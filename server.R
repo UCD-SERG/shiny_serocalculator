@@ -1,8 +1,56 @@
 
 library(ggplot2)
 library(ggthemes)
+library(readxl)
+library(skimr)
+library(gt)
 
 server <- function(input, output, session) {
+
+  # Store uploaded file information
+  uploaded_files <- reactiveValues(files = NULL)
+
+  # Read uploaded file and add data to the list
+  observeEvent(input$upload, {
+    req(input$upload)  # Ensure file is uploaded
+
+    uploaded_files$files <- c(uploaded_files$files,
+                              paste0(input$file_name," | ",input$upload$name))
+
+    # update
+    updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+    #updateSelectInput(session, "uploadedData", choices = uploaded_files$files)
+  })
+
+  # Read uploaded file and add data to the list
+  observeEvent(input$upload, {
+    req(input$upload)  # Ensure file is uploaded
+
+    uploaded_files$files <- c(uploaded_files$files,
+                              paste0(input$file_name," | ",input$upload$name))
+
+    # update
+    updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+    updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+  })
+
+  # choose uploaded data
+  # Read uploaded file and add data to the list
+  observeEvent(input$uploadedData, {
+    req(input$uploadedData)  # Ensure file is uploaded
+
+    #split
+    name_of_file <- input$uploadedData$name %>%
+      strsplit(split = "|")
+
+
+    #updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+
+  })
+
+
+
+
   data <- reactive({
     req(input$upload)
 
@@ -14,9 +62,29 @@ server <- function(input, output, session) {
     )
   })
 
+
+  # ---------- DATA OUTPUT ------------------------------------------------
   output$head <- renderTable({
-    head(data())
+    data() %>% head()
   })
+
+  output$str <- renderTable({
+    data() %>% head() %>% skimr::skim() %>% gt::gt()
+  })
+
+  output$summary <- renderPrint({
+    data() %>% summary()
+  })
+
+  output$radio_buttons <- renderUI({
+    switch(input$radio_display,
+           "preview" = tableOutput("head"),
+           "str" = tableOutput("str"),
+           "summary" = verbatimTextOutput("summary")
+    )
+  })
+
+  #-----------------------------------------------------
 
   output$y0 <- renderPlot({
     ggplot(data(),aes(x=y0)) +
@@ -41,7 +109,8 @@ server <- function(input, output, session) {
       geom_density() +
       theme_minimal() +
       ggtitle("Time to peak antibody concentration") +
-      xlab("")
+      xlab("") +
+      ylab("")
   })
 
   output$alpha <- renderPlot({
@@ -49,7 +118,8 @@ server <- function(input, output, session) {
       geom_density() +
       theme_minimal() +
       ggtitle("Antibody decay rate in days") +
-      xlab("")
+      xlab("") +
+      ylab("")
   })
 
   output$r <- renderPlot({
@@ -57,6 +127,7 @@ server <- function(input, output, session) {
       geom_density() +
       theme_minimal() +
       ggtitle("Antibody decay shape") +
-      xlab("")
+      xlab("") +
+      ylab("")
   })
 }
