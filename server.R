@@ -4,40 +4,69 @@ library(ggthemes)
 library(readxl)
 library(skimr)
 library(stringr)
+library(vroom)
 
 server <- function(input, output, session) {
 
-  # uploaded files information
+  # information of uploaded data
   uploaded_files <- reactiveValues(files = NULL)
   filename <- reactiveVal(NULL)
 
-  # Read uploaded file and add data to the list
-  observeEvent(input$upload, {
-    req(input$upload)  # Ensure file is uploaded
+  # read uploaded data
+  data <- reactive({
 
+    # ensure file is uploaded
+    req(input$upload)
+
+    # get file extension
+    ext <- tools::file_ext(input$upload$name)
+
+    switch(ext,
+           csv = vroom::vroom(input$upload$datapath, delim = ","),
+           #tsv = vroom::vroom(input$upload$datapath, delim = "\t"),
+           #colnames(csv),
+           validate("Invalid file; Please upload a .csv or .tsv file")
+          )
+  })
+
+  # get column names of uploaded data
+  column_names <- reactive({
+
+    # ensure data is uploaded
+    req(input$upload)
+
+    # load file
+    if (is.null(input$upload$datapath))
+      return(NULL)
+
+    df <- vroom::vroom(input$upload$datapath,delim = ",")
+    colnames(df)
+  })
+
+  # read uploaded file and add data to the list
+  observeEvent(input$upload, {
+
+    # ensure file is uploaded
+    req(input$upload)
+
+    # create list of uploaded files
     uploaded_files$files <- c(uploaded_files$files,
                               paste0(input$file_name," | ",input$upload$name))
 
+    # get file name without extension
     filename(tools::file_path_sans_ext(input$upload$name))
 
-    # store file on server
+    # store uploaded file on server as CSV
     filename <- paste0("uploaded_data_", Sys.Date(), ".csv")
     write.csv(data(), file = paste0(filename(), ".csv"), row.names = FALSE)
 
-    # update
+    # update dropdown list of uploaded files
     updateSelectInput(session, "selectedData", choices = uploaded_files$files)
-  })
 
-  # Read uploaded file and add data to the list
-  observeEvent(input$upload, {
-    req(input$upload)  # Ensure file is uploaded
-
-    uploaded_files$files <- c(uploaded_files$files,
-                              paste0(input$file_name," | ",input$upload$name))
-
-    # update
-    updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+    # update dropdown for uploaded data on secondary tab
     updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+
+    # update list of available data
     updateSelectInput(session, "availableData", choices = uploaded_files$files)
   })
 
@@ -59,23 +88,69 @@ server <- function(input, output, session) {
 
   })
 
-  data <- reactive({
-    req(input$upload)
-
-    ext <- tools::file_ext(input$upload$name)
-    switch(ext,
-           csv = vroom::vroom(input$upload$datapath, delim = ","),
-           tsv = vroom::vroom(input$upload$datapath, delim = "\t"),
-           validate("Invalid file; Please upload a .csv or .tsv file")
-          )
-  })
-
   # available data
   available_data <- reactive({
     req(input$availableData)
 
     get_uploaded_data(file_input = input$availableData)
 
+  })
+
+  # check uploaded data
+  observeEvent(input$file_name,{
+
+    # ensure file is uploaded
+    req(input$file_name)
+
+    output$head <- renderTable({
+
+      # check
+      if(input$file_name == "Pop Data"){
+        if(any(is.element(column_names(),c('catchment','antigen_iso','cluster')))){
+          print('Please Select Pop Data')
+        } else{
+          data() %>% head()
+        }
+      } else if(input$file_name == "Curve Data"){
+        if(any(is.element(column_names(),c('catchment','antigen_iso','cluster')))){
+          print('Please Select Curve Data')
+        } else {
+          data() %>% head()
+        }
+      } else if(input$file_name == "Curve Data"){
+        if(any(is.element(column_names(),c('catchment','antigen_iso','cluster')))){
+          print('Please Upload Noise Data')
+        } else {
+          data() %>% head()
+        }
+      }
+    })
+
+  })
+
+  # upload OSF URL
+  observeEvent(input$action_btn,{
+
+    url <- input$url_input
+
+    # Check if URL is not empty
+    if (!is.null(url) && url != "") {
+
+      # read data from URL
+      data <- vroom(url, delim = ",")
+
+      # show data in table
+      output$data_table <- renderTable({
+        data() %>% head()
+      })
+
+    } else {
+
+      # Show error message if URL is empty
+      output$data_table <- renderTable({
+        "Please enter a valid URL."
+      })
+    }
   })
 
   # load uploaded data
@@ -136,13 +211,15 @@ server <- function(input, output, session) {
 
   # ---------- DATA OUTPUT ------------------------------------------------
 
+  #output$head <- renderTable({
 
+  #  if(any(is.element(column_names(),c('catchment','antigen_iso','cluster')))){
+  #    print('Please select a data set')
+  #  } else{
+  #    data() %>% head()
+  #  }
 
-
-
-  output$head <- renderTable({
-    data() %>% head()
-  })
+  #})
 
   output$str <- renderTable({
     data() %>% head() %>% skimr::skim() %>% gt::gt()
