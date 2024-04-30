@@ -29,11 +29,13 @@ tabPanel("Import Data",
                                               accept = c(".csv", ".xlsx", ".rda","rds")),
 
                                     # provide OSF URL
-                                    textInput("url_input", "Provide OSF URL:", value = "https://osf.io/download/..."),
+                                    textInput("url_input", "Provide OSF URL:", value = "https://osf.io/download//n6cp3/"),
 
                                     # fetch OSF data
                                     actionButton("action_btn", "Upload"),
 
+                                    # progress bar
+                                    uiOutput("progress_bar"),
 
                                     # select input widget for column selection
                                     selectInput("updatedData", "Uploaded Data", choices = NULL),
