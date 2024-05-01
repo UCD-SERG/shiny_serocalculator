@@ -180,27 +180,27 @@ server <- function(input, output, session) {
 
       # Update reactive values
       #data_df(data)
-      update_progress(100)  # Update progress to 100% when download completes
+      #update_progress(100)  # Update progress to 100% when download completes
     #})
   #})
 
 
-    update_progress(100)  # Update progress to 100% when download completes
+    #update_progress(100)  # Update progress to 100% when download completes
 
-    output$data_table <- renderTable({
-      data_df()
-    })
+    #output$data_table <- renderTable({
+    #  data_df()
+    #})
 
     # Progress bar UI
-    output$progress_bar <- renderUI({
-      if (!is.null(input$url_input)) {
-        progressBar(
-          id = "progress",
-          value = progress(),
-          display_pct = TRUE
-        )
-      }
-    })
+    #output$progress_bar <- renderUI({
+      #if (!is.null(input$url_input)) {
+        #progressBar(
+          #id = "progress",
+          #value = progress(),
+          #display_pct = TRUE
+        #)
+      #}
+    #})
 
   ## check correct file is uploaded (pop, curve, noise) ----
   observeEvent(input$file_name,{
@@ -291,6 +291,6 @@ server <- function(input, output, session) {
   output$character_summary <- renderTable({
       data() %>% head() %>% skimr::skim() %>% yank("character")
   })
-}
+
 
 
