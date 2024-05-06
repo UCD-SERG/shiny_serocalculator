@@ -7,6 +7,7 @@ library(skimr)
 library(stringr)
 library(serocalculator)
 library(shinyWidgets)
+library(knitrProgressBar)
 
 server <- function(input, output, session) {
 
@@ -23,8 +24,6 @@ server <- function(input, output, session) {
   ## data_df
   data_df <- reactiveVal(NULL)
 
-  # UPLOADED DATA ----
-
   ## choose upload data ----
   data <- reactive({
 
@@ -39,7 +38,7 @@ server <- function(input, output, session) {
            #tsv = vroom::vroom(input$upload$datapath, delim = "\t"),
            #colnames(csv),
            validate("Invalid file; Please upload a .csv or .tsv file")
-          )
+    )
   })
 
   ## uploaded column names ----
@@ -67,18 +66,18 @@ server <- function(input, output, session) {
   ## url upload data ----
   url_data <- reactive({
 
-  # ensure data is uploaded
-  req(input$url_input)
+    # ensure data is uploaded
+    req(input$url_input)
 
-  if (!is.null(input$url_input) && input$url_input != "") {
-    vroom(input$url_input, delim = ",")
+    if (!is.null(input$url_input) && input$url_input != "") {
+      vroom(input$url_input, delim = ",")
 
-    # download the file
-    data <- serocalculator::load_pop_data(file_path = input$url_input)
+      # download the file
+      data <- serocalculator::load_pop_data(file_path = input$url_input)
 
-  } else {
-    "Please enter a valid URL."
-  }
+    } else {
+      "Please enter a valid URL."
+    }
 
   })
 
@@ -133,7 +132,6 @@ server <- function(input, output, session) {
     updateSelectInput(session, "availableData", choices = uploaded_files$files)
   })
 
-
   ## choose uploaded data ----
   observeEvent(input$statsSelectedData, {
     req(input$statsSelectedData)  # Ensure file is uploaded
@@ -153,144 +151,34 @@ server <- function(input, output, session) {
   })
 
 
-
-
   ## display data when the button is clicked ----
-  #observeEvent(input$action_btn, {
-
-    # function to update progress
-  #  update_progress <- function(value) {
-
-  #    progress(value)
-
-      # incrementally update the progress bar
-   #   setProgress(session, value = value, detail = paste(value, "% Complete"))
-    }
-
+  observeEvent(input$action_btn, {
     # download the file with progress indication
-    #withProgress(message = 'Downloading...', value = 0, {
-      #for (i in 1:10) {
-        #Sys.sleep(0.5)  # Simulate a delay for demonstration purposes
-        #update_progress(i * 10)
-      #}
-
-      # Read the downloaded file into a data frame
-      #download.file(input$file_url, "downloaded_file.csv", mode = "wb")
-      #data <- serocalculator::load_noise_params(file_path = input$url_input)
-
-      # Update reactive values
-      #data_df(data)
-      #update_progress(100)  # Update progress to 100% when download completes
-    #})
-  #})
-
-
-    #update_progress(100)  # Update progress to 100% when download completes
-
-    #output$data_table <- renderTable({
-    #  data_df()
-    #})
-
-    # Progress bar UI
-    #output$progress_bar <- renderUI({
-      #if (!is.null(input$url_input)) {
-        #progressBar(
-          #id = "progress",
-          #value = progress(),
-          #display_pct = TRUE
-        #)
-      #}
-    #})
-
-  ## check correct file is uploaded (pop, curve, noise) ----
-  observeEvent(input$file_name,{
-
-    # ensure file is uploaded
-    req(input$file_name)
-
-    output$head <- renderTable({
-
-    # check
-    if(input$file_name == "Pop Data"){
-      if(any(is.element(column_names(),c('catchment','antigen_iso','cluster')))){
-        print('Please Upload Pop Data')
-      } else{
-        data() %>% head()
+    withProgress(message = 'Downloading...', value = 0, {
+      for (i in 1:10) {
+        incProgress(1/15)
+        Sys.sleep(0.25)
       }
-      } else if(input$file_name == "Curve Data"){
-        if(any(is.element(column_names(),c('catchment','antigen_iso','cluster')))){
-          print('Please Upload Curve Data')
-      } else {
-        data() %>% head()
-      }
-      } else if(input$file_name == "Curve Data"){
-        if(any(is.element(column_names(),c('catchment','antigen_iso','cluster')))){
-          print('Please Upload Noise Data')
-      } else {
-        data() %>% head()
-      }
-    }
-    })
-
-    })
-
-
-  # update columns of uploaded data
-  observeEvent(input$availableData, {
-    req(input$availableData)
-
-    # file
-    input$availableData
-
-    # get data
-    available_data <- get_uploaded_data(file_input = input$availableData)
-
-    # update columns
-    updateSelectInput(session, "columns", choices = colnames(available_data))
-
-    })
-
-    output$plot <- renderPlot({
-      ggplot(available_data(),aes(x=Age)) +
-        geom_density()
-    })
-
-    #------------------------ plot
-    observeEvent(c(input$columns,input$availableData), {
-
-      output$dynamic_plot <- renderPlot({
-        req(input$availableData)
-        req(input$columns)
-
-        # get data
-        available_data <- get_uploaded_data(file_input = input$availableData)
-
-        ggplot(available_data, aes_string(x = input$columns)) +
-          geom_bar()
-      })
-    })
-
-
-  # DATA OUTPUT ----
-  ## file preview ----
-  output$str <- renderTable({
-      data() %>% head() %>% skimr::skim() %>% gt::gt()
-    })
-
-  ## file summary ----
-  output$summary <- renderPrint({
-    data() %>% summary()
   })
 
-  ## file numeric summary ----
-  output$numeric_summary <- renderTable({
-      data() %>% head() %>% skimr::skim() %>% yank("numeric")
+  # Read the downloaded file into a data frame
+  download.file(input$url_input, "downloaded_file.csv", mode = "wb")
+  data <- serocalculator::load_noise_params(file_path = input$url_input)
+
+  # Update reactive values
+  data_df(data)
+
   })
 
-  ## file character summary ----
-  output$character_summary <- renderTable({
-      data() %>% head() %>% skimr::skim() %>% yank("character")
+  output$data_table <- renderTable({
+    data_df() %>% head()
   })
+
+
+
+}
+
+
 
 
 
