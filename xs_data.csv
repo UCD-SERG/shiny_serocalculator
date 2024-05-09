@@ -1,4 +1,4 @@
-"index_id","Country","cluster","catchment","Age","ageCat","antigen_iso","result"
+"index_id","Country","cluster","catchment","age","ageCat","antigen_iso","value"
 "B1","Bangladesh","Ward 2 N","dhaka",4,"<5","HlyE_IgA",7.24137931
 "B2","Bangladesh","Ward 2 N","dhaka",4,"<5","HlyE_IgG",23.96853147
 "B3","Bangladesh","Ward 2 N","dhaka",3.7,"<5","HlyE_IgA",0.836298932

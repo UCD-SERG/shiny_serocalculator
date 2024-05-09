@@ -1,6 +1,7 @@
 
 library(shiny)
 library(shinythemes)
+library(cli)
 
 suppressWarnings(
   try(
@@ -29,8 +30,17 @@ shinyUI(navbarPage("Serocalculator",
                                                                    selected = "Pop"
                                                        ),
 
+                                                       # provide age name
+                                                       textInput("age", "Age", "Age"),
+
+                                                       # provide value column
+                                                       textInput("value", "Value", "result"),
+
+                                                       # provide index column name
+                                                       textInput("index", "Index", "index_id"),
+
                                                        # upload file
-                                                       fileInput(label = "Upload Data","upload", NULL,
+                                                       fileInput(label = "Choose File from Computer (.csv, .xsls, .rda, .rds)","upload", NULL,
                                                                  buttonLabel = "Upload...",
                                                                  multiple = TRUE,
                                                                  accept = c(".csv", ".xlsx", ".rda","rds")),
@@ -51,8 +61,7 @@ shinyUI(navbarPage("Serocalculator",
 
 
                                           mainPanel("",
-                                                    tabsetPanel(tabPanel("File Preview", tableOutput("data_table")),
-                                                                tabPanel("Numeric Summary",uiOutput("numeric_summary")),
+                                                    tabsetPanel(tabPanel("File Preview", uiOutput("head"),uiOutput("other_head")),
                                                     )
                                           )
                             )
@@ -62,12 +71,23 @@ shinyUI(navbarPage("Serocalculator",
                    tabPanel("Inspect Data",
                             sidebarLayout(position = "left",
                                           sidebarPanel(width = 3,
-                                                       h4("Data Upload"),
-                                                       helpText("This section allows for data upload")
+                                                       h4("Available Data"),
+                                                       helpText("This section allows the selection of uploaded data and visualize."),
+                                                       # select input widget for column selection
+                                                       selectInput("updatedData_ext", "Available Data to Choose", choices = NULL),
+                                                       selectInput("file_out",
+                                                                   "Choose Data Type:",
+                                                                   choices = c("Population","Curve Param"),
+                                                                   selected = "Population"
+                                                       ),
+                                                       uiOutput("sub_dropdown_ui"),
+                                                       checkboxInput("check_stratify", "Stratify", value = TRUE),
+                                                       checkboxInput("checklog", "Log", value = TRUE),
+                                                       #textOutput("selected_options")
                                           ),
                                           mainPanel("",
-                                                    tabsetPanel(tabPanel("Numeric Summary"),
-                                                                tabPanel("Visualize")
+                                                    tabsetPanel(tabPanel("Numeric Summary",uiOutput("numeric_summary")),
+                                                                tabPanel("Visualize", plotOutput('visualize'))
                                                     )
 
                                           )
