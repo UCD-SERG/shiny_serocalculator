@@ -14,6 +14,12 @@ suppressWarnings(
 shinyUI(navbarPage("Serocalculator",
                    theme = shinythemes::shinytheme("united"),
 
+                   # project summary
+                   tabPanel("Summary",
+                            h2("Serocalculator"),
+                            helpText("Antibody levels measured in a cross–sectional population sample can be translated into an estimate of the frequency with which seroconversions (infections) occur in the sampled population. In other words, the presence of many high antibody titers indicates that many individuals likely experienced infection recently and the burden of disease is high in the population, while low titers indicate a low frequency of infections in the sampled population and therefore a lower burden of disease."),
+                            helpText("The serocalculator package was designed to use the longitudinal response characteristics using a set of modeled parameters characterizing the longitudinal response of the selected serum antibodies.")),
+
                    # define the tabs to be used in the app ----------------------------------------
                    tabPanel("Import Data",
                             sidebarLayout(position = "left",
@@ -31,13 +37,13 @@ shinyUI(navbarPage("Serocalculator",
                                                        ),
 
                                                        # provide age name
-                                                       textInput("age", "Age", "Age"),
+                                                       uiOutput('select_age'),
 
                                                        # provide value column
-                                                       textInput("value", "Value", "result"),
+                                                       uiOutput('select_value'),
 
                                                        # provide index column name
-                                                       textInput("index", "Index", "index_id"),
+                                                       uiOutput('select_id'),
 
                                                        # upload file
                                                        fileInput(label = "Choose File from Computer (.csv, .xsls, .rda, .rds)","upload", NULL,
@@ -61,7 +67,7 @@ shinyUI(navbarPage("Serocalculator",
 
 
                                           mainPanel("",
-                                                    tabsetPanel(tabPanel("File Preview", uiOutput("head"),uiOutput("other_head")),
+                                                    tabsetPanel(tabPanel("File Preview", DTOutput("head"),DTOutput("other_head")),
                                                     )
                                           )
                             )
@@ -82,8 +88,7 @@ shinyUI(navbarPage("Serocalculator",
                                                        ),
                                                        uiOutput("sub_dropdown_ui"),
                                                        checkboxInput("check_stratify", "Stratify", value = TRUE),
-                                                       checkboxInput("checklog", "Log", value = TRUE),
-                                                       #textOutput("selected_options")
+                                                       checkboxInput("check_log", "Log", value = TRUE),
                                           ),
                                           mainPanel("",
                                                     tabsetPanel(tabPanel("Numeric Summary",uiOutput("numeric_summary")),
