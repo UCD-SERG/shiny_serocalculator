@@ -170,25 +170,83 @@ server <- function(input, output, session) {
     # get file name without extension
     filename(tools::file_path_sans_ext(input$upload$name))
 
-    ## store uploaded file on server as CSV
-    filename <- paste0("uploaded_data", ".csv")
-    write.csv(data(), file = paste0(filename(), ".csv"),
-              row.names = FALSE)
-
     # read data
-    up_data = read.csv(file = "uploaded_data.csv")
+    #up_data = read.csv(file = "uploaded_data.csv")
 
     # update drop down list of uploaded files
     updateSelectInput(session, "selectedData",
                       choices = uploaded_files$files)
 
     # update drop down for uploaded data on secondary tab
-    updateSelectInput(session, "updatedData",
-                      choices = uploaded_files$files)
+    if(input$file_name == 'Pop Data')
+    {
+      if(!any(is.element(data() %>% names(),c('ageCat'))))
+      {
+        output$other_head <- renderDT({
+          print('Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH POPULATION DATA.')
+        })
+
+        updateSelectInput(session,
+                          "updatedData",
+                          choices = NULL)
+      } else
+      {
+        updateSelectInput(session, "updatedData",
+                          choices = uploaded_files$files)
+      }
+
+    } else if(input$file_name == 'Curve Data')
+    {
+      if(!any(is.element(column_names(),c('y0','y1','t1','alpha'))))
+      {
+        # output error
+        output$other_head <- renderDT({
+          print('Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH CURVE DATA.')
+        })
+
+        # don't update drop down
+        updateSelectInput(session, "updatedData",
+                          choices = NULL)
+      } else
+      {
+        updateSelectInput(session, "updatedData",
+                          choices = uploaded_files$files)
+      }
+
+    } else if(input$file_name == 'Noise Data')
+    {
+      if(!any(is.element(column_names(),c('y.low','eps','y.high'))))
+      {
+        # output error
+        output$other_head <- renderDT({
+          print('Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH CURVE DATA.')
+        })
+
+        # don't update drop down
+        updateSelectInput(session, "updatedData",
+                          choices = NULL)
+      } else
+      {
+        updateSelectInput(session, "updatedData",
+                          choices = uploaded_files$files)
+      }
+    }
+
 
     # update drop down for uploaded data on secondary tab
-    updateSelectInput(session, "updatedData_ext",
-                      choices = uploaded_files$files)
+    if(input$file_name == 'Pop Data')
+    {
+      if(!any(is.element(data() %>% names(),c('ageCat'))))
+      {
+        updateSelectInput(session, "updatedData_ext",
+                          choices = NULL)
+      } else
+      {
+        updateSelectInput(session, "updatedData_ext",
+                          choices = uploaded_files$files)
+      }
+    }
+
 
     # update list of available data
     updateSelectInput(session, "availableData",
@@ -300,7 +358,8 @@ server <- function(input, output, session) {
       {
         selectInput("type_visualization",
                     "Choose Type of Visualization",
-                    choices = c("Distribution", "Decay"))
+                    choices = c("Distribution", "Decay"),
+                    selected = 'Distribution')
       }
     })
   })
@@ -376,21 +435,30 @@ server <- function(input, output, session) {
         ## select age column on drop down
         output$select_age <- renderUI({
 
-        # get uploaded data
-        df = data()
+        if(input$file_name == 'Pop Data')
+        {
+          # get uploaded data
+          df = data()
 
-        # column names
-        cols = names(df)
+          # column names
+          cols = names(df)
 
-        # dynamically create drop down list of column names
-        selectInput("age",
-                    "Select Age Column:",
-                    cols)
+          # dynamically create drop down list of column names
+          selectInput("age",
+                      "Select Age Column:",
+                      cols)
+        } else
+        {
+          NULL
+        }
+
         })
 
         ## select value column on drop down
         output$select_value <- renderUI({
 
+          if(input$file_name == 'Pop Data')
+          {
             # get data
             df = data()
 
@@ -401,21 +469,35 @@ server <- function(input, output, session) {
             selectInput("age",
                         "Select Value Column:",
                         cols)
+          } else
+          {
+            NULL
+          }
+
+
           })
 
           ## select id column on drop down
           output$select_id <- renderUI({
 
-            # get data
-            df = data()
+            if(input$file_name == 'Pop Data')
+            {
+              # get data
+              df = data()
 
-            # column names
-            cols = names(df)
+              # column names
+              cols = names(df)
 
-            # dynamically create drop down list of column names
-            selectInput("age",
-                        "Select Index Column:",
-                        cols)
+              # dynamically create drop down list of column names
+              selectInput("age",
+                          "Select Index Column:",
+                          cols)
+            } else
+            {
+              NULL
+            }
+
+
           })
 
           # display data
@@ -495,10 +577,9 @@ server <- function(input, output, session) {
     output$visualize <- renderPlot({
 
       viz_type = input$type_visualization
-      file_type = strsplit(x = input$updatedData_ext,split = " | ")[[1]][1]
 
       #### density plot
-      if(viz_type == 'Distribution' & file_type == 'Curve')
+      if(viz_type == 'Distribution')
       {
         down_data %>%
           pivot_longer(
@@ -515,7 +596,7 @@ server <- function(input, output, session) {
           theme_minimal()
 
       #### age-scatter plot
-      } else if (viz_type == 'Age Scatter' & file_type == 'Pop')
+      } else if (viz_type == 'Age Scatter')
       {
         # visualize age-scatter
         down_data %>% serocalculator:::autoplot.pop_data(type = 'age-scatter',
@@ -523,7 +604,7 @@ server <- function(input, output, session) {
                                                          log = input$check_log)
 
       #### distribution
-      } else if(viz_type == 'Density' & file_type == 'Pop')
+      } else if(viz_type == 'Density')
       {
 
         # visualize density
@@ -533,7 +614,7 @@ server <- function(input, output, session) {
 
 
       #### decay
-      } else if (viz_type == 'Decay' & file_type == 'Curve')
+      } else if (viz_type == 'Decay')
       {
         # visualize age-scatter
         down_data %>% serocalculator:::plot_curve_params_one_ab()
