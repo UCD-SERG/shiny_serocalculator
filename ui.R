@@ -2,6 +2,7 @@
 library(shiny)
 library(shinythemes)
 library(cli)
+library(ggplot2)
 
 suppressWarnings(
   try(
@@ -81,14 +82,17 @@ shinyUI(navbarPage("Serocalculator",
                                                        helpText("This section allows the selection of uploaded data and visualize."),
                                                        # select input widget for column selection
                                                        selectInput("updatedData_ext", "Available Data to Choose", choices = NULL),
-                                                       selectInput("file_out",
-                                                                   "Choose Data Type:",
-                                                                   choices = c("Population","Curve Param"),
-                                                                   selected = "Population"
-                                                       ),
-                                                       uiOutput("sub_dropdown_ui"),
-                                                       checkboxInput("check_stratify", "Stratify", value = TRUE),
-                                                       checkboxInput("check_log", "Log", value = TRUE),
+
+                                                       uiOutput("choose_visualization"),
+
+                                                       # choose stratifying column
+                                                       uiOutput("stratify"),
+
+                                                       uiOutput("log"),
+
+                                                       #checkboxInput("check_stratify", "Stratify", value = TRUE),
+                                                       #selectInput("check_stratify", "Stratify By:", choices = NULL),
+
                                           ),
                                           mainPanel("",
                                                     tabsetPanel(tabPanel("Numeric Summary",uiOutput("numeric_summary")),

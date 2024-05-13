@@ -1,5 +1,5 @@
 
-# load required libraries
+# load required packages
 library(ggplot2)
 library(ggthemes)
 library(readxl)
@@ -15,16 +15,17 @@ library(DT)
 server <- function(input, output, session) {
 
   # INFORMATION VARIABLES ----
+
   ## uploaded files ----
   uploaded_files <- reactiveValues(files = NULL)
 
-  ## filename ----
+  ## file name ----
   filename <- reactiveVal(NULL)
 
   ## progress ----
   progress <- reactiveVal(0)
 
-  ## data_df
+  ## data df
   data_df <- reactiveVal(NULL)
 
   ## choose upload data ----
@@ -37,14 +38,20 @@ server <- function(input, output, session) {
     ext <- tools::file_ext(input$upload$name)
 
     if (ext %in% c("csv", "tsv")) {
-      if (ext == "csv") {
+      if (ext == "csv")
+      {
         df <- read.csv(input$upload$datapath)
-      } else if (extension == "tsv") {
+      } else if (extension == "tsv")
+      {
         df <- read_tsv(input$upload$datapath)
       }
+
       return(df)
-    } else {
-      return(NULL)  # Return NULL for unsupported file types
+
+    } else
+    {
+      # Return NULL for unsupported file types
+      return(NULL)
     }
 
   })
@@ -56,38 +63,43 @@ server <- function(input, output, session) {
     req(input$upload)
 
     # load file
-    if (is.null(input$upload$datapath))
-      return(NULL)
+    null_file = is.null(input$upload$datapath)
 
-    df <- vroom::vroom(input$upload$datapath,delim = ",")
-    colnames(df)
+    if (null_file)
+    {
+      return(NULL)
+    }
+
+    # read file
+    df = vroom::vroom(input$upload$datapath, delim = ",")
+
+    # get column names
+    df %>% names()
+
   })
 
   ## available data ----
   available_data <- reactive({
+
     req(input$availableData)
 
     get_uploaded_data(file_input = input$availableData)
 
   })
 
-  ## url upload data ----
+  ## upload data via URL ----
   url_data <- reactive({
 
     # ensure data is uploaded
     req(input$url_input)
 
-    if (!is.null(input$url_input) && input$url_input != "") {
-      vroom(input$url_input, delim = ",")
-
+    if (!is.null(input$url_input) && input$url_input != "")
+    {
       # download the file
       data <- serocalculator::load_pop_data(file_path = input$url_input)
-      #data %>% rename()
 
-      # write file to disk
-
-
-    } else {
+    } else
+    {
       "Please enter a valid URL."
     }
 
@@ -99,17 +111,45 @@ server <- function(input, output, session) {
   get_uploaded_data <- function(file_input){
 
     # split
-    name_of_file <- file_input %>%
+    name_of_file = file_input %>%
       strsplit(split = " | ")
 
     # get file name
-    extracted_file_name <- name_of_file[[1]][6]
+    extracted_file_name = name_of_file[[1]][6]
 
     # file name sans extension
-    file_sans_ext <- strsplit(x = extracted_file_name,split = "\\.")[[1]][1]
+    file_sans_ext = strsplit(x = extracted_file_name,
+                              split = "\\.")[[1]][1]
 
     # read data
-    available_data <- read.csv(paste0(file_sans_ext,".csv"))
+    available_data <- read.csv(paste0(file_sans_ext, ".csv"))
+
+    # population data check
+    pop_data_check = any(is.element(names(available_data),
+                                    c('ageCat')))
+
+    if(!pop_data_check)
+    {
+      # set class
+      class(available_data) =
+        c("pop_data", class(available_data))
+
+    # check curve data
+    } else if(!any(is.element(el = names(available_data),
+                              set =  c('y0','y1','t1','alpha'))))
+    {
+      # set class
+      class(available_data) =
+        c("curve_data", class(available_data))
+
+    # noise data check
+    noise_data_check = any(is.element(column_names(),c('y.low','eps','y.high')))
+
+    } else  if(!noise_data_check)
+    {
+      class(available_data) =
+        c("noise_data", class(available_data))
+    }
 
     return(available_data)
 
@@ -132,30 +172,35 @@ server <- function(input, output, session) {
 
     ## store uploaded file on server as CSV
     filename <- paste0("uploaded_data", ".csv")
-    write.csv(data(), file = paste0(filename(), ".csv"), row.names = FALSE)
+    write.csv(data(), file = paste0(filename(), ".csv"),
+              row.names = FALSE)
+
+    # read data
     up_data = read.csv(file = "uploaded_data.csv")
 
     # update drop down list of uploaded files
-    updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+    updateSelectInput(session, "selectedData",
+                      choices = uploaded_files$files)
 
     # update drop down for uploaded data on secondary tab
-    updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+    updateSelectInput(session, "updatedData",
+                      choices = uploaded_files$files)
 
     # update drop down for uploaded data on secondary tab
-    updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
-
+    updateSelectInput(session, "updatedData_ext",
+                      choices = uploaded_files$files)
 
     # update list of available data
-    updateSelectInput(session, "availableData", choices = uploaded_files$files)
+    updateSelectInput(session, "availableData",
+                      choices = uploaded_files$files)
 
-
-    # update drop down for uploaded data on secondary tab
-    updateSelectInput(session, "age", choices = names(data()))
   })
 
   ## choose uploaded data ----
   observeEvent(input$statsSelectedData, {
-    req(input$statsSelectedData)  # Ensure file is uploaded
+
+    # ensure file is uploaded
+    req(input$statsSelectedData)
 
     #split
     name_of_file <- statsSelectedData %>%
@@ -174,6 +219,7 @@ server <- function(input, output, session) {
 
   ## display data when the button is clicked ----
   observeEvent(input$action_btn, {
+
     # download the file with progress indication
     withProgress(message = 'Downloading...', value = 0, {
       for (i in 1:10) {
@@ -183,37 +229,49 @@ server <- function(input, output, session) {
 
       # create list of uploaded files
       provided_file <- strsplit(x = input$url_input,split = '/')[[1]][6]
-      uploaded_files$files <- c(uploaded_files$files,
-                                paste0(input$file_name, " | OSF | ",provided_file))
 
+      # append uploaded files
+      uploaded_files$files <- c(uploaded_files$files,
+                                paste0(input$file_name, " | OSF | ",
+                                provided_file))
 
       # update drop down for uploaded data on secondary tab
-      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
+      updateSelectInput(session,
+                        "updatedData_ext",
+                        choices = uploaded_files$files)
 
     })
 
-    # write the downloaded file
+    # get file name
     download_name <- input$url_input %>% strsplit(split = "/")
-    download.file(input$url_input, paste0(download_name[[1]][6],'.csv'), mode = "wb")
+
+    # download file
+    download.file(input$url_input,
+                  paste0(download_name[[1]][6],'.csv'),
+                  mode = "wb")
 
     if(input$file_name == 'Pop Data')
     {
       data <- serocalculator::load_pop_data(file_path = input$url_input)
+
     } else if (input$file_name == 'Curve Data')
     {
       data <- serocalculator::load_curve_params(file_path = input$url_input)
+
     } else if (input$file_name == 'Noise Data')
     {
       data <- serocalculator::load_noise_params(file_path = input$url_input)
     }
 
-
-    # Update reactive values
+    # update reactive values
     data_df(data)
 
     # update drop down for uploaded data on secondary tab
-    updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+    updateSelectInput(session,
+                      "updatedData",
+                      choices = uploaded_files$files)
 
+    # display data
     output$head <- renderTable({
       data %>% head()
     })
@@ -221,116 +279,189 @@ server <- function(input, output, session) {
 
   })
 
+  # check file uploaded
+  observeEvent(c(input$updatedData_ext),{
+
+    #req(input$file_name)
+    req(input$updatedData_ext)
+
+    # uploaded file
+    file_type = strsplit(x = input$updatedData_ext,split = " | ")[[1]][1]
+
+    output$choose_visualization <- renderUI({
+      if (file_type == 'Pop')
+      {
+
+        selectInput("type_visualization",
+                    "Choose Type of Visualization",
+                    choices = c("Density", "Age Scatter"))
+
+      } else if (file_type == 'Curve')
+      {
+        selectInput("type_visualization",
+                    "Choose Type of Visualization",
+                    choices = c("Distribution", "Decay"))
+      }
+    })
+  })
+
   ## check correct file is uploaded (pop, curve, noise) ----
-  observeEvent(c(input$file_name,input$updatedData_ext, input$updatedData),{
+  observeEvent(c(input$updatedData_ext,
+                 input$updatedData),{
 
     # ensure file is uploaded
-    req(input$file_name)
+    req(input$updatedData_ext)
 
+    file_type = strsplit(x = input$updatedData_ext,split = " | ")[[1]][1]
 
+    output$stratify <- renderUI({
+
+      # get uploaded data
+      df = data()
+
+      # column names
+      cols = df %>% names()
+
+      # dynamically create drop down list of column name
+      if(file_type == 'Pop')
+      {
+        selectInput("stratify",
+                    "Stratify By:",
+                    cols,
+                    selected = "Country")
+
+      } else if (file_type == 'Curve')
+      {
+        NULL
+      }
+
+    })
+
+    output$log <- renderUI({
+
+      # get uploaded data
+      df = data()
+
+      # column names
+      cols = df %>% names()
+
+      # dynamically create drop down list of column name
+      if(file_type == 'Pop')
+      {
+        checkboxInput("check_log", "Log", value = TRUE)
+
+      } else if (file_type == 'Curve')
+      {
+        NULL
+      }
+
+    })
 
     output$other_head <- renderDT({
 
-      # check
-      if(input$file_name == "Pop Data"){
-        if(!any(is.element(column_names(),c('ageCat')))){
-          print('Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH POPULATION DATA.')
-        } else {
+      # population data
+      if(input$file_name == "Pop Data")
+      {
 
-          ## select age column on dropdown
-          output$select_age <- renderUI({
+        check_age = any(is.element(column_names(),c('ageCat')))
 
+      if(!check_age)
+      {
+
+        print('Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH POPULATION DATA.')
+
+      } else
+      {
+
+        ## select age column on drop down
+        output$select_age <- renderUI({
+
+        # get uploaded data
+        df = data()
+
+        # column names
+        cols = names(df)
+
+        # dynamically create drop down list of column names
+        selectInput("age",
+                    "Select Age Column:",
+                    cols)
+        })
+
+        ## select value column on drop down
+        output$select_value <- renderUI({
+
+            # get data
             df = data()
 
-            items=names(df)
+            # column names
+            cols = names(df)
 
-            # Dynamically create dropdown list of column names
-            selectInput("age","Select Age Column:", items)
-          })
-
-          ## select value column on dropdown
-          # column names dropdown
-          output$select_value <- renderUI({
-
-            df = data()
-
-            items=names(df)
-
-            # Dynamically create drop down list of column names
-            selectInput("age","Select Value Column:", items)
+            # dynamically create drop down list of column names
+            selectInput("age",
+                        "Select Value Column:",
+                        cols)
           })
 
           ## select id column on drop down
           output$select_id <- renderUI({
 
+            # get data
             df = data()
 
-            items = names(df)
+            # column names
+            cols = names(df)
 
-            # Dynamically create drop down list of column names
-            selectInput("age","Select Index Column:", items)
+            # dynamically create drop down list of column names
+            selectInput("age",
+                        "Select Index Column:",
+                        cols)
           })
 
-          datatable(data = data(), editable = TRUE)
+          # display data
+          datatable(data = data(),
+                    editable = TRUE)
         }
-      } else if(input$file_name == "Curve Data"){
-        if(!any(is.element(column_names(),c('y0','y1','t1','alpha')))){
-          print('Please Upload Curve Data')
-        } else {
-          datatable(data = data(), editable = TRUE)
+      } else if(input$file_name == "Curve Data")
+      {
+
+        # curve data check
+        curve_data_check = any(is.element(column_names(),c('y0','y1','t1','alpha')))
+
+        if(!curve_data_check)
+        {
+
+          print('Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH CURVE DATA.')
+
+        } else
+        {
+          datatable(data = data(),
+                    editable = TRUE)
         }
-      } else if(input$file_name == "Noise Data"){
-        if(!any(is.element(column_names(),c('y.low','eps','y.high')))){
-          print('Please Upload Noise Data')
-        } else {
-          datatable(data = data(), editable = TRUE)
+
+      } else if(input$file_name == "Noise Data")
+      {
+        # noise data check
+        noise_data_check = any(is.element(column_names(),c('y.low','eps','y.high')))
+
+        if(!noise_data_check)
+        {
+
+          print('Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH NOISE DATA.')
+
+        } else
+        {
+          datatable(data = data(),
+                    editable = TRUE)
         }
       }
     })
   })
 
-  # update columns of uploaded data
-  observeEvent(input$availableData, {
-    req(input$availableData)
-
-    # file
-    input$availableData
-
-    # get data
-    available_data <- get_uploaded_data(file_input = input$availableData)
-
-    # update columns
-    updateSelectInput(session, "columns", choices = colnames(available_data))
-
-  })
-
-  # set attributes
-  observeEvent(c(input$select_age, input$select_value, input$select_id),{
-
-    # rename
-    data()
-  })
-
-  output$sub_dropdown_ui <- renderUI({
-    if (input$file_out == "Population") {
-      selectInput("sub_dropdown", "Choose Type of Visualization",
-                  choices = c("Density", "Age Scatter"))
-    } else if (input$file_out == "Curve Param") {
-      selectInput("sub_dropdown", "Choose Type of Visualization",
-                  choices = c("Distribution", "Decay"))
-    } else {
-      # If none selected, render empty dropdown
-      selectInput("sub_dropdown", "Choose Type of Visualization", choices = NULL)
-    }
-  })
-
-  output$selected_options <- renderText({
-    paste("Main dropdown selection:", input$file_out, "\n",
-          "Sub dropdown selection:", input$sub_dropdown)
-  })
-
   output$data_table <- renderTable({
+
     data_df() %>% head()
+
   })
 
   ## file numeric summary ----
@@ -347,51 +478,27 @@ server <- function(input, output, session) {
     })
   })
 
-  observeEvent(c(input$updatedData_ext, input$file_out, input$check_stratify, input$check_log), {
+  observeEvent(c(input$updatedData_ext,
+                 input$stratify,
+                 input$check_log,
+                 input$type_visualization), {
 
     req(input$updatedData_ext)
-    req(input$file_out)
-    req(input$check_stratify)
+    req(input$stratify)
     req(input$check_log)
+    req(input$type_visualization)
 
+    # get data
     down_data = get_uploaded_data(file_input = input$updatedData_ext)
 
-    ## population age scatter
+    ## visualization
     output$visualize <- renderPlot({
 
-      viz_type <- input$sub_dropdown
+      viz_type = input$type_visualization
+      file_type = strsplit(x = input$updatedData_ext,split = " | ")[[1]][1]
 
       #### density plot
-      if(viz_type == 'Density')
-      {
-        if(input$check_stratify)
-        {
-          down_data %>% serocalculator:::autoplot.pop_data(type = 'density',strata = 'Country',log = input$checklog)
-
-        } else if(!input$check_stratify)
-        {
-          down_data %>% serocalculator:::autoplot.pop_data(type = 'density', log = input$checklog)
-        }
-
-        #### age-scatter plot
-      } else if (viz_type == 'Age Scatter')
-      {
-        if(input$check_stratify)
-        {
-          if(input$checklog)
-          {
-            down_data %>% serocalculator:::autoplot.pop_data(type = 'age-scatter',strata = 'Country',log = input$checklog)
-          } else if(!input$checklog)
-          {
-            down_data %>% serocalculator:::autoplot.pop_data(type = 'age-scatter',strata = 'Country')
-          }
-
-        } else if(!input$check_stratify)
-        {
-          down_data %>% serocalculator:::autoplot.pop_data(type = 'age-scatter')
-        }
-
-      } else if(viz_type == 'Distribution')
+      if(viz_type == 'Distribution' & file_type == 'Curve')
       {
         down_data %>%
           pivot_longer(
@@ -400,12 +507,36 @@ server <- function(input, output, session) {
             values_to = "value"
           ) %>%
 
-          ggplot(aes(y=value)) +
+          ggplot2::ggplot(aes(x = value)) +
           geom_density() +
-          scale_y_continuous(limits = c(0, 500)) +
-          facet_grid(rows = vars(parameter)) +
-          theme_linedraw()
+          facet_grid(parameter ~ .) +
+          scale_y_continuous(limits = c(0, 0.0075)) +
+          scale_x_continuous(limits = c(0, 600)) +
+          theme_minimal()
 
+      #### age-scatter plot
+      } else if (viz_type == 'Age Scatter' & file_type == 'Pop')
+      {
+        # visualize age-scatter
+        down_data %>% serocalculator:::autoplot.pop_data(type = 'age-scatter',
+                                                         strata = input$stratify,
+                                                         log = input$check_log)
+
+      #### distribution
+      } else if(viz_type == 'Density' & file_type == 'Pop')
+      {
+
+        # visualize density
+        down_data %>% serocalculator:::autoplot.pop_data(type = 'density',
+                                                         strata = input$stratify,
+                                                         log = input$check_log)
+
+
+      #### decay
+      } else if (viz_type == 'Decay' & file_type == 'Curve')
+      {
+        # visualize age-scatter
+        down_data %>% serocalculator:::plot_curve_params_one_ab()
       }
 
     })
