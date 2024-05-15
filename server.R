@@ -80,6 +80,10 @@ server <- function(input, output, session) {
         attr(df, "id_var") <- input$id_select
       }
 
+      # write
+      # file_write = paste0(tools::file_path_sans_ext(input$upload$name,".csv"))
+      # write.csv(x = file_write, file = df, row.names = F)
+
       return(df)
     } else {
       # Return NULL for unsupported file types
@@ -184,6 +188,9 @@ server <- function(input, output, session) {
 
     # get file name without extension
     filename(tools::file_path_sans_ext(input$upload$name))
+
+    # store uploaded file on server as CSV
+    write.csv(data(), file = paste0(filename(), ".csv"), row.names = FALSE)
 
     # update drop down list of uploaded files
     updateSelectInput(session, "selectedData",
@@ -521,14 +528,6 @@ server <- function(input, output, session) {
     })
   })
 
-  # output$data_table <- renderTable({
-  #   data_df() %>% head()
-  # })
-
-  output$age_var <- renderText({
-    attributes(data())$id_var
-  })
-
   ## file numeric summary ----
   observeEvent(input$updatedData_ext, {
     req(input$updatedData_ext)
@@ -541,11 +540,6 @@ server <- function(input, output, session) {
         skimr::skim() %>%
         yank("numeric")
     })
-  })
-
-  # update pop_data age, value and id
-  observeEvent(input$updatedData, {
-
   })
 
   observeEvent(c(
@@ -598,7 +592,6 @@ server <- function(input, output, session) {
           strata = input$stratify,
           log = input$check_log
         )
-
 
         #### decay
       } else if (viz_type == "Decay") {
