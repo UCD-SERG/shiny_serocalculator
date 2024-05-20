@@ -143,34 +143,34 @@ server <- function(input, output, session) {
     # read data
     available_data <- read.csv(paste0(file_sans_ext, ".csv"))
 
-    # population data check
-    pop_data_check <- any(is.element(
-      names(available_data),
-      c("ageCat")
-    ))
+    # # population data check
+    # pop_data_check <- any(is.element(
+    #   names(available_data),
+    #   c("ageCat")
+    # ))
+    #
+    # if (!pop_data_check) {
+    #   # set class
+    #   class(available_data) <-
+    #     c("pop_data", class(available_data))
+    #
+    #   # check curve data
+    # } else if (!any(is.element(
+    #   el = names(available_data),
+    #   set = c("y0", "y1", "t1", "alpha")
+    # ))) {
+    #   # set class
+    #   class(available_data) <-
+    #     c("curve_data", class(available_data))
+    #
+    #   # noise data check
+    #   noise_data_check <- any(is.element(column_names(), c("y.low", "eps", "y.high")))
+    # } else if (!noise_data_check) {
+    #   class(available_data) <-
+    #     c("noise_data", class(available_data))
+    # }
 
-    if (!pop_data_check) {
-      # set class
-      class(available_data) <-
-        c("pop_data", class(available_data))
-
-      # check curve data
-    } else if (!any(is.element(
-      el = names(available_data),
-      set = c("y0", "y1", "t1", "alpha")
-    ))) {
-      # set class
-      class(available_data) <-
-        c("curve_data", class(available_data))
-
-      # noise data check
-      noise_data_check <- any(is.element(column_names(), c("y.low", "eps", "y.high")))
-    } else if (!noise_data_check) {
-      class(available_data) <-
-        c("noise_data", class(available_data))
-    }
-
-    return(available_data)
+    return(data.frame(available_data))
   }
 
   #  PROCESS INPUTS ----
@@ -605,25 +605,27 @@ server <- function(input, output, session) {
   #                     ESTIMATE SEROINCIDENCE
   # ----------------------------------------------------------------------------
 
-  output$est_incidence <- renderPrint({
+  output$est_incidence <- renderPlot({
     # create empty list
-    est_files <- my_list <- list(
-      pop_data = NA,
-      curve_data = NA,
-      noise_data
-    )
-
-
     for (i in 1:length(uploaded_files$files))
     {
       g <- get_uploaded_data(file_input = (uploaded_files$files[[i]]))
 
       if (any(is.element(g %>% names(), c("ageCat")))) {
-        est_files[["pop_data"]] <- g
+        pop_data <- data.frame(g)
+      } else if(any(is.element(g %>% names(), c("y0", "y1", "t1", "alpha")))){
+        curve_data <- data.frame(g)
+      } else if(any(is.element(g %>% names(), c("y.low", "eps", "y.high")))){
+        noise_data <- data.frame(g)
       }
-
-      est_files[[i]] <- g
     }
-    print(est_files[[1]])
+
+    est = serocalculator:::est.incidence(pop_data = subset(pop_data, Country == "Pakistan"),
+                                   curve_params = curve_data ,
+                                   noise_params = subset(noise_data, Country == "Pakistan"),
+                                   antigen_isos = c("HlyE_IgG", "HlyE_IgA"),
+                                   build_graph = T)
+
+    autoplot(est)
   })
 }

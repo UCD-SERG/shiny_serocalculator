@@ -121,9 +121,7 @@ shinyUI(navbarPage("Serocalculator",
       ),
       mainPanel(
         "",
-        tabsetPanel(
-          tabPanel("Estimate Seroincidence", tableOutput("age_var")),
-          tabPanel("Visualize", textOutput("age_var"))
+        tabsetPanel(tabPanel("Estimate Seroincidence", plotOutput("est_incidence"))
         )
       )
     )
