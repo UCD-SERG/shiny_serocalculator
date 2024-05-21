@@ -44,6 +44,7 @@ shinyUI(navbarPage("Serocalculator",
         # provide age name
         uiOutput("select_age"),
 
+        # select age
         uiOutput("age_selected"),
 
         # provide value column
@@ -87,17 +88,21 @@ shinyUI(navbarPage("Serocalculator",
       sidebarPanel(
         width = 3,
         h4("Available Data"),
+
+        # description
         helpText("This section allows the selection of uploaded data and visualize."),
+
         # select input widget for column selection
         selectInput("updatedData_ext", "Available Data to Choose", choices = NULL),
+
+        # choose type of visualization
         uiOutput("choose_visualization"),
 
         # choose stratifying column
         uiOutput("stratify"),
-        uiOutput("log"),
 
-        # checkboxInput("check_stratify", "Stratify", value = TRUE),
-        # selectInput("check_stratify", "Stratify By:", choices = NULL),
+        # choose log
+        uiOutput("log"),
       ),
       mainPanel(
         "",
@@ -116,13 +121,19 @@ shinyUI(navbarPage("Serocalculator",
       position = "left",
       sidebarPanel(
         width = 3,
-        h4("Data Upload"),
-        helpText("Use this section to upload")
+
+        # title
+        h4("Estimation Filters"),
+
+        # description
+        helpText("Provide the parameters for filtering estimation of seroincidence"),
+
+        uiOutput("stratify_by"),
       ),
+
       mainPanel(
         "",
-        tabsetPanel(tabPanel("Estimate Seroincidence", plotOutput("est_incidence"))
-        )
+        tabsetPanel(tabPanel("Estimate Seroincidence", plotOutput("est_incidence")))
       )
     )
   ),

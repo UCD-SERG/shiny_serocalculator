@@ -10,6 +10,8 @@ library(tidyr)
 library(scales)
 library(ggthemes)
 library(DT)
+library(dplyr)
+
 
 server <- function(input, output, session) {
   # INFORMATION VARIABLES ----
@@ -21,7 +23,7 @@ server <- function(input, output, session) {
   filename <- reactiveVal(NULL)
 
   ## progress ----
-  progress <- reactiveVal(0)
+  # progress <- reactiveVal(0)
 
   ## data df
   data_df <- reactiveVal(NULL)
@@ -407,6 +409,28 @@ server <- function(input, output, session) {
       }
     })
 
+    output$stratify_by <- renderUI({
+      # get uploaded data
+      df <- data()
+
+      # column names
+      cols <- df %>%
+        distinct(Country)
+
+      # dynamically create drop down list of column name
+      if (file_type == "Pop") {
+        selectInput("countries",
+          "Choose Country:",
+          cols,
+          selected = "Pakistan"
+        )
+
+      } else {
+        NULL
+      }
+
+    })
+
     output$log <- renderUI({
       # get uploaded data
       df <- data()
@@ -605,6 +629,10 @@ server <- function(input, output, session) {
   #                     ESTIMATE SEROINCIDENCE
   # ----------------------------------------------------------------------------
 
+  observeEvent(input$countries, {
+
+    req(input$countries)
+
   output$est_incidence <- renderPlot({
     # create empty list
     for (i in 1:length(uploaded_files$files))
@@ -613,19 +641,21 @@ server <- function(input, output, session) {
 
       if (any(is.element(g %>% names(), c("ageCat")))) {
         pop_data <- data.frame(g)
-      } else if(any(is.element(g %>% names(), c("y0", "y1", "t1", "alpha")))){
+      } else if (any(is.element(g %>% names(), c("y0", "y1", "t1", "alpha")))) {
         curve_data <- data.frame(g)
-      } else if(any(is.element(g %>% names(), c("y.low", "eps", "y.high")))){
+      } else if (any(is.element(g %>% names(), c("y.low", "eps", "y.high")))) {
         noise_data <- data.frame(g)
       }
     }
 
-    est = serocalculator:::est.incidence(pop_data = subset(pop_data, Country == "Pakistan"),
-                                   curve_params = curve_data ,
-                                   noise_params = subset(noise_data, Country == "Pakistan"),
-                                   antigen_isos = c("HlyE_IgG", "HlyE_IgA"),
-                                   build_graph = T)
+    est = serocalculator:::est.incidence(pop_data = subset(pop_data, Country == input$countries),
+                                         curve_params = curve_data ,
+                                         noise_params = subset(noise_data, Country == input$countries),
+                                         antigen_isos = c("HlyE_IgG", "HlyE_IgA"),
+                                         build_graph = T)
 
     autoplot(est)
   })
+  })
+
 }
