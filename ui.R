@@ -129,11 +129,15 @@ shinyUI(navbarPage("Serocalculator",
         helpText("Provide the parameters for filtering estimation of seroincidence"),
 
         uiOutput("stratify_by"),
+
+        # choose antigen
+        uiOutput("choose_antigen"),
+
       ),
 
       mainPanel(
         "",
-        tabsetPanel(tabPanel("Estimate Seroincidence", plotOutput("est_incidence")))
+        tabsetPanel(tabPanel("Estimate Seroincidence", tableOutput("est_incidence")))
       )
     )
   ),

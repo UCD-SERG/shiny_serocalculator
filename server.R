@@ -431,6 +431,30 @@ server <- function(input, output, session) {
 
     })
 
+    # choose antigen
+    output$choose_antigen <- renderUI({
+
+      # get uploaded data
+      df <- data()
+
+      # column names
+      cols <- df %>%
+        distinct(antigen_iso)
+
+      # dynamically create drop down list of column name
+      if (file_type == "Pop") {
+        selectInput("antigen",
+                    "Choose Antigen:",
+                    cols,
+                    selected = "HlyE_IgA"
+        )
+
+      } else {
+        NULL
+      }
+
+    })
+
     output$log <- renderUI({
       # get uploaded data
       df <- data()
@@ -633,7 +657,7 @@ server <- function(input, output, session) {
 
     req(input$countries)
 
-  output$est_incidence <- renderPlot({
+  output$est_incidence <- renderTable({
     # create empty list
     for (i in 1:length(uploaded_files$files))
     {
@@ -654,7 +678,7 @@ server <- function(input, output, session) {
                                          antigen_isos = c("HlyE_IgG", "HlyE_IgA"),
                                          build_graph = T)
 
-    autoplot(est)
+    summary(est)
   })
   })
 
