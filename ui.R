@@ -1,5 +1,6 @@
 library(shiny)
 library(shinythemes)
+library(shinybusy)
 library(DT)
 
 suppressWarnings(
@@ -10,7 +11,14 @@ suppressWarnings(
 )
 
 # Set up the application ui
-shinyUI(navbarPage("Serocalculator",
+shinyUI(navbarPage(title = "Serocalculator",
+
+  # Add the busy spinner
+  header = add_busy_spinner(spin = "orbit",
+                            position = "top-right",
+                            margins = c(500, 500),
+                            timeout = 100),
+
   theme = shinythemes::shinytheme("united"),
 
   # project summary
@@ -130,8 +138,10 @@ shinyUI(navbarPage("Serocalculator",
 
         uiOutput("stratify_by"),
 
+        textOutput("result")
+
         # choose antigen
-        uiOutput("choose_antigen"),
+        #uiOutput("choose_antigen"),
 
       ),
 

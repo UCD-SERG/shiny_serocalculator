@@ -22,9 +22,6 @@ server <- function(input, output, session) {
   ## file name ----
   filename <- reactiveVal(NULL)
 
-  ## progress ----
-  # progress <- reactiveVal(0)
-
   ## data df
   data_df <- reactiveVal(NULL)
 
@@ -415,38 +412,14 @@ server <- function(input, output, session) {
 
       # column names
       cols <- df %>%
-        distinct(Country)
+        names()
 
       # dynamically create drop down list of column name
       if (file_type == "Pop") {
-        selectInput("countries",
-          "Choose Country:",
+        selectInput("stratify_by",
+          "Stratify By:",
           cols,
-          selected = "Pakistan"
-        )
-
-      } else {
-        NULL
-      }
-
-    })
-
-    # choose antigen
-    output$choose_antigen <- renderUI({
-
-      # get uploaded data
-      df <- data()
-
-      # column names
-      cols <- df %>%
-        distinct(antigen_iso)
-
-      # dynamically create drop down list of column name
-      if (file_type == "Pop") {
-        selectInput("antigen",
-                    "Choose Antigen:",
-                    cols,
-                    selected = "HlyE_IgA"
+          selected = "Country"
         )
 
       } else {
@@ -649,13 +622,31 @@ server <- function(input, output, session) {
     })
   })
 
+  observeEvent(input$stratify_by, {
+    # Show busy spinner by simulating a long computation
+    Sys.sleep(3)
+    output$result <- renderText("Calculation Complete")
+  })
+
+  #------------------------------------------------------------------------------
+  #                     BUSY SPINNER
+  #------------------------------------------------------------------------------
+
+  observeEvent(input$stratify_by, {
+    # Simulate a long-running task
+    Sys.sleep(3)
+
+    # Update the output
+    output$result <- renderText("Task completed")
+  })
+
   # -----------------------------------------------------------------------------
   #                     ESTIMATE SEROINCIDENCE
   # ----------------------------------------------------------------------------
 
-  observeEvent(input$countries, {
+  observeEvent(input$stratify_by, {
 
-    req(input$countries)
+    req(input$stratify_by)
 
   output$est_incidence <- renderTable({
     # create empty list
@@ -672,11 +663,11 @@ server <- function(input, output, session) {
       }
     }
 
-    est = serocalculator:::est.incidence(pop_data = subset(pop_data, Country == input$countries),
-                                         curve_params = curve_data ,
-                                         noise_params = subset(noise_data, Country == input$countries),
-                                         antigen_isos = c("HlyE_IgG", "HlyE_IgA"),
-                                         build_graph = T)
+    est = serocalculator::est.incidence.by(pop_data = pop_data,
+                                           curve_params = curve_data,
+                                           noise_params = noise_data,
+                                           strata = input$stratify_by)
+
 
     summary(est)
   })
