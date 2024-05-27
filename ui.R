@@ -86,7 +86,7 @@ shinyUI(navbarPage(title = "Serocalculator",
       ),
       mainPanel(
         "",
-        tabsetPanel(tabPanel("Data Requirement",htmlOutput("data_requirement")),
+        tabsetPanel(tabPanel("Data Requirements",htmlOutput("data_requirement")),
                     tabPanel("File Preview",
                              DTOutput("head"),
                              DTOutput("other_head")), )

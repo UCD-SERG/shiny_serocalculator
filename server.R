@@ -633,7 +633,7 @@ server <- function(input, output, session) {
   output$output_html <- renderUI({
     HTML("<p>The <strong>serocalculator </strong>R package provides a rapid and computationally simple method for calculating seroconversion rates,
          as originally published in <cite>Simonsen, 2009</cite> and <cite>Teunis, 2012</cite>, and further developed in subsequent publications by
-         <cite>de_Graaf, 2014</cite>, <cite>Teunis_2016</cite>, and <cite>@Teunis_2020.</cite> </p>
+         <cite>de_Graaf, 2014</cite>, <cite>Teunis_2016</cite>, and <cite>Teunis, 2020.</cite> </p>
 
          <p>In short, longitudinal seroresponses from confirmed cases with a known symptom onset date are
          assumed to represent the time course of human serum antibodies against a specific pathogen. Therefore, by using these longitudinal
@@ -664,12 +664,24 @@ server <- function(input, output, session) {
     HTML("<p>Required datasets:
 
         <ul>
-          <li> 1.) Population (Pop) Data
+          <li> <strong>Population (Pop) Data </strong>
+                  <p>A dataset with cross-sectional serology data per antibody and age, and additional columns</p>
+          <li> <strong>Noise Data</strong>
+                  <p>A dataset containing the following variables, specifying noise parameters for each antigen isotype:
                   <ul>
-                    <li>Cross-sectional dataset with age, quantitative antibody </li>
-                  </ul>
-          <li> 2). Noise parameters
-          <li> 3). Longitudinal curve parameters
+                    <li>antigen_iso: antigen isotype whose noise parameters are being specified on each row</li>
+                    <li>nu: biological noise</li>
+                    <li>eps: measurement noise</li>
+                  </ul></p>
+          <li><strong>Curve Data</strong></li>
+          <p>A data setcontaining MCMC samples of antibody decay curve parameters from the Bayesian posterior distribution of a longitudinal decay curve model</p>
+            <ul>
+              <li>y0: baseline antibody level</li>
+              <li>y1: antibody peak level (ELISA units)</li>
+              <li>t1: duration of infection</li>
+              <li>alpha: antibody decay rate (1/days for the current longitudinal parameter sets)</li>
+              <li>r: shape factor of antibody decay</li>
+            </ul>
         </ul>
         </p>")
   })
