@@ -421,11 +421,9 @@ server <- function(input, output, session) {
           cols,
           selected = "Country"
         )
-
       } else {
         NULL
       }
-
     })
 
     output$log <- renderUI({
@@ -628,6 +626,54 @@ server <- function(input, output, session) {
     output$result <- renderText("Calculation Complete")
   })
 
+  #-----------------------------------------------------------------------------
+  #                     HTML OUTOUT
+  #-----------------------------------------------------------------------------
+
+  output$output_html <- renderUI({
+    HTML("<p>The <strong>serocalculator </strong>R package provides a rapid and computationally simple method for calculating seroconversion rates,
+         as originally published in <cite>Simonsen, 2009</cite> and <cite>Teunis, 2012</cite>, and further developed in subsequent publications by
+         <cite>de_Graaf, 2014</cite>, <cite>Teunis_2016</cite>, and <cite>@Teunis_2020.</cite> </p>
+
+         <p>In short, longitudinal seroresponses from confirmed cases with a known symptom onset date are
+         assumed to represent the time course of human serum antibodies against a specific pathogen. Therefore, by using these longitudinal
+         antibody dynamics with any cross–sectional sample of the same antibodies in a human population, an incidence estimate can be calculated.</p>
+
+         <p>Further details on the methodology can be found on the  <a href=https://ucd-serg.github.io/serocalculator/articles/serocalculator.html>main package website.  </a></p>
+
+         <p>This app provides a user-friendly interface to use the serocalculator methodology without the need for specialized coding knowledge.
+         Users should follow the steps to: </p>
+
+
+         <ul>
+            <li> 1). Import the required datasets</li>
+            <li> 2). Inspect their data,</li>
+            <li> 3). Estimate seroincidence</li>
+            <li> 4). Prepare a report (optional)</li>
+        </ul> </p>
+         <p>Required datasets:
+         <ul>
+            <li> 1). Cross-sectional dataset with age, quantitative antibody  </li>
+            <li> 2). Noise parameters </li>
+            <li> 3). Longitudinal curve parameters </li>
+        </ul></p>
+         <p>If you need assistance or encounter a clear bug, please file an issue with a minimal reproducible example on  <a href=https://github.com/UCD-SERG/serocalculator/issues> GitHub </p>")
+  })
+
+  output$data_requirement <- renderText({
+    HTML("<p>Required datasets:
+
+        <ul>
+          <li> 1.) Population (Pop) Data
+                  <ul>
+                    <li>Cross-sectional dataset with age, quantitative antibody </li>
+                  </ul>
+          <li> 2). Noise parameters
+          <li> 3). Longitudinal curve parameters
+        </ul>
+        </p>")
+  })
+
   #------------------------------------------------------------------------------
   #                     BUSY SPINNER
   #------------------------------------------------------------------------------
@@ -645,32 +691,32 @@ server <- function(input, output, session) {
   # ----------------------------------------------------------------------------
 
   observeEvent(input$stratify_by, {
-
     req(input$stratify_by)
 
-  output$est_incidence <- renderTable({
-    # create empty list
-    for (i in 1:length(uploaded_files$files))
-    {
-      g <- get_uploaded_data(file_input = (uploaded_files$files[[i]]))
+    output$est_incidence <- renderTable({
+      # create empty list
+      for (i in 1:length(uploaded_files$files))
+      {
+        g <- get_uploaded_data(file_input = (uploaded_files$files[[i]]))
 
-      if (any(is.element(g %>% names(), c("ageCat")))) {
-        pop_data <- data.frame(g)
-      } else if (any(is.element(g %>% names(), c("y0", "y1", "t1", "alpha")))) {
-        curve_data <- data.frame(g)
-      } else if (any(is.element(g %>% names(), c("y.low", "eps", "y.high")))) {
-        noise_data <- data.frame(g)
+        if (any(is.element(g %>% names(), c("ageCat")))) {
+          pop_data <- data.frame(g)
+        } else if (any(is.element(g %>% names(), c("y0", "y1", "t1", "alpha")))) {
+          curve_data <- data.frame(g)
+        } else if (any(is.element(g %>% names(), c("y.low", "eps", "y.high")))) {
+          noise_data <- data.frame(g)
+        }
       }
-    }
 
-    est = serocalculator::est.incidence.by(pop_data = pop_data,
-                                           curve_params = curve_data,
-                                           noise_params = noise_data,
-                                           strata = input$stratify_by)
+      est <- serocalculator::est.incidence.by(
+        pop_data = pop_data,
+        curve_params = curve_data,
+        noise_params = noise_data,
+        strata = input$stratify_by
+      )
 
 
-    summary(est)
+      summary(est)
+    })
   })
-  })
-
 }

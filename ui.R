@@ -14,9 +14,9 @@ suppressWarnings(
 shinyUI(navbarPage(title = "Serocalculator",
 
   # Add the busy spinner
-  header = add_busy_spinner(spin = "orbit",
+  header = add_busy_spinner(spin = "atom",
                             position = "top-right",
-                            margins = c(500, 500),
+                            margins = c(200, 800),
                             timeout = 100),
 
   theme = shinythemes::shinytheme("united"),
@@ -25,9 +25,12 @@ shinyUI(navbarPage(title = "Serocalculator",
   tabPanel(
     "Summary",
     h2("Serocalculator"),
-    tags$a("Project Website", href = "https://ucd-serg.github.io/serocalculator/"),
-    helpText("Antibody levels measured in a cross–sectional population sample can be translated into an estimate of the frequency with which seroconversions (infections) occur in the sampled population. In other words, the presence of many high antibody titers indicates that many individuals likely experienced infection recently and the burden of disease is high in the population, while low titers indicate a low frequency of infections in the sampled population and therefore a lower burden of disease."),
-    helpText("The serocalculator package was designed to use the longitudinal response characteristics using a set of modeled parameters characterizing the longitudinal response of the selected serum antibodies.")
+
+    htmlOutput("output_html"),
+
+    #tags$a("Project Website", href = "https://ucd-serg.github.io/serocalculator/"),
+    #helpText("Antibody levels measured in a cross–sectional population sample can be translated into an estimate of the frequency with which seroconversions (infections) occur in the sampled population. In other words, the presence of many high antibody titers indicates that many individuals likely experienced infection recently and the burden of disease is high in the population, while low titers indicate a low frequency of infections in the sampled population and therefore a lower burden of disease."),
+    #helpText("The serocalculator package was designed to use the longitudinal response characteristics using a set of modeled parameters characterizing the longitudinal response of the selected serum antibodies.")
   ),
 
   # define the tabs to be used in the app ----------------------------------------
@@ -83,7 +86,10 @@ shinyUI(navbarPage(title = "Serocalculator",
       ),
       mainPanel(
         "",
-        tabsetPanel(tabPanel("File Preview", DTOutput("head"), DTOutput("other_head")), )
+        tabsetPanel(tabPanel("Data Requirement",htmlOutput("data_requirement")),
+                    tabPanel("File Preview",
+                             DTOutput("head"),
+                             DTOutput("other_head")), )
       )
     )
   ),

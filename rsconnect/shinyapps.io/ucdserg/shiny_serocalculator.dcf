@@ -5,7 +5,7 @@ account: ucdserg
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 11815992
-bundleId: 8650788
+bundleId:
 url: https://ucdserg.shinyapps.io/shiny_serocalculator/
 version: 1
 asMultiple: FALSE
