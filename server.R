@@ -410,19 +410,23 @@ server <- function(input, output, session) {
       # get uploaded data
       df <- data()
 
+      # check type of uploaded data
+      # file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
+      file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
+      g <- get_uploaded_data(input$updatedData_ext)
+
       # column names
-      cols <- df %>%
+      cols <- g %>%
         names()
 
-      # dynamically create drop down list of column name
-      if (file_type == "Pop") {
+      if (any(is.element(cols, c("ageCat")))) {
         selectInput("stratify_by",
           "Stratify By:",
           cols,
           selected = "Country"
         )
-      } else {
-        NULL
       }
     })
 

@@ -142,13 +142,10 @@ shinyUI(navbarPage(title = "Serocalculator",
         # description
         helpText("Provide the parameters for filtering estimation of seroincidence"),
 
+        # choose stratification
         uiOutput("stratify_by"),
 
         textOutput("result")
-
-        # choose antigen
-        #uiOutput("choose_antigen"),
-
       ),
 
       mainPanel(
