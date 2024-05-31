@@ -407,6 +407,7 @@ server <- function(input, output, session) {
     })
 
     output$stratify_by <- renderUI({
+
       # get uploaded data
       df <- data()
 
@@ -419,16 +420,91 @@ server <- function(input, output, session) {
 
       # column names
       cols <- g %>%
+        select(-Country) %>%
         names()
+
+      # countries
+      countries <- g %>%
+        select(Country) %>%
+        unique()
 
       if (any(is.element(cols, c("ageCat")))) {
         selectInput("stratify_by",
-          "Stratify By:",
-          cols,
-          selected = "Country"
-        )
+                    "Stratify By:",
+                    cols,
+                    selected = "catchment")
+
       }
+
+
     })
+
+      output$country <- renderUI({
+        # get uploaded data
+        df <- data()
+
+        # check type of uploaded data
+        # file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
+        file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
+        g <- get_uploaded_data(input$updatedData_ext)
+
+        # column names
+        cols <- g %>%
+          select(-Country) %>%
+          names()
+
+        # countries
+        countries <- g %>%
+          select(Country) %>%
+          unique()
+
+        if (any(is.element(cols, c("ageCat")))) {
+          pickerInput(
+            inputId = "country",
+            label = "Select Country:",
+            choices = countries,
+            selected = "Pakistan",
+            multiple = FALSE,
+            options = list(
+              `live-search` = TRUE,
+              `actions-box` = TRUE
+            )
+          )
+        }
+
+      })
+
+      # antigen
+      output$antigen <- renderUI({
+        # get uploaded data
+        df <- data()
+
+        # check type of uploaded data
+        # file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
+        file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
+        g <- get_uploaded_data(input$updatedData_ext)
+
+        # antigen
+        antigen_isos = g %>%
+          pull("antigen_iso") %>%
+          unique()
+
+        # column names
+        cols <- g %>%
+          names()
+
+        if (any(is.element(cols, c("ageCat")))) {
+          selectInput("antigen_by",
+                      "Choose Antigen:",
+                      antigen_isos,
+                      selected = "HlyE_IgG"
+          )
+        }
+      })
 
     output$log <- renderUI({
       # get uploaded data
@@ -631,7 +707,7 @@ server <- function(input, output, session) {
   })
 
   #-----------------------------------------------------------------------------
-  #                     HTML OUTOUT
+  #                     SEROCALCULATOR SUMMARY
   #-----------------------------------------------------------------------------
 
   output$output_html <- renderUI({
@@ -650,16 +726,16 @@ server <- function(input, output, session) {
 
 
          <ul>
-            <li> 1). Import the required datasets</li>
-            <li> 2). Inspect their data,</li>
-            <li> 3). Estimate seroincidence</li>
-            <li> 4). Prepare a report (optional)</li>
+            <li> Import the required datasets</li>
+            <li> Inspect their data,</li>
+            <li> Estimate seroincidence</li>
+            <li> Prepare a report (optional)</li>
         </ul> </p>
          <p>Required datasets:
          <ul>
-            <li> 1). Cross-sectional dataset with age, quantitative antibody  </li>
-            <li> 2). Noise parameters </li>
-            <li> 3). Longitudinal curve parameters </li>
+            <li> Cross-sectional dataset with age, quantitative antibody  </li>
+            <li> Noise parameters </li>
+            <li> Longitudinal curve parameters </li>
         </ul></p>
          <p>If you need assistance or encounter a clear bug, please file an issue with a minimal reproducible example on  <a href=https://github.com/UCD-SERG/serocalculator/issues> GitHub </p>")
   })
@@ -725,12 +801,11 @@ server <- function(input, output, session) {
       }
 
       est <- serocalculator::est.incidence.by(
-        pop_data = pop_data,
+        pop_data = pop_data %>% filter(Country == input$country),
         curve_params = curve_data,
-        noise_params = noise_data,
+        noise_params = noise_data  %>% filter(Country == input$country) ,
         strata = input$stratify_by
       )
-
 
       summary(est)
     })
