@@ -712,14 +712,15 @@ server <- function(input, output, session) {
 
   output$output_html <- renderUI({
     HTML("<p>The <strong>serocalculator </strong>R package provides a rapid and computationally simple method for calculating seroconversion rates,
-         as originally published in <cite>Simonsen, 2009</cite> and <cite>Teunis, 2012</cite>, and further developed in subsequent publications by
-         <cite>de_Graaf, 2014</cite>, <cite>Teunis_2016</cite>, and <cite>Teunis, 2020.</cite> </p>
+         as originally published in <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.3592> Simonsen (2009) </a></cite> and <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2012) </a></cite>,
+         and further developed in subsequent publications by <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436514000371?via%3Dihub>de_Graaf (2014)</a></cite>,
+         <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436516300135?via%3Dihub>Teunis (2016)</a></cite>, and <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a>.</cite> </p>
 
          <p>In short, longitudinal seroresponses from confirmed cases with a known symptom onset date are
          assumed to represent the time course of human serum antibodies against a specific pathogen. Therefore, by using these longitudinal
          antibody dynamics with any cross–sectional sample of the same antibodies in a human population, an incidence estimate can be calculated.</p>
 
-         <p>Further details on the methodology can be found on the  <a href=https://ucd-serg.github.io/serocalculator/articles/serocalculator.html>main package website.  </a></p>
+         <p>Further details on the methodology can be found on the  <a href=https://ucd-serg.github.io/serocalculator/articles/serocalculator.html> main package website.  </a></p>
 
          <p>This app provides a user-friendly interface to use the serocalculator methodology without the need for specialized coding knowledge.
          Users should follow the steps to: </p>
@@ -727,13 +728,13 @@ server <- function(input, output, session) {
 
          <ul>
             <li> Import the required datasets</li>
-            <li> Inspect their data,</li>
+            <li> Inspect their data</li>
             <li> Estimate seroincidence</li>
             <li> Prepare a report (optional)</li>
         </ul> </p>
          <p>Required datasets:
          <ul>
-            <li> Cross-sectional dataset with age, quantitative antibody  </li>
+            <li> Cross-sectional population-based dataset with age and quantitative antibody results</li>
             <li> Noise parameters </li>
             <li> Longitudinal curve parameters </li>
         </ul></p>
@@ -744,17 +745,18 @@ server <- function(input, output, session) {
     HTML("<p>Required datasets:
 
         <ul>
-          <li> <strong>Population (Pop) Data </strong>
-                  <p>A dataset with cross-sectional serology data per antibody and age, and additional columns</p>
+          <li> <strong>Cross-sectional Population Data (Pop Data)</strong>
+                  <p>A dataset with one row per sample and columns for antigen isotype, quantitative antibody results, and age in years. Additional columns and variables can be included for stratification.</p>
           <li> <strong>Noise Data</strong>
-                  <p>A dataset containing the following variables, specifying noise parameters for each antigen isotype:
+                  <p>A dataset containing the following variables, specifying noise parameters for each antigen isotype.
+                  Note that variable names <u>must</u> follow these guidelines. For more information see <a hfref=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a>.
                   <ul>
                     <li>antigen_iso: antigen isotype whose noise parameters are being specified on each row</li>
                     <li>nu: biological noise</li>
                     <li>eps: measurement noise</li>
                   </ul></p>
-          <li><strong>Curve Data</strong></li>
-          <p>A data setcontaining MCMC samples of antibody decay curve parameters from the Bayesian posterior distribution of a longitudinal decay curve model</p>
+          <li><strong>Antibody Decay Curve Data</strong></li>
+          <p>A data set containing antibody decay curve parameters fit using a Bayesian hierarchical framework obtaining predictive posterior samples using Markov chain Monte Carlo sampling. Note that variable names <u>must</u> follow these guidelines. For more information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a></p>
             <ul>
               <li>y0: baseline antibody level</li>
               <li>y1: antibody peak level (ELISA units)</li>
