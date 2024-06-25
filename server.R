@@ -19,6 +19,16 @@ server <- function(input, output, session) {
   ## uploaded files ----
   uploaded_files <- reactiveValues(files = NULL)
 
+  ## uploaded noise data (averages)
+  noise_values <- reactiveValues(new_val = data.frame(
+    antigen = character(),
+    y_low = numeric(),
+    y_high = numeric(),
+    eps = numeric(),
+    nu = numeric(),
+    stringsAsFactors = FALSE
+  ))
+
   ## file name ----
   filename <- reactiveVal(NULL)
 
@@ -79,10 +89,6 @@ server <- function(input, output, session) {
         attr(df, "id_var") <- input$id_select
       }
 
-      # write
-      # file_write = paste0(tools::file_path_sans_ext(input$upload$name,".csv"))
-      # write.csv(x = file_write, file = df, row.names = F)
-
       return(df)
     } else {
       # Return NULL for unsupported file types
@@ -142,37 +148,28 @@ server <- function(input, output, session) {
     # read data
     available_data <- read.csv(paste0(file_sans_ext, ".csv"))
 
-    # # population data check
-    # pop_data_check <- any(is.element(
-    #   names(available_data),
-    #   c("ageCat")
-    # ))
-    #
-    # if (!pop_data_check) {
-    #   # set class
-    #   class(available_data) <-
-    #     c("pop_data", class(available_data))
-    #
-    #   # check curve data
-    # } else if (!any(is.element(
-    #   el = names(available_data),
-    #   set = c("y0", "y1", "t1", "alpha")
-    # ))) {
-    #   # set class
-    #   class(available_data) <-
-    #     c("curve_data", class(available_data))
-    #
-    #   # noise data check
-    #   noise_data_check <- any(is.element(column_names(), c("y.low", "eps", "y.high")))
-    # } else if (!noise_data_check) {
-    #   class(available_data) <-
-    #     c("noise_data", class(available_data))
-    # }
-
     return(data.frame(available_data))
   }
 
   #  PROCESS INPUTS ----
+
+  observeEvent(input$file_name, {
+    req(input$file_name)
+
+    output$get_files <- renderUI({
+      if (input$file_name == "Pop Data" | input$file_name == "Curve Data") {
+        # upload file
+        fileInput(
+          label = "Choose File from Computer (.csv, .xsls, .rda, .rds)",
+          "upload",
+          NULL,
+          buttonLabel = "Upload...",
+          multiple = TRUE,
+          accept = c(".csv", ".xlsx", ".rda", "rds")
+        )
+      }
+    })
+  })
 
   ## update list of uploaded files ----
   observeEvent(input$upload, {
@@ -401,18 +398,12 @@ server <- function(input, output, session) {
           cols,
           selected = "Country"
         )
-      } else if (file_type == "Curve") {
-        NULL
       }
     })
 
     output$stratify_by <- renderUI({
-
       # get uploaded data
       df <- data()
-
-      # check type of uploaded data
-      # file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
 
       file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
 
@@ -420,7 +411,6 @@ server <- function(input, output, session) {
 
       # column names
       cols <- g %>%
-        select(-Country) %>%
         names()
 
       # countries
@@ -430,81 +420,12 @@ server <- function(input, output, session) {
 
       if (any(is.element(cols, c("ageCat")))) {
         selectInput("stratify_by",
-                    "Stratify By:",
-                    cols,
-                    selected = "catchment")
-
+          "Stratify By:",
+          cols,
+          selected = "catchment"
+        )
       }
-
-
     })
-
-      output$country <- renderUI({
-        # get uploaded data
-        df <- data()
-
-        # check type of uploaded data
-        # file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
-
-        file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
-
-        g <- get_uploaded_data(input$updatedData_ext)
-
-        # column names
-        cols <- g %>%
-          select(-Country) %>%
-          names()
-
-        # countries
-        countries <- g %>%
-          select(Country) %>%
-          unique()
-
-        if (any(is.element(cols, c("ageCat")))) {
-          pickerInput(
-            inputId = "country",
-            label = "Select Country:",
-            choices = countries,
-            selected = "Pakistan",
-            multiple = FALSE,
-            options = list(
-              `live-search` = TRUE,
-              `actions-box` = TRUE
-            )
-          )
-        }
-
-      })
-
-      # antigen
-      output$antigen <- renderUI({
-        # get uploaded data
-        df <- data()
-
-        # check type of uploaded data
-        # file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
-
-        file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
-
-        g <- get_uploaded_data(input$updatedData_ext)
-
-        # antigen
-        antigen_isos = g %>%
-          pull("antigen_iso") %>%
-          unique()
-
-        # column names
-        cols <- g %>%
-          names()
-
-        if (any(is.element(cols, c("ageCat")))) {
-          selectInput("antigen_by",
-                      "Choose Antigen:",
-                      antigen_isos,
-                      selected = "HlyE_IgG"
-          )
-        }
-      })
 
     output$log <- renderUI({
       # get uploaded data
@@ -516,8 +437,69 @@ server <- function(input, output, session) {
       # dynamically create drop down list of column name
       if (file_type == "Pop") {
         checkboxInput("check_log", "Log", value = TRUE)
-      } else if (file_type == "Curve") {
-        NULL
+      }
+    })
+
+    ## select age column on drop down
+    output$select_age <- renderUI({
+      if (input$file_name == "Pop Data") {
+        # get uploaded data
+        df <- data()
+
+        # column names
+        cols <- names(df)
+
+        # dynamically create drop down list of column names
+        selectInput(
+          "age_select",
+          "Select Age Column:",
+          cols,
+          selected = "age"
+        )
+      }
+    })
+
+    ## select value column on drop down
+    observeEvent(input$file_name, {
+      req(input$file_name)
+
+      output$select_value <- renderUI({
+        # get data
+        df <- data()
+
+        cols <- NULL
+
+        if (input$file_name == "Pop Data" && "pop_data" %in% class(df)) {
+          cols <- names(df)
+
+          # dynamically create drop down list of column names
+          selectInput(
+            "value_select",
+            "Select Value Column:",
+            cols,
+            selected = "value"
+          )
+        }
+
+      })
+    })
+
+    ## select id column on drop down
+    output$select_id <- renderUI({
+      if (input$file_name == "Pop Data") {
+        # get data
+        df <- data()
+
+        # column names
+        cols <- names(df)
+
+        # dynamically create drop down list of column names
+        selectInput(
+          "id_select",
+          "Select Index Column:",
+          cols,
+          selected = "index_id"
+        )
       }
     })
 
@@ -529,70 +511,6 @@ server <- function(input, output, session) {
         if (!check_age) {
           print("Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH POPULATION DATA.")
         } else {
-          ## select age column on drop down
-          output$select_age <- renderUI({
-            if (input$file_name == "Pop Data") {
-              # get uploaded data
-              df <- data()
-
-              # column names
-              cols <- names(df)
-
-              # dynamically create drop down list of column names
-              selectInput(
-                "age_select",
-                "Select Age Column:",
-                cols,
-                selected = "age"
-              )
-            } else {
-              NULL
-            }
-          })
-
-
-          ## select value column on drop down
-          output$select_value <- renderUI({
-            if (input$file_name == "Pop Data") {
-              # get data
-              df <- data()
-
-              # column names
-              cols <- names(df)
-
-              # dynamically create drop down list of column names
-              selectInput(
-                "value_select",
-                "Select Value Column:",
-                cols,
-                selected = "value"
-              )
-            } else {
-              NULL
-            }
-          })
-
-          ## select id column on drop down
-          output$select_id <- renderUI({
-            if (input$file_name == "Pop Data") {
-              # get data
-              df <- data()
-
-              # column names
-              cols <- names(df)
-
-              # dynamically create drop down list of column names
-              selectInput(
-                "id_select",
-                "Select Index Column:",
-                cols,
-                selected = "index_id"
-              )
-            } else {
-              NULL
-            }
-          })
-
           # display data
           datatable(
             data = data(),
@@ -707,13 +625,132 @@ server <- function(input, output, session) {
   })
 
   #-----------------------------------------------------------------------------
+  #                     NOISE
+  #-----------------------------------------------------------------------------
+
+  observeEvent(input$file_name, {
+    req(input$file_name)
+
+    if (input$file_name == "Noise Data") {
+      output$average <- renderUI({
+        radioButtons("noise_choice", "Do you want to use average values:",
+          choices = c(
+            "Yes" = "yes",
+            "No" = "no"
+          ),
+          selected = "no"
+        )
+      })
+    } else if (input$file_name == "Curve Data") {
+      output$average <- renderUI({
+        NULL
+      })
+    } else if (input$file_name == "Pop Data") {
+      output$average <- renderUI({
+        NULL
+      })
+    }
+  })
+
+  observeEvent(c(input$noise_choice, input$file_name), {
+    req(input$noise_choice)
+    req(input$file_name)
+
+    output$y_low <- renderUI({
+      if (input$file_name == "Noise Data") {
+        if (input$noise_choice == "yes") {
+          numericInput("y_low", "y low:", value = 0.479)
+        } else if (input$noise_choice == "no") {
+          fileInput(
+            label = "Choose File from Computer (.csv, .xsls, .rda, .rds)",
+            "upload",
+            NULL,
+            buttonLabel = "Upload...",
+            multiple = TRUE,
+            accept = c(".csv", ".xlsx", ".rda", "rds")
+          )
+        }
+      }
+    })
+  })
+
+  observeEvent(c(input$noise_choice, input$file_name), {
+    req(input$noise_choice)
+    req(input$file_name)
+
+    output$y_high <- renderUI({
+      if (input$file_name == "Noise Data") {
+        if (input$noise_choice == "yes") {
+          numericInput("y_high", "y high:", value = 5000000)
+        }
+      }
+    })
+  })
+
+  # eps
+  observeEvent(c(input$noise_choice, input$file_name), {
+    req(input$noise_choice)
+    req(input$file_name)
+
+    output$eps <- renderUI({
+      if (input$file_name == "Noise Data") {
+        if (input$noise_choice == "yes") {
+          numericInput("eps", "eps:", value = 0.259)
+        }
+      }
+    })
+  })
+
+  # nu
+  observeEvent(c(input$noise_choice, input$file_name), {
+    req(input$noise_choice)
+    req(input$file_name)
+
+    output$nu <- renderUI({
+      if (input$file_name == "Noise Data") {
+        if (input$noise_choice == "yes") {
+          numericInput("nu", "nu:", value = 2.60)
+        }
+      }
+    })
+  })
+
+  # antigen
+  observeEvent(c(input$noise_choice, input$file_name), {
+    req(input$noise_choice)
+    req(input$file_name)
+
+    output$antigen <- renderUI({
+      if (input$file_name == "Noise Data") {
+        if (input$noise_choice == "yes") {
+          textInput("antigen", "antigen:", value = "HlyE_IgA")
+        }
+      }
+    })
+  })
+
+  # action button
+  observeEvent(c(input$noise_choice, input$file_name), {
+    req(input$noise_choice)
+    req(input$file_name)
+
+    output$provide_averages <- renderUI({
+      if (input$file_name == "Noise Data") {
+        if (input$noise_choice == "yes") {
+          actionButton("set_average", "Set Averages")
+        }
+      }
+    })
+  })
+
+  #-----------------------------------------------------------------------------
   #                     SEROCALCULATOR SUMMARY
   #-----------------------------------------------------------------------------
 
   output$output_html <- renderUI({
     HTML("<p>The <strong>serocalculator </strong>R package provides a rapid and computationally simple method for calculating seroconversion rates,
          as originally published in <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.3592> Simonsen (2009) </a></cite> and <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2012) </a></cite>,
-         and further developed in subsequent publications by <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436514000371?via%3Dihub>de_Graaf (2014)</a></cite>,
+         and further developed in subsequent publications by <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436514000371?via%3Dihub>de Graaf (2014)</a></cite>,
          <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436516300135?via%3Dihub>Teunis (2016)</a></cite>, and <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a>.</cite> </p>
 
          <p>In short, longitudinal seroresponses from confirmed cases with a known symptom onset date are
@@ -753,6 +790,8 @@ server <- function(input, output, session) {
                   <ul>
                     <li>antigen_iso: antigen isotype whose noise parameters are being specified on each row</li>
                     <li>nu: biological noise</li>
+                    <li>y.low: Lower limit of detection of the antibody assay</li>
+                    <li>y.high: Upper limit of detection of the antibody assay</li>
                     <li>eps: measurement noise</li>
                   </ul></p>
           <li><strong>Antibody Decay Curve Data</strong></li>
@@ -765,7 +804,8 @@ server <- function(input, output, session) {
               <li>r: shape factor of antibody decay</li>
             </ul>
         </ul>
-        </p>")
+        </p>
+         <p>File limit: <strong>500MB</strong></p>")
   })
 
   #------------------------------------------------------------------------------
@@ -783,6 +823,37 @@ server <- function(input, output, session) {
   # -----------------------------------------------------------------------------
   #                     ESTIMATE SEROINCIDENCE
   # ----------------------------------------------------------------------------
+
+  # defaults noise values
+  noise_data_params <- serocalculator::load_noise_params("https://osf.io/download/h64cw")
+
+  # noise value from uploaded file
+  observeEvent(c(input$file_name, input$upload), {
+    req(input$file_name)
+    req(input$upload)
+
+    if (input$file_name == "Noise Data") {
+      noise_data_params <- data()
+    }
+  })
+
+  # noise value from UI
+  observeEvent(input$set_average, {
+
+    new_row <- data.frame(
+      antigen = input$antigen,
+      y_low = input$y_low,
+      y_high = input$y_high,
+      eps = input$eps,
+      nu = input$nu,
+      stringsAsFactors = FALSE
+    )
+
+  #noise_values$new_val <- rbind(noise_values$new_val, new_row)
+
+  noise_data_params <- noise_values$new_val
+
+  })
 
   observeEvent(input$stratify_by, {
     req(input$stratify_by)
@@ -803,9 +874,9 @@ server <- function(input, output, session) {
       }
 
       est <- serocalculator::est.incidence.by(
-        pop_data = pop_data %>% filter(Country == input$country),
+        pop_data = pop_data,
         curve_params = curve_data,
-        noise_params = noise_data  %>% filter(Country == input$country) ,
+        noise_params = noise_data_params,
         strata = input$stratify_by
       )
 

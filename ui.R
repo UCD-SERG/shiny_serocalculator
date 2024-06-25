@@ -10,6 +10,9 @@ suppressWarnings(
   )
 )
 
+# Set the maximum request size to 500MB
+options(shiny.maxRequestSize = 500 * 1024^2)
+
 # Set up the application ui
 shinyUI(navbarPage(
   title = "Serocalculator",
@@ -50,8 +53,16 @@ shinyUI(navbarPage(
         selectInput("file_name",
           "Choose Data:",
           choices = c("Pop Data", "Curve Data", "Noise Data"),
-          selected = "Pop"
+          selected = "Pop Data"
         ),
+
+        uiOutput("average"),
+        uiOutput("antigen"),
+        uiOutput("y_low"),
+        uiOutput("y_high"),
+        uiOutput("eps"),
+        uiOutput("nu"),
+        uiOutput("provide_averages"),
 
         # provide age name
         uiOutput("select_age"),
@@ -65,13 +76,7 @@ shinyUI(navbarPage(
         # provide index column name
         uiOutput("select_id"),
 
-        # upload file
-        fileInput(
-          label = "Choose File from Computer (.csv, .xsls, .rda, .rds)", "upload", NULL,
-          buttonLabel = "Upload...",
-          multiple = TRUE,
-          accept = c(".csv", ".xlsx", ".rda", "rds")
-        ),
+        uiOutput("get_files"),
 
         # provide OSF URL
         textInput("url_input", "Provide OSF URL:", value = "https://osf.io/download//n6cp3/"),
@@ -83,7 +88,9 @@ shinyUI(navbarPage(
         uiOutput("progress_bar"),
 
         # select input widget for column selection
-        selectInput("updatedData", "Uploaded Data", choices = NULL),
+        selectInput("updatedData",
+                    "Uploaded Data",
+                    choices = NULL),
       ),
       mainPanel(
         "",
@@ -147,11 +154,10 @@ shinyUI(navbarPage(
         # description
         helpText("Provide the parameters for filtering estimation of seroincidence"),
 
-        uiOutput("country"),
-
-        # choose antigen
+        # choose stratification
         uiOutput("stratify_by"),
 
+        # display computation results
         textOutput("result")
       ),
       mainPanel(
