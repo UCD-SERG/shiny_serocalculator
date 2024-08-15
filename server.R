@@ -422,7 +422,8 @@ server <- function(input, output, session) {
         selectInput("stratify_by",
           "Stratify By:",
           cols,
-          selected = "catchment"
+          selected = c("catchment","cluster"),
+          multiple = TRUE
         )
       }
     })
