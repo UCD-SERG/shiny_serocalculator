@@ -1,6 +1,7 @@
 library(shiny)
 library(shinythemes)
 library(shinybusy)
+library(shinyjs)
 library(DT)
 
 suppressWarnings(
@@ -17,6 +18,8 @@ options(shiny.maxRequestSize = 500 * 1024^2)
 shinyUI(navbarPage(
   title = "Serocalculator",
 
+  useShinyjs(),  # Initialize shinyjs
+
   # Add the busy spinner
   header = add_busy_spinner(
     spin = "atom",
@@ -31,10 +34,6 @@ shinyUI(navbarPage(
     "Summary",
     h2("Serocalculator"),
     htmlOutput("output_html"),
-
-    # tags$a("Project Website", href = "https://ucd-serg.github.io/serocalculator/"),
-    # helpText("Antibody levels measured in a cross–sectional population sample can be translated into an estimate of the frequency with which seroconversions (infections) occur in the sampled population. In other words, the presence of many high antibody titers indicates that many individuals likely experienced infection recently and the burden of disease is high in the population, while low titers indicate a low frequency of infections in the sampled population and therefore a lower burden of disease."),
-    # helpText("The serocalculator package was designed to use the longitudinal response characteristics using a set of modeled parameters characterizing the longitudinal response of the selected serum antibodies.")
   ),
 
   # define the tabs to be used in the app ----------------------------------------
@@ -52,7 +51,9 @@ shinyUI(navbarPage(
         # select data type
         selectInput("file_name",
           "Choose Data:",
-          choices = c("Pop Data", "Curve Data", "Noise Data"),
+          choices = c("Pop Data",
+                      "Curve Data",
+                      "Noise Data"),
           selected = "Pop Data"
         ),
 
@@ -79,10 +80,13 @@ shinyUI(navbarPage(
         uiOutput("get_files"),
 
         # provide OSF URL
-        textInput("url_input", "Provide OSF URL:", value = "https://osf.io/download//n6cp3/"),
+        textInput("url_input",
+                  "Provide OSF URL:",
+                  value = "https://osf.io/download//n6cp3/"),
 
         # fetch OSF data
-        actionButton("action_btn", "Upload"),
+        actionButton("action_btn",
+                     "Upload"),
 
         # progress bar
         uiOutput("progress_bar"),
@@ -95,7 +99,8 @@ shinyUI(navbarPage(
       mainPanel(
         "",
         tabsetPanel(
-          tabPanel("Data Requirements", htmlOutput("data_requirement")),
+          tabPanel("Data Requirements",
+                   htmlOutput("data_requirement")),
           tabPanel(
             "File Preview",
             DTOutput("head"),
@@ -124,8 +129,11 @@ shinyUI(navbarPage(
         # choose type of visualization
         uiOutput("choose_visualization"),
 
-        # choose stratifying column
-        uiOutput("country"),
+        uiOutput("stratification_radio"),
+
+
+        # choose visualization stratification
+        uiOutput("stratification"),
 
         # choose log
         uiOutput("log"),
@@ -134,7 +142,8 @@ shinyUI(navbarPage(
         "",
         tabsetPanel(
           tabPanel("Numeric Summary", uiOutput("numeric_summary")),
-          tabPanel("Visualize", plotOutput("visualize"))
+          tabPanel("Visualize",
+                   plotOutput("visualize"))
         )
       )
     )
@@ -154,15 +163,27 @@ shinyUI(navbarPage(
         # description
         helpText("Provide the parameters for filtering estimation of seroincidence"),
 
-        # choose stratification
+        # choose stratification type
+        radioButtons(
+          inputId = "stratification_type",
+          label = "Choose Stratification Type:",
+          choices = list("Overall" = "overall", "Stratified" = "stratified"),
+          selected = "overall"
+        ),
+
+        # choose stratification column
         uiOutput("stratify_by"),
+
+        textOutput("status1"),
 
         # display computation results
         textOutput("result")
       ),
       mainPanel(
         "",
-        tabsetPanel(tabPanel("Estimate Seroincidence", tableOutput("est_incidence")))
+        tabsetPanel(
+          tabPanel("Estimate Seroincidence",
+                             tableOutput("est_incidence")))
       )
     )
   ),
