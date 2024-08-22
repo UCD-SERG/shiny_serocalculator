@@ -912,6 +912,33 @@ server <- function(input, output, session) {
 
   })
 
+  # choose antigen type
+  observeEvent(input$updatedData_ext,{
+    req(input$updatedData_ext)
+
+
+    output$antigen_type <- renderUI({
+
+      # uploaded file
+      file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
+      df <- data()
+
+      # column names
+      antigen_types <- df$antigen_iso %>% unique()
+
+      if(file_type == 'Pop'){
+        selectInput(
+          inputId = "output_antigen",
+          label = "Choose antigen Type:",
+          choices = antigen_types,
+          multiple = TRUE
+        )
+      }
+
+    })
+  })
+
   observeEvent(c(input$updatedData_ext,
                  input$stratification_type), {
 
@@ -927,6 +954,7 @@ server <- function(input, output, session) {
         # Column names excluding specific columns
         cols <- g %>%
           select(where(~ !is.numeric(.))) %>%
+          select(-antigen_iso) %>%
           names()
 
         # Conditionally display the selectInput based on available columns
@@ -934,7 +962,6 @@ server <- function(input, output, session) {
           selectInput("stratify_by",
                       "Stratify By:",
                       choices = cols,
-                      selected = c("catchment","cluster"),
                       multiple = TRUE
           )
         } else {
@@ -973,7 +1000,9 @@ server <- function(input, output, session) {
               pop_data = pop_data,
               curve_params = curve_data,
               noise_params = noise_data_params,
-              strata = input$stratify_by
+              strata = input$stratify_by,
+              antigen_isos = input$output_antigen,
+              verbose = TRUE
             )
 
 
@@ -985,6 +1014,7 @@ server <- function(input, output, session) {
               pop_data = pop_data,
               curve_params = curve_data,
               noise_params = noise_data_params,
+              antigen_isos = input$output_antigen,
               verbose = TRUE
             )
 

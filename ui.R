@@ -163,6 +163,9 @@ shinyUI(navbarPage(
         # description
         helpText("Provide the parameters for filtering estimation of seroincidence"),
 
+        # choose antigen_iso type
+        uiOutput("antigen_type"),
+
         # choose stratification type
         radioButtons(
           inputId = "stratification_type",
@@ -170,6 +173,7 @@ shinyUI(navbarPage(
           choices = list("Overall" = "overall", "Stratified" = "stratified"),
           selected = "overall"
         ),
+
 
         # choose stratification column
         uiOutput("stratify_by"),
