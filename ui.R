@@ -181,13 +181,18 @@ shinyUI(navbarPage(
         textOutput("status1"),
 
         # display computation results
-        textOutput("result")
+        textOutput("result"),
+
+        # kill process
+        # UI component for triggering stop
+        actionButton("stop_btn", "Stop Estimation")
       ),
       mainPanel(
         "",
         tabsetPanel(
           tabPanel("Estimate Seroincidence",
-                             tableOutput("est_incidence")))
+                             tableOutput("est_incidence")
+                   ))
       )
     )
   ),
