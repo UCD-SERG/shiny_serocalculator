@@ -50,12 +50,18 @@ shinyUI(navbarPage(
         #------------------ LOAD DATA ----------------------
         # select data type
         selectInput("file_name",
-          "Choose Data:",
-          choices = c("Pop Data",
-                      "Curve Data",
-                      "Noise Data"),
-          selected = "Pop Data"
+                    "Choose Data:",
+                    choices = c("Pop Data",
+                                "Curve Data",
+                                "Noise Data"),
+                    selected = "Pop Data"
         ),
+
+        # how to upload pop_data ("OSF" | "File Upload")
+        uiOutput("pop_type"),
+
+        # OSF or File Upload
+        uiOutput("pop_upload_type"),
 
         uiOutput("average"),
         uiOutput("antigen"),
@@ -77,16 +83,11 @@ shinyUI(navbarPage(
         # provide index column name
         uiOutput("select_id"),
 
-        uiOutput("get_files"),
-
-        # provide OSF URL
-        textInput("url_input",
-                  "Provide OSF URL:",
-                  value = "https://osf.io/download//n6cp3/"),
+        #uiOutput("get_files"),
 
         # fetch OSF data
-        actionButton("action_btn",
-                     "Upload"),
+        # actionButton("action_btn",
+        #              "Upload"),
 
         # progress bar
         uiOutput("progress_bar"),
@@ -103,7 +104,8 @@ shinyUI(navbarPage(
                    htmlOutput("data_requirement")),
           tabPanel(
             "File Preview",
-            DTOutput("head"),
+            #DTOutput("head"),
+            tableOutput("head"),
             DTOutput("other_head")
           ),
         )
@@ -181,18 +183,13 @@ shinyUI(navbarPage(
         textOutput("status1"),
 
         # display computation results
-        textOutput("result"),
-
-        # kill process
-        # UI component for triggering stop
-        actionButton("stop_btn", "Stop Estimation")
+        textOutput("result")
       ),
       mainPanel(
         "",
         tabsetPanel(
           tabPanel("Estimate Seroincidence",
-                             tableOutput("est_incidence")
-                   ))
+                   tableOutput("est_incidence")))
       )
     )
   ),
@@ -203,7 +200,7 @@ shinyUI(navbarPage(
   navbarMenu(
     "Report",
     tabPanel("Rmd", DT::dataTableOutput("table"),
-      icon = icon("file-code")
+             icon = icon("file-code")
     ),
     tabPanel("R", icon = icon("code"))
   )

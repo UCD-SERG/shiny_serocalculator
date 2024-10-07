@@ -11,19 +11,26 @@ library(scales)
 library(ggthemes)
 library(DT)
 library(dplyr)
-library(readr)
-library(future)
-library(promises)
-
-plan(multisession)
+library(shinyjs)
+library(httr)
 
 server <- function(input, output, session) {
-  # INFORMATION VARIABLES ----
+  # reactive object to hold upload population data
+  pop_data <- reactiveVal(NULL)
 
-  ## uploaded files ----
-  uploaded_files <- reactiveValues(files = NULL)
+  # reactive object to hold curve data
+  curve_data <- reactiveVal(NULL)
 
-  ## uploaded noise data (averages)
+  # reactive object to hold noise data
+  noise_data <- reactiveVal(NULL)
+
+  # reactive object to hold list of uploaded files
+  uploaded_files <- reactiveValues(files = character(0))
+
+  # reactive object to hold file name of uploaded data
+  filename <- reactiveVal(NULL)
+
+  # reactive object (data frame) for default noise values
   noise_values <- reactiveValues(new_val = data.frame(
     antigen = character(),
     y_low = numeric(),
@@ -33,37 +40,35 @@ server <- function(input, output, session) {
     stringsAsFactors = FALSE
   ))
 
+
   ## file name ----
   filename <- reactiveVal(NULL)
 
   ## data df
   data_df <- reactiveVal(NULL)
 
-  # Reactive expression for loading data
+  # Reactive object to hold uploaded data
   data <- reactive({
     req(input$upload)
     ext <- tools::file_ext(input$upload$name)
 
     # Read the data based on the file extension
-    if (ext == "csv") {
-      read.csv(input$upload$datapath)
-    } else if (ext == "rds") {
-      readRDS(input$upload$datapath)
-    } else {
-      return(NULL)
-    }
+    switch(ext,
+      "csv" = read.csv(input$upload$datapath),
+      "rds" = readRDS(input$upload$datapath),
+      return(NULL) # Return NULL for unsupported extensions
+    )
   })
 
-  # Reactive expressions for each data type
-  pop_data <- reactiveVal(NULL)
-  curve_data <- reactiveVal(NULL)
-  noise_data <- reactiveVal(NULL)
 
   # Observe the upload and assign data to the correct reactiveVal
   observeEvent(data(), {
+
     df <- data()
 
-    if (is.null(df)) return()
+    if (is.null(df)) {
+      return()
+    }
 
     if (input$file_name == "Pop Data") {
       class(df) <- c("pop_data", class(df))
@@ -97,171 +102,132 @@ server <- function(input, output, session) {
     df %>% names()
   })
 
-  ## upload data via URL ----
-  url_data <- reactive({
-    # ensure data is uploaded
-    req(input$url_input)
-
-    if (!is.null(input$url_input) && input$url_input != "") {
-      # download the file
-      data <- serocalculator::load_pop_data(file_path = input$url_input)
-    } else {
-      "Please enter a valid URL."
-    }
-  })
-
-  # DATA PROCESSING FUNCTIONS ----
-
-  # Get Uploaded Data
-  get_uploaded_data <- function(file_input) {
-    # Split the file input string
-    name_of_file <- strsplit(file_input, split = " ")[[1]]
-
-    # Check if the split produced enough parts
-    if (length(name_of_file) < 6) {
-      stop("Unexpected file input format. Cannot extract the file name.")
-    }
-
-    # Get the file name
-    extracted_file_name <- name_of_file[6]
-
-    # Remove the file extension
-    file_sans_ext <- sub("\\..*$", "", extracted_file_name)
-
-    # Construct the file path for the CSV file
-    file_path <- paste0(file_sans_ext, ".csv")
-
-    # Check if the file exists
-    if (!file.exists(file_path)) {
-      stop(paste("File does not exist:", file_path))
-    }
-
-    # Read the data from the CSV file
-    available_data <- read.csv(file_path)
-
-    # Return the data as a data frame
-    return(data.frame(available_data))
-  }
-
-
-  #  PROCESS INPUTS ----
-
+  # Select how to get pop data
   observeEvent(input$file_name, {
     req(input$file_name)
 
-    output$get_files <- renderUI({
-      if (input$file_name == "Pop Data" | input$file_name == "Curve Data") {
-        # upload file
+    if (input$file_name == "Pop Data") {
+      output$pop_type <- renderUI({
+        selectInput(
+          inputId = "pop_type",
+          label = "Choose Type",
+          choices = c("Upload", "OSF"),
+          selected = "Upload"
+        )
+      })
+    } else {
+      output$pop_type <- renderUI(NULL) # Ensures UI element is cleared for non "Pop Data" file names
+    }
+  })
+
+
+  # Dynamically render UI based on conditions
+  output$pop_upload_type <- renderUI({
+    req(input$pop_type) # Ensure pop_type is available
+    req(input$file_name) # Ensure file_name is available
+
+    if (input$file_name %in% c("Pop Data", "Curve Data", "Noise Data")) {
+      if (input$pop_type == "Upload") {
+        # File upload interface
         fileInput(
+          inputId = "upload",
           label = "Choose File from Computer (.csv, .rds)",
-          "upload",
-          NULL,
           buttonLabel = "Upload...",
           multiple = TRUE,
           accept = c(".csv", ".rds")
         )
+      } else if (input$pop_type == "OSF") {
+        # URL input and download button for OSF
+        tagList(
+          textInput(
+            inputId = "pop_data_url",
+            label = "Provide OSF URL:"
+          ),
+          actionButton(
+            inputId = "pop_data_url_btn",
+            label = "Download Data"
+          )
+        )
       }
-    })
+    }
   })
 
-  ## update list of uploaded files ----
-  observeEvent(input$upload, {
-    # ensure file is uploaded
-    req(input$upload)
+  # PROCESSING FUNCTIONS ----
 
-    # create list of uploaded files
+  # load uploaded data
+  get_uploaded_data <- function(file_input) {
+    # split
+    name_of_file <- file_input %>%
+      strsplit(split = " | ")
+
+    # get file name
+    extracted_file_name <- name_of_file[[1]][6]
+
+    # file name sans extension
+    file_sans_ext <- strsplit(
+      x = extracted_file_name,
+      split = "\\."
+    )[[1]][1]
+
+    # read data
+    available_data <- read.csv(paste0(file_sans_ext, ".csv"))
+
+    return(data.frame(available_data))
+  }
+
+  #  PROCESS INPUTS ----
+
+  observeEvent(c(input$upload,
+                 input$file_name,
+                 data()), {
+
+    # Ensure a file is uploaded and data() exists
+    req(input$upload)
+    req(data())  # Ensure data() is not NULL
+
+    # Naming and saving the file based on file_name
+    if (input$file_name == 'Pop Data') {
+      named_file <- 'Pop Data'
+
+      # Store the uploaded file on the server as 'Pop Data.csv'
+      write.csv(data(), file = paste0(named_file, ".csv"), row.names = FALSE)
+
+    } else {
+      # Use input$upload$name or fallback to a default name if it's NULL
+      upload_name <- input$upload$name
+      if (is.null(upload_name) || upload_name == "") {
+        upload_name <- "uploaded_file"  # Fallback filename
+      }
+
+      named_file <- paste0(input$file_name, " | Upload | ", upload_name)
+
+      # Get the file name without the extension
+      filename <- tools::file_path_sans_ext(upload_name)
+
+      # Store the uploaded file on the server
+      write.csv(data(), file = paste0(filename, ".csv"), row.names = FALSE)
+    }
+
+    # Add the named file to the list of uploaded files
+    uploaded_files$files <- c(uploaded_files$files, named_file)
+
+    # Append to the list of uploaded files
     uploaded_files$files <- c(
       uploaded_files$files,
-      paste0(input$file_name, " | Upload | ", input$upload$name)
+      "Pop Data"
     )
 
-    # get file name without extension
-    filename(tools::file_path_sans_ext(input$upload$name))
+    # # Append to the list of uploaded files
+    # uploaded_files$files <- c(
+    #   uploaded_files$files,
+    #   "Pop Data"
+    # )
 
-    # store uploaded file on server as CSV
-    write.csv(data(), file = paste0(filename(), ".csv"), row.names = FALSE)
 
-    # update drop down list of uploaded files
-    updateSelectInput(session, "selectedData",
-      choices = uploaded_files$files
-    )
-
-    # update drop down for uploaded data on secondary tab
-    update_data <- updateSelectInput(session, "updatedData", choices = uploaded_files$files)
-    null_update_data <- updateSelectInput(session, "updatedData", choices = NULL)
-
-    # ------------------------------------------------------------------------------
-    #                         updateData
-    # ------------------------------------------------------------------------------
-    if (input$file_name == "Pop Data") {
-      if (!any(is.element(data() %>% names(), c("ageCat")))) {
-        output$other_head <- renderDT({
-          print("Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH POPULATION DATA.")
-        })
-
-        null_update_data
-      } else {
-        update_data
-      }
-    } else if (input$file_name == "Curve Data") {
-      if (!any(is.element(column_names(), c("y0", "y1", "t1", "alpha")))) {
-        # output error
-        output$other_head <- renderDT({
-          print("Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH CURVE DATA.")
-        })
-
-        # don't update drop down
-        null_update_data
-      } else {
-        update_data
-      }
-    } else if (input$file_name == "Noise Data") {
-      if (!any(is.element(column_names(), c("y.low", "eps", "y.high")))) {
-        # output error
-        output$other_head <- renderDT({
-          print("Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH CURVE DATA.")
-        })
-
-        # don't update drop down
-        null_update_data
-      } else {
-        update_data
-      }
-    }
-
-    #----------------------------------------------------------------------------------
-    #                          updatedData_ext
-    #----------------------------------------------------------------------------------
-
-    # update drop down for uploaded data on secondary tab
-
-    update_available_data <- updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
-    null_available_data <- updateSelectInput(session, "updatedData_ext", choices = NULL)
-
-    if (input$file_name == "Pop Data") {
-      if (!any(is.element(data() %>% names(), c("age", "ageCat")))) {
-        null_available_data
-      } else {
-        update_available_data
-      }
-    }
-
-    # update list of available data
-    if (input$file_name == "Curve Data") {
-      if (!any(is.element(column_names(), c("y0", "y1", "t1", "alpha")))) {
-        null_available_data
-      } else {
-        update_available_data
-      }
-    }
-
-    if (input$file_name == "Noise Data") {
-      if (!any(is.element(column_names(), c("y.low", "eps", "y.high")))) {
-        null_available_data
-      } else {
-        update_available_data
-      }
-    }
+    # Update dropdown lists for uploaded files
+    updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+    updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+    #updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
   })
 
   ## choose uploaded data ----
@@ -283,65 +249,124 @@ server <- function(input, output, session) {
   })
 
 
-  ## display data when the button is clicked ----
-  observeEvent(input$action_btn, {
-    # download the file with progress indication
-    withProgress(message = "Downloading...", value = 0, {
-      for (i in 1:10) {
-        incProgress(1 / 15)
-        Sys.sleep(0.25)
-      }
+  # # display data when the button is clicked ----
+  # observeEvent(input$pop_data_url_btn, {
+  #
+  #   # Function to check if a URL is working
+  #   check_url <- function(url) {
+  #     # Make a GET request to the URL
+  #     response <- tryCatch(
+  #       {
+  #         GET(url)
+  #       },
+  #       error = function(e) {
+  #         return(NULL) # Return NULL if the URL causes an error
+  #       }
+  #     )
+  #
+  #     # Check if the response is valid
+  #     if (!is.null(response) && status_code(response) == 200) {
+  #       return(TRUE) # URL is valid and working
+  #     } else {
+  #       return(FALSE) # URL is not working or invalid
+  #     }
+  #   }
+  #
+  #   if (check_url(input$pop_data_url)) {
+  #     withProgress(message = "Downloading...", value = 0, {
+  #       for (i in 1:10) {
+  #         incProgress(1 / 15)
+  #
+  #         pop_data(serocalculator::load_pop_data(file_path = input$pop_data_url))
+  #
+  #       }
+  #     })
+  #
+  #     # create list of uploaded files
+  #     provided_file <- strsplit(x = input$pop_data_url, split = "/")[[1]][6]
+  #
+  #     # append uploaded files
+  #     uploaded_files$files <- c(
+  #       uploaded_files$files,
+  #       paste0(
+  #         input$file_name,
+  #         " | OSF | ",
+  #         provided_file
+  #       )
+  #     )
+  #
+  #       # update drop down for uploaded data on secondary tab
+  #       updateSelectInput(session,
+  #         "updatedData_ext",
+  #         choices = uploaded_files$files
+  #       )
+  #
+  #       # update drop down for uploaded data on secondary tab
+  #       updateSelectInput(session,
+  #         "updatedData",
+  #         choices = uploaded_files$files
+  #       )
+  #
+  #       # display data
+  #       output$head <- renderTable({
+  #         if(!is.null(pop_data())){
+  #           pop_data()
+  #           #%>% head()
+  #         }
+  #       })
+  #
+  #
+  #   } else {
+  #     showNotification("URL provided is not valid", , type = "error")
+  #   }
+  # })
+  #
 
-      # create list of uploaded files
-      provided_file <- strsplit(x = input$url_input, split = "/")[[1]][6]
 
-      # append uploaded files
-      uploaded_files$files <- c(
-        uploaded_files$files,
-        paste0(
-          input$file_name, " | OSF | ",
-          provided_file
-        )
+  # Handle URL-based download ----
+  observeEvent(input$pop_data_url_btn, {
+
+    # Function to check if the URL is working
+    check_url <- function(url) {
+      response <- tryCatch(
+        GET(url),
+        error = function(e) return(NULL)
       )
-
-      # update drop down for uploaded data on secondary tab
-      updateSelectInput(session,
-        "updatedData_ext",
-        choices = uploaded_files$files
-      )
-    })
-
-    # get file name
-    download_name <- input$url_input %>% strsplit(split = "/")
-
-    # download file
-    download.file(input$url_input,
-      paste0(download_name[[1]][6], ".csv"),
-      mode = "wb"
-    )
-
-    if (input$file_name == "Pop Data") {
-      data <- serocalculator::load_pop_data(file_path = input$url_input)
-    } else if (input$file_name == "Curve Data") {
-      data <- serocalculator::load_curve_params(file_path = input$url_input)
-    } else if (input$file_name == "Noise Data") {
-      data <- serocalculator::load_noise_params(file_path = input$url_input)
+      return(!is.null(response) && status_code(response) == 200)
     }
 
-    # update reactive values
-    data_df(data)
+    # Check if the URL is valid
+    if (check_url(input$pop_data_url)) {
+      # Download the file from the URL and store it in pop_data
+      withProgress(message = "Downloading...", value = 0.1, {
+        pop_data(serocalculator::load_pop_data(file_path = input$pop_data_url))
+        incProgress(1)
+      })
 
-    # update drop down for uploaded data on secondary tab
-    updateSelectInput(session,
-      "updatedData",
-      choices = uploaded_files$files
-    )
+      # Append to the list of uploaded files
+      uploaded_files$files <- c(
+        uploaded_files$files,
+        paste0("Pop Data")
+      )
 
-    # display data
-    output$head <- renderTable({
-      data %>% head()
-    })
+      # Update drop-down list for uploaded data
+      updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+
+      # Display the data in the table
+      output$head <- renderTable({
+        if (!is.null(pop_data())) {
+          head(pop_data())
+        }
+      })
+
+    } else {
+      # Notify if the URL is invalid
+      showNotification("URL provided is not valid", type = "error")
+    }
   })
+
+
+
 
   # check file uploaded
   observeEvent(c(input$updatedData_ext), {
@@ -431,108 +456,99 @@ server <- function(input, output, session) {
       }
     })
 
-    # Dynamically generate UI for selecting age column based on the selected data type
-    observeEvent(input$file_name, {
-      df <- NULL
-      if (input$file_name == "Pop Data") {
-        df <- pop_data()
-      } else if (input$file_name == "Curve Data") {
-        df <- curve_data()
-      } else if (input$file_name == "Noise Data") {
-        df <- noise_data()
-      }
+    # UI to select age column in drop-down
+    output$select_age <- renderUI({
+      if (!is.null(pop_data())) {
+        # Get column names from pop_data
+        cols <- names(pop_data())
 
-      if (!is.null(df)  && input$file_name %in% c("Pop Data")) {
-        cols <- names(df)
-        output$select_age <- renderUI({
-          selectInput("age_select",
-                      "Select Age Column:",
-                      choices = c("", cols),
-                      selected = NULL)
-        })
-      } else {
-        output$select_age <- renderUI({
-          NULL
-        })
+        # Add a blank entry at the top for display
+        cols <- c("", cols)
+
+        # Dynamically create drop-down list of column names
+        selectInput(
+          "age_select",
+          "Select Age Column:",
+          choices = cols
+        )
       }
     })
 
-    # Dynamically generate UI for selecting value column based on the selected data type
-    observeEvent(input$file_name, {
-      df <- NULL
-      if (input$file_name == "Pop Data") {
-        df <- pop_data()
-      } else if (input$file_name == "Curve Data") {
-        df <- curve_data()
-      } else if (input$file_name == "Noise Data") {
-        df <- noise_data()
-      }
+    # UI to select value column in drop-down
+    output$select_value <- renderUI({
+      if (!is.null(pop_data())) {
+        # Get column names from pop_data
+        cols <- names(pop_data())
 
-      if (!is.null(df) && input$file_name %in% c("Pop Data")) {
-        cols <- names(df)
-        output$select_value <- renderUI({
-          selectInput("value_select",
-                      "Select Value Column:",
-                      choices = c("", cols),
-                      selected = NULL)
-        })
-      } else {
-        output$select_value <- renderUI({
-          NULL
-        })
+        # Add a blank entry at the top for display
+        cols <- c("", cols)
+
+        # Dynamically create drop-down list of column names
+        selectInput(
+          "value_select",
+          "Select Value Column:",
+          choices = cols
+        )
       }
     })
 
-    # Dynamically generate UI for selecting id column based on the selected data type
-    observeEvent(input$file_name, {
-      df <- NULL
-      if (input$file_name == "Pop Data") {
-        df <- pop_data()
-      } else if (input$file_name == "Curve Data") {
-        df <- curve_data()
-      } else if (input$file_name == "Noise Data") {
-        df <- noise_data()
-      }
+    # UI to select age column in drop-down
+    output$select_id <- renderUI({
+      if (!is.null(pop_data())) {
+        # Get column names from pop_data
+        cols <- names(pop_data())
 
-      if (!is.null(df)  && input$file_name %in% c("Pop Data")) {
-        cols <- names(df)
-        output$select_id <- renderUI({
-          selectInput("id_select",
-                      "Select Index Column:",
-                      choices = c("", cols),
-                      selected = NULL)
-        })
-      } else {
-        output$select_id <- renderUI({
-          NULL
-        })
+        # Add a blank entry at the top for display
+        cols <- c("", cols)
+
+        # Dynamically create drop-down list of column names
+        selectInput(
+          "id_select",
+          "Select Id Column:",
+          choices = cols
+        )
       }
     })
 
     output$other_head <- renderDT({
       # population data
       if (input$file_name == "Pop Data") {
-        # display data
-        datatable(
-          data = pop_data(),
-          editable = TRUE
-        )
+        check_age <- all(is.element(column_names(), c("Country", "age", "ageCat")))
 
-      } else if (input$file_name == "Curve Data") {
-
-          datatable(
-            data = data(),
-            editable = TRUE
-          )
-
-      } else if (input$file_name == "Noise Data") {
-
+        if (!check_age) {
+          print("Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH POPULATION DATA.")
+        } else {
+          # display data
           datatable(
             data = data(),
             editable = TRUE
           )
         }
+      } else if (input$file_name == "Curve Data") {
+        # curve data check
+        curve_data_check <- any(is.element(column_names(), c("y0", "y1", "t1", "alpha")))
 
+        if (!curve_data_check) {
+          print("Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH CURVE DATA.")
+        } else {
+          datatable(
+            data = data(),
+            editable = TRUE
+          )
+        }
+      } else if (input$file_name == "Noise Data") {
+        # noise data check
+        noise_data_check <- any(is.element(column_names(), c("y.low", "eps", "y.high")))
+
+        if (!noise_data_check) {
+          print("Error: THE DATA PROVIDED DOES NOT HAVE THE COLUMNS CONSISTENT WITH NOISE DATA.")
+        } else {
+          datatable(
+            data = data(),
+            editable = TRUE
+          )
+        }
+      }
     })
   })
 
@@ -953,11 +969,6 @@ server <- function(input, output, session) {
     })
   })
 
-  # Observe the button click
-  observeEvent(input$kill_btn, {
-    stopApp() # This stops the Shiny app
-  })
-
 
   observeEvent(c(
     input$stratify_by,
@@ -966,73 +977,41 @@ server <- function(input, output, session) {
     req(input$stratify_by)
     req(input$stratification_type)
 
-    # # create empty list
-    # for (i in 1:length(uploaded_files$files))
-    # {
-    #   g <- get_uploaded_data(file_input = (uploaded_files$files[[i]]))
-    #
-    #   if (any(is.element(g %>% names(), c("ageCat")))) {
-    #     pop_data <- data.frame(g)
-    #   } else if (any(is.element(g %>% names(), c("y0", "y1", "t1", "alpha")))) {
-    #     curve_data <- data.frame(g)
-    #   } else if (any(is.element(g %>% names(), c("y.low", "eps", "y.high")))) {
-    #     noise_data <- data.frame(g)
-    #   }
-    # }
+    # create empty list
+    for (i in 1:length(uploaded_files$files))
+    {
+      g <- get_uploaded_data(file_input = (uploaded_files$files[[i]]))
 
-    # # Create a reactive value to store if the process should be stopped
-    # stop_flag <- reactiveVal(FALSE)
-
-    # Observe the stop button and set the stop_flag when pressed
-    observeEvent(input$stop_btn, {
-      stop_flag(TRUE)
-    })
+      if (any(is.element(g %>% names(), c("ageCat")))) {
+        pop_data <- data.frame(g)
+      } else if (any(is.element(g %>% names(), c("y0", "y1", "t1", "alpha")))) {
+        curve_data <- data.frame(g)
+      } else if (any(is.element(g %>% names(), c("y.low", "eps", "y.high")))) {
+        noise_data <- data.frame(g)
+      }
+    }
 
     output$est_incidence <- renderTable({
-      # Reset the stop flag at the beginning of the calculation
-      # stop_flag(FALSE)
-      #
-      # fut <- future({
-      #   for (i in 1:1000) {
-      #     # Check if the stop flag has been set
-      #     if (stop_flag()) {
-      #       stop("Process was interrupted by the user.")
-      #     }
-      #
-      #     # Simulate long computation
-      #     Sys.sleep(0.1)
-      #   }
+      if (input$stratification_type == "stratified") {
+        est <- serocalculator::est.incidence.by(
+          pop_data = pop_data,
+          curve_params = curve_data,
+          noise_params = noise_data_params,
+          strata = input$stratify_by,
+          antigen_isos = input$output_antigen,
+          verbose = TRUE
+        )
+      } else if (input$stratification_type == "overall") {
+        est <- serocalculator::est.incidence(
+          pop_data = pop_data,
+          curve_params = curve_data,
+          noise_params = noise_data_params,
+          antigen_isos = input$output_antigen,
+          verbose = TRUE
+        )
+      }
 
-        # Replace with your actual calculation logic
-        if (input$stratification_type == "stratified") {
-          est <- serocalculator::est.incidence.by(
-            pop_data = pop_data(),
-            curve_params = curve_data(),
-            noise_params = noise_data(),
-            strata = input$stratify_by,
-            antigen_isos = input$output_antigen,
-            verbose = TRUE
-          )
-        } else if (input$stratification_type == "overall") {
-          est <- serocalculator::est.incidence(
-            pop_data = pop_data(),
-            curve_params = curve_data(),
-            noise_params = noise_data(),
-            antigen_isos = input$output_antigen,
-            verbose = TRUE
-          )
-        }
-
-        # Return the result
-        est %>% summary()
-      })
-
-      # Handle the completion or failure of the future
-      # fut %...>% {
-      #   summary(.)
-      # } %...!% {
-      #   data.frame(Error = "Calculation was interrupted or failed")
-      # }
+      summary(est)
     })
-  #})
+  })
 }
