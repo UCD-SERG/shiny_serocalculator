@@ -516,14 +516,14 @@ server <- function(input, output, session) {
     input$updatedData
   ), {
     # ensure file is uploaded
-    req(input$updatedData_ext)
+    # req(input$updatedData_ext)
 
     output$log <- renderUI({
       # get uploaded data
-      df <- data()
+      # df <- data()
 
       # column names
-      cols <- df %>% names()
+      # cols <- df %>% names()
 
       #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
 
@@ -535,10 +535,10 @@ server <- function(input, output, session) {
 
     output$stratification_radio <- renderUI({
       # get uploaded data
-      df <- data()
+      # df <- data()
 
       # column names
-      cols <- df %>% names()
+      # cols <- df %>% names()
 
       #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
 
@@ -559,10 +559,10 @@ server <- function(input, output, session) {
 
     output$stratify_option <- renderUI({
       # get uploaded data
-      df <- data()
+      # df <- data()
 
       # column names
-      cols <- df %>% names()
+      # cols <- df %>% names()
 
       #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
 
@@ -685,7 +685,6 @@ server <- function(input, output, session) {
       if(input$updatedData_ext == "Pop Data"){
 
         pop_df <- read_data_file(input$pop_upload)
-
         pop_data(pop_df)
 
         pop_data() %>%
@@ -696,7 +695,6 @@ server <- function(input, output, session) {
       } else if (input$updatedData_ext == "Noise Data"){
 
         noise_df <- read_data_file(input$noise_upload)
-
         noise_data(noise_df)
 
         noise_data() %>%
@@ -707,7 +705,6 @@ server <- function(input, output, session) {
       } else if (input$updatedData_ext == "Curve Data"){
 
         curve_df <- read_data_file(input$curve_upload)
-
         curve_data(curve_df)
 
         curve_data() %>%
@@ -755,26 +752,21 @@ server <- function(input, output, session) {
     input$choosen_stratification,
     input$stratification_choice,
     input$curve_upload,
-    input$pop_upload
+    input$pop_data
   ), {
-    req(input$updatedData_ext)
-    req(input$check_log)
-    req(input$type_visualization)
-    req(input$choosen_stratification)
-    req(input$stratification_choice)
 
-    # get data
-    #down_data <- get_uploaded_data(file_input = input$updatedData_ext)
+    # req(input$check_log)
+    # req(input$type_visualization)
+    # req(input$choosen_stratification)
+    # req(input$stratification_choice)
 
     ## visualization
     output$visualize <- renderPlot({
       viz_type <- input$type_visualization
 
-      #### distribution plot
-      if (viz_type == "Distribution" && input$updatedData_ext == "Curve Data") {
-
+      #### Distribution plot
+      if (viz_type == "Distribution") {
         curve_df <- read_data_file(input$curve_upload)
-
         curve_data(curve_df)
 
         curve_data() %>%
@@ -790,54 +782,69 @@ server <- function(input, output, session) {
           scale_x_continuous(limits = c(0, 600)) +
           theme_minimal()
 
-        #### age-scatter plot
-      } else if (viz_type == "Age Scatter" && input$updatedData_ext == "Pop Data") {
+        #### Age Scatter plot
+      } else if (viz_type == "Age Scatter") {
         if (input$stratification_choice == "yes") {
           # visualize age-scatter
-          pop_df <- read_data_file(input$pop_upload)
 
+          pop_df <- read_data_file(input$pop_upload)
           pop_data(pop_df)
 
-          pop_data %>% serocalculator:::autoplot.pop_data(
+          pop_data() %>% serocalculator:::autoplot.pop_data(
             type = "age-scatter",
             strata = input$choosen_stratification,
             log = input$check_log
           )
         } else {
-          # visualize age-scatter
-          pop_data %>% serocalculator:::autoplot.pop_data(
+          # visualize age-scatter without stratification
+
+          pop_df <- read_data_file(input$pop_upload)
+          pop_data(pop_df)
+
+          pop_data() %>% serocalculator:::autoplot.pop_data(
             type = "age-scatter",
             strata = NULL,
             log = input$check_log
           )
         }
 
-
-        #### density
-      } else if (viz_type == "Density" && input$updatedData_ext == "Pop Data") {
+        #### Density plot
+      } else if (viz_type == "Density") {
         if (input$stratification_choice == "yes") {
-          # visualize density
-          pop_data %>% serocalculator:::autoplot.pop_data(
+          # visualize density with stratification
+          pop_df <- read_data_file(input$pop_upload)
+          pop_data(pop_df)
+
+          pop_data() %>% serocalculator:::autoplot.pop_data(
             type = "density",
             strata = input$choosen_stratification,
             log = input$check_log
           )
         } else {
-          # visualize density
-          pop_data %>% serocalculator:::autoplot.pop_data(
+          # visualize density without stratification
+          pop_df <- read_data_file(input$pop_upload)
+          pop_data(pop_df)
+
+          pop_data() %>% serocalculator:::autoplot.pop_data(
             type = "density",
             strata = NULL,
             log = input$check_log
           )
         }
 
-        #### decay
-      } else if (viz_type == "Decay" && input$updatedData_ext == "Curve Data") {
-        # visualize age-scatter
-        curve_data %>% serocalculator:::plot_curve_params_one_ab()
+        #### Decay plot
+      } else if (viz_type == "Decay") {
+        # visualize decay
+        curve_df <- read_data_file(input$curve_upload)
+        curve_data(curve_df)
+
+        curve_data() %>% serocalculator:::plot_curve_params_one_ab()
       }
     })
   })
+
+
+
 
   observeEvent(input$stratify_by, {
     # Show busy spinner by simulating a long computation
@@ -1047,7 +1054,6 @@ server <- function(input, output, session) {
 
   # defaults noise values
   noise_data_params <- serocalculator::load_noise_params("https://osf.io/download/h64cw")
-
   noise_data(noise_data_params)
 
   # noise value from uploaded file
@@ -1057,7 +1063,6 @@ server <- function(input, output, session) {
 
     if (input$file_name == "Noise Data") {
       noise_df <- read_data_file(input$noise_upload)
-
       noise_data(noise_df)
 
     }
@@ -1119,7 +1124,6 @@ server <- function(input, output, session) {
         #g <- get_uploaded_data(input$updatedData_ext)
 
         pop_df <- read_data_file(input$pop_upload)
-
         pop_data(pop_df)
 
         # Column names excluding specific columns
@@ -1148,10 +1152,9 @@ server <- function(input, output, session) {
     input$stratification_type,
     input$curve_upload,
     input$pop_upload,
-    input$curve_upload,
     input$noise_upload
   ), {
-    req(input$stratify_by)
+    #req(input$stratify_by)
     req(input$stratification_type)
 
     pop_df <- read_data_file(input$pop_upload)
