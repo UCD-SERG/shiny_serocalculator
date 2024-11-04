@@ -96,6 +96,9 @@ shinyUI(navbarPage(
         selectInput("updatedData",
                     "Uploaded Data",
                     choices = NULL),
+
+        actionButton("clear_btn", "Clear Environment"),
+        textOutput("status")
       ),
       mainPanel(
         "",

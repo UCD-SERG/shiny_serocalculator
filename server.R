@@ -671,6 +671,13 @@ server <- function(input, output, session) {
     })
   })
 
+  ## clear environment
+  observeEvent(input$clear_btn, {
+    rm(list = ls(envir = .GlobalEnv), envir = .GlobalEnv)  # Clear global environment
+    gc()  # Optional: trigger garbage collection to free memory
+    output$status <- renderText("Environment cleared!")
+  })
+
   ## file numeric summary ----
   observeEvent(c(input$updatedData_ext,
                  input$noise_upload,
