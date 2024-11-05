@@ -83,12 +83,6 @@ shinyUI(navbarPage(
         # provide index column name
         uiOutput("select_id"),
 
-        #uiOutput("get_files"),
-
-        # fetch OSF data
-        # actionButton("action_btn",
-        #              "Upload"),
-
         # progress bar
         uiOutput("progress_bar"),
 
@@ -134,14 +128,16 @@ shinyUI(navbarPage(
         # choose type of visualization
         uiOutput("choose_visualization"),
 
+        # choose 'yes' or 'no' for stratification
         uiOutput("stratification_radio"),
-
 
         # choose visualization stratification
         uiOutput("stratification"),
 
         # choose log
         uiOutput("log"),
+
+        actionButton("clear_btn", "Clear Environment"),
       ),
       mainPanel(
         "",
