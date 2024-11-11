@@ -14,6 +14,9 @@ library(dplyr)
 library(shinyjs)
 library(httr)
 
+library(shinytest2)
+library(testthat)
+
 server <- function(input, output, session) {
   # reactive object to hold upload population data
   pop_data <- reactiveVal(NULL)
@@ -1185,3 +1188,4 @@ server <- function(input, output, session) {
 
   })
 }
+
