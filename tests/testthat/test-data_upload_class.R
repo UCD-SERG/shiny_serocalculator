@@ -8,10 +8,6 @@ test_that("Data upload assigns to correct reactiveVal with correct class", {
   test_df <- data.frame(a = 1:3, b = 4:6)
   write.csv(test_df, temp_csv, row.names = FALSE)
 
-  pop_data <- reactiveVal(NULL)
-  curve_data <- reactiveVal(NULL)
-  noise_data <- reactiveVal(NULL)
-
   # Test Noise Data
   testServer(server, {
     # Set input to simulate uploading the CSV file

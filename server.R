@@ -1,107 +1,32 @@
-# load required packages
-library(ggplot2)
-library(ggthemes)
-library(readxl)
-library(skimr)
-library(stringr)
-library(serocalculator)
-library(shinyWidgets)
-library(tidyr)
-library(scales)
-library(ggthemes)
-library(DT)
-library(dplyr)
-library(shinyjs)
-library(httr)
 
-library(shinytest2)
-library(testthat)
+# load scripts
+source("functions/read_file.R")
+
+source("functions/url.R")
+source("values/reactive_values.R")
+source("libraries/load_libraries.R")
+source("functions/observe_functions.R")
 
 server <- function(input, output, session) {
-  # reactive object to hold upload population data
-  pop_data <- reactiveVal(NULL)
 
-  # reactive object to hold curve data
-  curve_data <- reactiveVal(NULL)
+  # Get upload data
+  data()
 
-  # reactive object to hold noise data
-  noise_data <- reactiveVal(NULL)
+  # Assign class to uploaded data
+  uploadedDF <- assign_class_to_data(data = data(), file_name = input$file_name)
 
-  # reactive object to hold list of uploaded files
-  uploaded_files <- reactiveValues(files = character(0))
+  # Update the appropriate reactive value based on the class of uploadedDF
+  if ("pop_data" %in% class(uploadedDF)) {
+    pop_data(uploadedDF)
+  } else if ("curve_data" %in% class(uploadedDF)) {
+    curve_data(uploadedDF)
+  } else if ("noise_data" %in% class(uploadedDF)) {
+    noise_data(uploadedDF)
+  }
 
-  # reactive object to hold file name of uploaded data
-  filename <- reactiveVal(NULL)
+  # Call the function to conditionally render the UI for pop type selection
+  render_pop_type_ui(reactive(input$file_name), output)
 
-  # reactive object (data frame) for default noise values
-  noise_values <- reactiveValues(new_val = data.frame(
-    antigen = character(),
-    y_low = numeric(),
-    y_high = numeric(),
-    eps = numeric(),
-    nu = numeric(),
-    stringsAsFactors = FALSE
-  ))
-
-
-  ## file name ----
-  filename <- reactiveVal(NULL)
-
-  ## data df
-  data_df <- reactiveVal(NULL)
-
-  # Reactive object to hold uploaded data
-  data <- reactive({
-    req(input$upload)
-    ext <- tools::file_ext(input$upload$name)
-
-    # Read the data based on the file extension
-    switch(ext,
-      "csv" = read.csv(input$upload$datapath),
-      "rds" = readRDS(input$upload$datapath),
-      return(NULL) # Return NULL for unsupported extensions
-    )
-  })
-
-
-  # Observe the upload and assign data to the correct reactiveVal
-  observeEvent(data(), {
-    df <- data()
-
-    if (is.null(df)) {
-      return()
-    }
-
-    if (input$file_name == "Pop Data") {
-      class(df) <- c("pop_data", class(df))
-      pop_data(df)
-    } else if (input$file_name == "Curve Data") {
-      class(df) <- c("curve_data", class(df))
-      curve_data(df)
-    } else if (input$file_name == "Noise Data") {
-      class(df) <- c("noise_data", class(df))
-      noise_data(df)
-    }
-  })
-
-  ## uploaded column names ----
-  column_names <- reactive({
-    # ensure data is uploaded
-    req(input$upload)
-
-    # load file
-    null_file <- is.null(input$upload$datapath)
-
-    if (null_file) {
-      return(NULL)
-    }
-
-    # read file
-    df <- vroom::vroom(input$upload$datapath, delim = ",")
-
-    # get column names
-    df %>% names()
-  })
 
   # Select how to get pop data
   observeEvent(input$file_name, {
@@ -117,7 +42,8 @@ server <- function(input, output, session) {
         )
       })
     } else {
-      output$pop_type <- renderUI(NULL) # Ensures UI element is cleared for non "Pop Data" file names
+      # Ensures UI element is cleared for non "Pop Data" file names
+      output$pop_type <- renderUI(NULL)
     }
   })
 
@@ -321,16 +247,6 @@ server <- function(input, output, session) {
 
   # Handle URL-based download ----
   observeEvent(input$pop_data_url_btn, {
-    # Function to check if the URL is working
-    check_url <- function(url) {
-      response <- tryCatch(
-        GET(url),
-        error = function(e) {
-          return(NULL)
-        }
-      )
-      return(!is.null(response) && status_code(response) == 200)
-    }
 
     # Check if the URL is valid
     if (check_url(input$pop_data_url)) {
@@ -360,25 +276,6 @@ server <- function(input, output, session) {
       showNotification("URL provided is not valid", type = "error")
     }
   })
-
-
-
-
-  # Function to determine file type and read the file
-  read_data_file <- function(file) {
-    req(file) # Ensure the file is not NULL
-
-    # Get the file extension
-    file_ext <- tools::file_ext(file$name)
-
-    if (file_ext == "csv") {
-      return(read.csv(file$datapath))
-    } else if (file_ext == "rds") {
-      return(readRDS(file$datapath))
-    } else {
-      stop("Unsupported file type. Please upload a .csv or .rds file.")
-    }
-  }
 
   # Observe the file upload for Curve Data
   observeEvent(input$curve_upload, {
