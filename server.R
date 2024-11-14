@@ -9,11 +9,21 @@ source("functions/observe_functions.R")
 
 server <- function(input, output, session) {
 
-  # Get upload data
-  data()
+  # reactive object to hold uploaded data
+  data <- reactive({
+    req(input$upload)
+    ext <- tools::file_ext(input$upload$name)
+
+    # Read the data based on the file extension
+    switch(ext,
+           "csv" = read.csv(input$upload$datapath),
+           "rds" = readRDS(input$upload$datapath),
+           return(NULL) # Return NULL for unsupported extensions
+    )
+  })
 
   # Assign class to uploaded data
-  uploadedDF <- assign_class_to_data(data = data(), file_name = input$file_name)
+  uploadedDF <- assign_class_to_data(data = data(),file_name = input$file_name)
 
   # Update the appropriate reactive value based on the class of uploadedDF
   if ("pop_data" %in% class(uploadedDF)) {
@@ -23,10 +33,6 @@ server <- function(input, output, session) {
   } else if ("noise_data" %in% class(uploadedDF)) {
     noise_data(uploadedDF)
   }
-
-  # Call the function to conditionally render the UI for pop type selection
-  render_pop_type_ui(reactive(input$file_name), output)
-
 
   # Select how to get pop data
   observeEvent(input$file_name, {

@@ -1,32 +1,29 @@
 
-library(shinytest2)
 library(testthat)
 
-test_that("Data upload assigns to correct reactiveVal with correct class", {
-  # Create a temporary CSV file
-  temp_csv <- tempfile(fileext = ".csv")
-  test_df <- data.frame(a = 1:3, b = 4:6)
-  write.csv(test_df, temp_csv, row.names = FALSE)
+source("functions/observe_functions.R")
 
-  # Test Noise Data
-  testServer(server, {
-    # Set input to simulate uploading the CSV file
-    session$setInputs(upload = list(name = "testfile.csv", datapath = temp_csv))
+test_that("get_classified_data assigns correct class based on file name", {
+  # Sample data frame for testing
+  df <- data.frame(x = 1:5, y = 6:10)
 
-    # Set input to specify file type as "Noise Data"
-    session$setInputs(file_name = "Noise Data")
+  # Test for "Pop Data"
+  result <- get_classified_data(df, "Pop Data")
+  expect_true(inherits(result, "pop_data"))
 
-    # Flush reactivity to ensure updates have propagated
-    session$flushReact()
+  # Test for "Curve Data"
+  result <- get_classified_data(df, "Curve Data")
+  expect_true(inherits(result, "curve_data"))
 
-    # Check that noise_data() has the expected data and class
-    expect_equal(noise_data(), test_df)
-    expect_true("noise_data" %in% class(noise_data()))
-    expect_null(pop_data())
-    expect_null(test_df)
-    expect_null(curve_data())
-  })
+  # Test for "Noise Data"
+  result <- get_classified_data(df, "Noise Data")
+  expect_true(inherits(result, "noise_data"))
 
-  # Clean up the temporary file
-  unlink(temp_csv)
+  # Test for an unsupported file name (no class should be added)
+  result <- get_classified_data(df, "Other Data")
+  expect_false(inherits(result, "pop_data") || inherits(result, "curve_data") || inherits(result, "noise_data"))
+
+  # Test for NULL input (should return NULL)
+  result <- get_classified_data(NULL, "Pop Data")
+  expect_null(result)
 })
