@@ -144,11 +144,6 @@ server <- function(input, output, session) {
       "Pop Data"
     )
 
-    # # Append to the list of uploaded files
-    # uploaded_files$files <- c(
-    #   uploaded_files$files,
-    #   "Pop Data"
-    # )
 
 
     # Update dropdown lists for uploaded files
@@ -397,17 +392,7 @@ server <- function(input, output, session) {
     input$updatedData_ext,
     input$updatedData
   ), {
-    # ensure file is uploaded
-    # req(input$updatedData_ext)
-
     output$log <- renderUI({
-      # get uploaded data
-      # df <- data()
-
-      # column names
-      # cols <- df %>% names()
-
-      #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
 
       # dynamically create drop down list of column name
       if (input$updatedData_ext == "Pop Data") {
@@ -433,14 +418,6 @@ server <- function(input, output, session) {
     })
 
     output$stratify_option <- renderUI({
-      # get uploaded data
-      # df <- data()
-
-      # column names
-      # cols <- df %>% names()
-
-      #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
-
       # dynamically create drop down list of column name
       if (input$updatedData_ext == "Pop Data") {
         checkboxInput("check_stratify",

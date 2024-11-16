@@ -1,47 +1,68 @@
-# Load necessary libraries
 library(shinytest2)
 library(testthat)
 
-test_that("Uploaded file is named, saved, and added to selection dropdowns correctly", {
-  # Create a temporary CSV file to simulate file upload
-  temp_csv <- tempfile(fileext = ".csv")
-  test_data <- data.frame(a = 1:3, b = 4:6)
-  write.csv(test_data, temp_csv, row.names = FALSE)
+source("functions/observe_functions.R")
 
-  # Test the observeEvent that handles file upload and naming
+test_that("handle_file_upload updates uploaded_files and select inputs correctly", {
   testServer(server, {
-    # Simulate file upload with `file_name` set to "Pop Data"
-    session$setInputs(upload = list(name = "testfile.csv", datapath = temp_csv))
-    session$setInputs(file_name = "Pop Data")
-    session$flushReact()  # Ensure all reactivity has propagated
+    # Initialize the uploaded_files reactiveValues
+    uploaded_files <- reactiveValues(files = character(0))
 
-    # Check that the file has been named and saved as "Pop Data.csv"
-    expect_true(file.exists("Pop Data.csv"))
+    # Call the handle_file_upload function for Curve Data
+    handle_file_upload(
+      input_id = "curve_upload",
+      file_label = "Curve Data",
+      uploaded_files = uploaded_files,
+      session = session,
+      updated_input_ids = c("updatedData", "updatedData_ext")
+    )
 
-    # Verify the uploaded file list includes "Pop Data"
+    # Simulate a file upload for Curve Data
+    session$setInputs(curve_upload = "curve.csv")
+
+    # Check that the "Curve Data" has been added to uploaded_files$files
+    expect_true("Curve Data" %in% uploaded_files$files)
+
+    # Check if the select inputs are updated with the new list of files
+    expect_true("Curve Data" %in% session$input$updatedData)
+    expect_true("Curve Data" %in% session$input$updatedData_ext)
+
+    # Call the handle_file_upload function for Pop Data
+    handle_file_upload(
+      input_id = "pop_upload",
+      file_label = "Pop Data",
+      uploaded_files = uploaded_files,
+      session = session,
+      updated_input_ids = c("updatedData", "updatedData_ext")
+    )
+
+    # Simulate a file upload for Pop Data
+    session$setInputs(pop_upload = "pop.csv")
+
+    # Check that the "Pop Data" has been added to uploaded_files$files
     expect_true("Pop Data" %in% uploaded_files$files)
 
-    # Check the select input choices are updated correctly
-    expect_true("Pop Data" %in% isolate(session$input$selectedData))
-    expect_true("Pop Data" %in% isolate(session$input$updatedData))
+    # Check if the select inputs are updated with the new list of files
+    expect_true("Pop Data" %in% session$input$updatedData)
+    expect_true("Pop Data" %in% session$input$updatedData_ext)
 
-    # Now test with another `file_name` value
-    session$setInputs(file_name = "Curve Data")
-    session$flushReact()
+    # Call the handle_file_upload function for Noise Data
+    handle_file_upload(
+      input_id = "noise_upload",
+      file_label = "Noise Data",
+      uploaded_files = uploaded_files,
+      session = session,
+      updated_input_ids = c("updatedData", "updatedData_ext")
+    )
 
-    # Check for the updated file naming
-    expect_true(file.exists("testfile.csv"))
+    # Simulate a file upload for Noise Data
+    session$setInputs(noise_upload = "noise.csv")
 
-    # Verify the uploaded file list includes "Curve Data | Upload | testfile.csv"
-    expect_true("Curve Data | Upload | testfile.csv" %in% uploaded_files$files)
+    # Check that the "Noise Data" has been added to uploaded_files$files
+    expect_true("Noise Data" %in% uploaded_files$files)
 
-    # Confirm the dropdown lists are updated again
-    expect_true("Curve Data | Upload | testfile.csv" %in% isolate(session$input$selectedData))
-    expect_true("Curve Data | Upload | testfile.csv" %in% isolate(session$input$updatedData))
+    # Check if the select inputs are updated with the new list of files
+    expect_true("Noise Data" %in% session$input$updatedData)
+    expect_true("Noise Data" %in% session$input$updatedData_ext)
   })
-
-  # Clean up temporary files created during testing
-  unlink(temp_csv)
-  unlink("Pop Data.csv")
-  unlink("testfile.csv")
 })

@@ -137,7 +137,6 @@ shinyUI(navbarPage(
         # choose log
         uiOutput("log"),
 
-        actionButton("clear_btn", "Clear Environment"),
       ),
       mainPanel(
         "",
