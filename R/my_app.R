@@ -1,4 +1,264 @@
 
+suppressWarnings(
+  try(
+    rm("registerShinyDebugHook", envir = as.environment("tools:rstudio")),
+    silent = TRUE
+  )
+)
+
+
+# Set the maximum request size to 500MB
+options(shiny.maxRequestSize = 500 * 1024^2)
+
+
+library(shiny)
+
+# reactive object to hold upload population data
+pop_data <- reactiveVal(NULL)
+
+# reactive object to hold curve data
+curve_data <- reactiveVal(NULL)
+
+# reactive object to hold noise data
+noise_data <- reactiveVal(NULL)
+
+# reactive object to hold list of uploaded files
+uploaded_files <- reactiveValues(files = character(0))
+
+# reactive object to hold file name of uploaded data
+filename <- reactiveVal(NULL)
+
+# reactive object (data frame) for default noise values
+noise_values <- reactiveValues(new_val = data.frame(
+  antigen = character(),
+  y_low = numeric(),
+  y_high = numeric(),
+  eps = numeric(),
+  nu = numeric(),
+  stringsAsFactors = FALSE
+))
+
+
+# file name ----
+filename <- reactiveVal(NULL)
+
+## data df
+data_df <- reactiveVal(NULL)
+
+# get uploaded column names ----
+column_names <- reactive({
+  # ensure data is uploaded
+  req(input$upload)
+
+  # load file
+  null_file <- is.null(input$upload$datapath)
+
+  if (null_file) {
+    return(NULL)
+  }
+
+  # read file
+  df <- vroom::vroom(input$upload$datapath, delim = ",")
+
+  # get column names
+  df %>% names()
+})
+
+
+
+shiny_serocalculator_app <- function(...) {
+
+# Set up the application ui
+ui <- shinyUI(navbarPage(
+  title = "Serocalculator",
+
+  useShinyjs(),  # Initialize shinyjs
+
+  # Add the busy spinner
+  header = add_busy_spinner(
+    spin = "atom",
+    position = "top-right",
+    margins = c(200, 800),
+    timeout = 100
+  ),
+  theme = shinythemes::shinytheme("united"),
+
+  # project summary
+  tabPanel(
+    "Summary",
+    h2("Serocalculator"),
+    htmlOutput("output_html"),
+  ),
+
+  # define the tabs to be used in the app ----------------------------------------
+  tabPanel(
+    "Import Data",
+    sidebarLayout(
+      position = "left",
+      sidebarPanel(
+        width = 3,
+        h4("Data Upload"),
+        helpText("Use this section to upload the different types of data"),
+
+
+        #------------------ LOAD DATA ----------------------
+        # select data type
+        selectInput("file_name",
+                    "Choose Data:",
+                    choices = c("Pop Data",
+                                "Curve Data",
+                                "Noise Data"),
+                    selected = "Pop Data"
+        ),
+
+        # how to upload pop_data ("OSF" | "File Upload")
+        uiOutput("pop_type"),
+
+        # OSF or File Upload
+        uiOutput("pop_upload_type"),
+
+        uiOutput("average"),
+        uiOutput("antigen"),
+        uiOutput("y_low"),
+        uiOutput("y_high"),
+        uiOutput("eps"),
+        uiOutput("nu"),
+        uiOutput("provide_averages"),
+
+        # provide age name
+        uiOutput("select_age"),
+
+        # select age
+        uiOutput("age_selected"),
+
+        # provide value column
+        uiOutput("select_value"),
+
+        # provide index column name
+        uiOutput("select_id"),
+
+        # progress bar
+        uiOutput("progress_bar"),
+
+        # select input widget for column selection
+        selectInput("updatedData",
+                    "Uploaded Data",
+                    choices = NULL),
+
+        actionButton("clear_btn", "Clear Environment"),
+        textOutput("status")
+      ),
+      mainPanel(
+        "",
+        tabsetPanel(
+          tabPanel("Data Requirements",
+                   htmlOutput("data_requirement")),
+          tabPanel(
+            "File Preview",
+            #DTOutput("head"),
+            tableOutput("head"),
+            DTOutput("other_head")
+          ),
+        )
+      )
+    )
+  ),
+
+  # ----------------------------------------- INSPECT DATA ----------------------------------------------
+  tabPanel(
+    "Inspect Data",
+    sidebarLayout(
+      position = "left",
+      sidebarPanel(
+        width = 3,
+        h4("Available Data"),
+
+        # description
+        helpText("This section allows the selection of uploaded data and visualize."),
+
+        # select input widget for column selection
+        selectInput("updatedData_ext", "Available Data to Choose", choices = NULL),
+
+        # choose type of visualization
+        uiOutput("choose_visualization"),
+
+        # choose 'yes' or 'no' for stratification
+        uiOutput("stratification_radio"),
+
+        # choose visualization stratification
+        uiOutput("stratification"),
+
+        # choose log
+        uiOutput("log"),
+
+      ),
+      mainPanel(
+        "",
+        tabsetPanel(
+          tabPanel("Numeric Summary", uiOutput("numeric_summary")),
+          tabPanel("Visualize",
+                   plotOutput("visualize"))
+        )
+      )
+    )
+  ),
+
+  # ----------------------------------------- ESTIMATE SEROINCIDENCE ------------------------------------
+  tabPanel(
+    "Estimate Seroincidence",
+    sidebarLayout(
+      position = "left",
+      sidebarPanel(
+        width = 3,
+
+        # title
+        h4("Estimation Filters"),
+
+        # description
+        helpText("Provide the parameters for filtering estimation of seroincidence"),
+
+        # choose antigen_iso type
+        uiOutput("antigen_type"),
+
+        # choose stratification type
+        radioButtons(
+          inputId = "stratification_type",
+          label = "Choose Stratification Type:",
+          choices = list("Overall" = "overall", "Stratified" = "stratified"),
+          selected = "overall"
+        ),
+
+
+        # choose stratification column
+        uiOutput("stratify_by"),
+
+        textOutput("status1"),
+
+        # display computation results
+        textOutput("result")
+      ),
+      mainPanel(
+        "",
+        tabsetPanel(
+          tabPanel("Estimate Seroincidence",
+                   tableOutput("est_incidence")))
+      )
+    )
+  ),
+
+
+
+  # --------------------------------------- REPORT -------------------------------------------------------
+  navbarMenu(
+    "Report",
+    tabPanel("Rmd", DT::dataTableOutput("table"),
+             icon = icon("file-code")
+    ),
+    tabPanel("R", icon = icon("code"))
+  )
+))
+
+
 server <- function(input, output, session) {
 
   # reactive object to hold uploaded data
@@ -365,14 +625,14 @@ server <- function(input, output, session) {
     output$choose_visualization <- renderUI({
       if (input$updatedData_ext == "Pop Data") {
         selectInput("type_visualization",
-          "Choose Type of Visualization",
-          choices = c("Density", "Age Scatter")
+                    "Choose Type of Visualization",
+                    choices = c("Density", "Age Scatter")
         )
       } else if (input$updatedData_ext == "Curve Data") {
         selectInput("type_visualization",
-          "Choose Type of Visualization",
-          choices = c("Distribution", "Decay"),
-          selected = "Distribution"
+                    "Choose Type of Visualization",
+                    choices = c("Distribution", "Decay"),
+                    selected = "Distribution"
         )
       }
     })
@@ -412,8 +672,8 @@ server <- function(input, output, session) {
       # dynamically create drop down list of column name
       if (input$updatedData_ext == "Pop Data") {
         checkboxInput("check_stratify",
-          "Stratify",
-          value = TRUE
+                      "Stratify",
+                      value = TRUE
         )
       }
     })
@@ -521,42 +781,42 @@ server <- function(input, output, session) {
                  input$curve_upload,
                  input$pop_upload), {
 
-    req(input$updatedData_ext)
+                   req(input$updatedData_ext)
 
-    output$numeric_summary <- renderTable({
-      if(input$updatedData_ext == "Pop Data"){
+                   output$numeric_summary <- renderTable({
+                     if(input$updatedData_ext == "Pop Data"){
 
-        pop_df <- read_data_file(input$pop_upload)
-        pop_data(pop_df)
+                       pop_df <- read_data_file(input$pop_upload)
+                       pop_data(pop_df)
 
-        pop_data() %>%
-          head() %>%
-          skimr::skim() %>%
-          yank("numeric")
+                       pop_data() %>%
+                         head() %>%
+                         skimr::skim() %>%
+                         yank("numeric")
 
-      } else if (input$updatedData_ext == "Noise Data"){
+                     } else if (input$updatedData_ext == "Noise Data"){
 
-        noise_df <- read_data_file(input$noise_upload)
-        noise_data(noise_df)
+                       noise_df <- read_data_file(input$noise_upload)
+                       noise_data(noise_df)
 
-        noise_data() %>%
-          head() %>%
-          skimr::skim() %>%
-          yank("numeric")
+                       noise_data() %>%
+                         head() %>%
+                         skimr::skim() %>%
+                         yank("numeric")
 
-      } else if (input$updatedData_ext == "Curve Data"){
+                     } else if (input$updatedData_ext == "Curve Data"){
 
-        curve_df <- read_data_file(input$curve_upload)
-        curve_data(curve_df)
+                       curve_df <- read_data_file(input$curve_upload)
+                       curve_data(curve_df)
 
-        curve_data() %>%
-          head() %>%
-          skimr::skim() %>%
-          yank("numeric")
+                       curve_data() %>%
+                         head() %>%
+                         skimr::skim() %>%
+                         yank("numeric")
 
-      }
-    })
-  })
+                     }
+                   })
+                 })
 
   # stratify
   observeEvent(c(
@@ -575,10 +835,10 @@ server <- function(input, output, session) {
 
       if (input$stratification_choice == "yes" && input$updatedData_ext == "Pop Data") {
         selectInput("choosen_stratification",
-          "Stratify By:",
-          #df %>% names(),
-          pop_data() %>% names(),
-          selected = "Country"
+                    "Stratify By:",
+                    #df %>% names(),
+                    pop_data() %>% names(),
+                    selected = "Country"
         )
       }
     })
@@ -694,11 +954,11 @@ server <- function(input, output, session) {
     if (input$file_name == "Noise Data") {
       output$average <- renderUI({
         radioButtons("noise_choice", "Do you want to use average values:",
-          choices = c(
-            "Yes" = "yes",
-            "No" = "no"
-          ),
-          selected = "no"
+                     choices = c(
+                       "Yes" = "yes",
+                       "No" = "no"
+                     ),
+                     selected = "no"
         )
       })
     } else if (input$file_name == "Curve Data") {
@@ -967,9 +1227,9 @@ server <- function(input, output, session) {
         # Conditionally display the selectInput based on available columns
         if (any(is.element(cols, c("age")))) {
           selectInput("stratify_by",
-            "Stratify By:",
-            choices = cols,
-            multiple = TRUE
+                      "Stratify By:",
+                      choices = cols,
+                      multiple = TRUE
           )
         } else {
           h4("No applicable columns for stratification found.")
@@ -1060,3 +1320,6 @@ server <- function(input, output, session) {
   })
 }
 
+
+shinyApp(ui, server)
+}

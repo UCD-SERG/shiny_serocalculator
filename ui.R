@@ -1,8 +1,3 @@
-library(shiny)
-library(shinythemes)
-library(shinybusy)
-library(shinyjs)
-library(DT)
 
 suppressWarnings(
   try(

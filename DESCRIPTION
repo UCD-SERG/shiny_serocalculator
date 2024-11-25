@@ -1,4 +1,4 @@
-Title: Serocalculator Shiny App
+Package: shiny.serocalculator
 Version: 0.0.0.9000
 Authors@R: c(
   person(given = "Peter", family = "Teunis", email = "p.teunis@emory.edu", role = c("aut", "cph"), comment = "Author of the method and original code."),
@@ -28,3 +28,4 @@ Imports:
   shinythemes,
   shiny,
   shinybusy
+  shinyjs
