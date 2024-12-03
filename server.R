@@ -1,7 +1,54 @@
+# load required packages
+library(ggplot2)
+library(ggthemes)
+library(readxl)
+library(skimr)
+library(stringr)
+library(serocalculator)
+library(shinyWidgets)
+library(tidyr)
+library(scales)
+library(ggthemes)
+library(DT)
+library(dplyr)
+library(shinyjs)
+library(httr)
+library(shinybusy)
 
 server <- function(input, output, session) {
+  # reactive object to hold upload population data
+  pop_data <- reactiveVal(NULL)
 
-  # reactive object to hold uploaded data
+  # reactive object to hold curve data
+  curve_data <- reactiveVal(NULL)
+
+  # reactive object to hold noise data
+  noise_data <- reactiveVal(NULL)
+
+  # reactive object to hold list of uploaded files
+  uploaded_files <- reactiveValues(files = character(0))
+
+  # reactive object to hold file name of uploaded data
+  filename <- reactiveVal(NULL)
+
+  # reactive object (data frame) for default noise values
+  noise_values <- reactiveValues(new_val = data.frame(
+    antigen = character(),
+    y_low = numeric(),
+    y_high = numeric(),
+    eps = numeric(),
+    nu = numeric(),
+    stringsAsFactors = FALSE
+  ))
+
+
+  ## file name ----
+  filename <- reactiveVal(NULL)
+
+  ## data df
+  data_df <- reactiveVal(NULL)
+
+  # Reactive object to hold uploaded data
   data <- reactive({
     req(input$upload)
     ext <- tools::file_ext(input$upload$name)
@@ -14,17 +61,46 @@ server <- function(input, output, session) {
     )
   })
 
-  # Assign class to uploaded data
-  uploadedDF <- assign_class_to_data(data = data(),file_name = input$file_name)
 
-  # Update the appropriate reactive value based on the class of uploadedDF
-  if ("pop_data" %in% class(uploadedDF)) {
-    pop_data(uploadedDF)
-  } else if ("curve_data" %in% class(uploadedDF)) {
-    curve_data(uploadedDF)
-  } else if ("noise_data" %in% class(uploadedDF)) {
-    noise_data(uploadedDF)
-  }
+  # Observe the upload and assign data to the correct reactiveVal
+  observeEvent(data(), {
+    df <- data()
+
+    if (is.null(df)) {
+      return()
+    }
+
+    if (input$file_name == "Pop Data") {
+      class(df) <- c("pop_data", class(df))
+      pop_data(df)
+    } else if (input$file_name == "Curve Data") {
+      class(df) <- c("curve_data", class(df))
+      curve_data(df)
+    } else if (input$file_name == "Noise Data") {
+      class(df) <- c("noise_data", class(df))
+      noise_data(df)
+    }
+  })
+
+
+  ## uploaded column names ----
+  column_names <- reactive({
+    # ensure data is uploaded
+    req(input$upload)
+
+    # load file
+    null_file <- is.null(input$upload$datapath)
+
+    if (null_file) {
+      return(NULL)
+    }
+
+    # read file
+    df <- vroom::vroom(input$upload$datapath, delim = ",")
+
+    # get column names
+    df %>% names()
+  })
 
   # Select how to get pop data
   observeEvent(input$file_name, {
@@ -40,8 +116,7 @@ server <- function(input, output, session) {
         )
       })
     } else {
-      # Ensures UI element is cleared for non "Pop Data" file names
-      output$pop_type <- renderUI(NULL)
+      output$pop_type <- renderUI(NULL) # Ensures UI element is cleared for non "Pop Data" file names
     }
   })
 
@@ -94,6 +169,30 @@ server <- function(input, output, session) {
     }
   })
 
+
+  # PROCESSING FUNCTIONS ----
+
+  # load uploaded data
+  get_uploaded_data <- function(file_input) {
+    # split
+    name_of_file <- file_input %>%
+      strsplit(split = " | ")
+
+    # get file name
+    extracted_file_name <- name_of_file[[1]][6]
+
+    # file name sans extension
+    file_sans_ext <- strsplit(
+      x = extracted_file_name,
+      split = "\\."
+    )[[1]][1]
+
+    # read data
+    available_data <- read.csv(paste0(file_sans_ext, ".csv"))
+
+    return(data.frame(available_data))
+  }
+
   #  PROCESS INPUTS ----
 
   observeEvent(c(
@@ -136,6 +235,11 @@ server <- function(input, output, session) {
       "Pop Data"
     )
 
+    # # Append to the list of uploaded files
+    # uploaded_files$files <- c(
+    #   uploaded_files$files,
+    #   "Pop Data"
+    # )
 
 
     # Update dropdown lists for uploaded files
@@ -161,7 +265,6 @@ server <- function(input, output, session) {
     # read data
     get_uploaded_data <- read.csv(paste0(file_sans_ext, ".csv"))
   })
-
 
 
   # # display data when the button is clicked ----
@@ -237,8 +340,19 @@ server <- function(input, output, session) {
   # })
   #
 
+
   # Handle URL-based download ----
   observeEvent(input$pop_data_url_btn, {
+    # Function to check if the URL is working
+    check_url <- function(url) {
+      response <- tryCatch(
+        GET(url),
+        error = function(e) {
+          return(NULL)
+        }
+      )
+      return(!is.null(response) && status_code(response) == 200)
+    }
 
     # Check if the URL is valid
     if (check_url(input$pop_data_url)) {
@@ -268,6 +382,25 @@ server <- function(input, output, session) {
       showNotification("URL provided is not valid", type = "error")
     }
   })
+
+
+
+
+  # Function to determine file type and read the file
+  read_data_file <- function(file) {
+    req(file) # Ensure the file is not NULL
+
+    # Get the file extension
+    file_ext <- tools::file_ext(file$name)
+
+    if (file_ext == "csv") {
+      return(read.csv(file$datapath))
+    } else if (file_ext == "rds") {
+      return(readRDS(file$datapath))
+    } else {
+      stop("Unsupported file type. Please upload a .csv or .rds file.")
+    }
+  }
 
   # Observe the file upload for Curve Data
   observeEvent(input$curve_upload, {
@@ -346,7 +479,7 @@ server <- function(input, output, session) {
         df <- read_data_file(input$pop_upload)
 
         # Update the reactiveVal with the new pop data
-        pop_data(df)
+        pop_data(df) # Assuming pop_data is a reactiveVal
 
         head(pop_data()) # Display the head of the pop data
       }
@@ -365,14 +498,14 @@ server <- function(input, output, session) {
     output$choose_visualization <- renderUI({
       if (input$updatedData_ext == "Pop Data") {
         selectInput("type_visualization",
-          "Choose Type of Visualization",
-          choices = c("Density", "Age Scatter")
+                    "Choose Type of Visualization",
+                    choices = c("Density", "Age Scatter")
         )
       } else if (input$updatedData_ext == "Curve Data") {
         selectInput("type_visualization",
-          "Choose Type of Visualization",
-          choices = c("Distribution", "Decay"),
-          selected = "Distribution"
+                    "Choose Type of Visualization",
+                    choices = c("Distribution", "Decay"),
+                    selected = "Distribution"
         )
       }
     })
@@ -383,7 +516,17 @@ server <- function(input, output, session) {
     input$updatedData_ext,
     input$updatedData
   ), {
+    # ensure file is uploaded
+    # req(input$updatedData_ext)
+
     output$log <- renderUI({
+      # get uploaded data
+      # df <- data()
+
+      # column names
+      # cols <- df %>% names()
+
+      #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
 
       # dynamically create drop down list of column name
       if (input$updatedData_ext == "Pop Data") {
@@ -392,6 +535,13 @@ server <- function(input, output, session) {
     })
 
     output$stratification_radio <- renderUI({
+      # get uploaded data
+      # df <- data()
+
+      # column names
+      # cols <- df %>% names()
+
+      #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
 
       # dynamically create drop down list of column name
       if (input$updatedData_ext == "Pop Data") {
@@ -409,11 +559,19 @@ server <- function(input, output, session) {
     })
 
     output$stratify_option <- renderUI({
+      # get uploaded data
+      # df <- data()
+
+      # column names
+      # cols <- df %>% names()
+
+      #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
       # dynamically create drop down list of column name
       if (input$updatedData_ext == "Pop Data") {
         checkboxInput("check_stratify",
-          "Stratify",
-          value = TRUE
+                      "Stratify",
+                      value = TRUE
         )
       }
     })
@@ -514,6 +672,12 @@ server <- function(input, output, session) {
     })
   })
 
+  ## clear environment
+  observeEvent(input$clear_btn, {
+    rm(list = ls(envir = .GlobalEnv), envir = .GlobalEnv)  # Clear global environment
+    gc()  # Optional: trigger garbage collection to free memory
+    output$status <- renderText("Environment cleared!")
+  })
 
   ## file numeric summary ----
   observeEvent(c(input$updatedData_ext,
@@ -521,42 +685,44 @@ server <- function(input, output, session) {
                  input$curve_upload,
                  input$pop_upload), {
 
-    req(input$updatedData_ext)
+                   req(input$updatedData_ext)
 
-    output$numeric_summary <- renderTable({
-      if(input$updatedData_ext == "Pop Data"){
+                   #g <- get_uploaded_data(input$updatedData_ext)
 
-        pop_df <- read_data_file(input$pop_upload)
-        pop_data(pop_df)
+                   output$numeric_summary <- renderTable({
+                     if(input$updatedData_ext == "Pop Data"){
 
-        pop_data() %>%
-          head() %>%
-          skimr::skim() %>%
-          yank("numeric")
+                       pop_df <- read_data_file(input$pop_upload)
+                       pop_data(pop_df)
 
-      } else if (input$updatedData_ext == "Noise Data"){
+                       pop_data() %>%
+                         head() %>%
+                         skimr::skim() %>%
+                         yank("numeric")
 
-        noise_df <- read_data_file(input$noise_upload)
-        noise_data(noise_df)
+                     } else if (input$updatedData_ext == "Noise Data"){
 
-        noise_data() %>%
-          head() %>%
-          skimr::skim() %>%
-          yank("numeric")
+                       noise_df <- read_data_file(input$noise_upload)
+                       noise_data(noise_df)
 
-      } else if (input$updatedData_ext == "Curve Data"){
+                       noise_data() %>%
+                         head() %>%
+                         skimr::skim() %>%
+                         yank("numeric")
 
-        curve_df <- read_data_file(input$curve_upload)
-        curve_data(curve_df)
+                     } else if (input$updatedData_ext == "Curve Data"){
 
-        curve_data() %>%
-          head() %>%
-          skimr::skim() %>%
-          yank("numeric")
+                       curve_df <- read_data_file(input$curve_upload)
+                       curve_data(curve_df)
 
-      }
-    })
-  })
+                       curve_data() %>%
+                         head() %>%
+                         skimr::skim() %>%
+                         yank("numeric")
+
+                     }
+                   })
+                 })
 
   # stratify
   observeEvent(c(
@@ -573,12 +739,14 @@ server <- function(input, output, session) {
       # column names
       cols <- df %>% names()
 
+      #file_type <- strsplit(x = input$updatedData_ext, split = " | ")[[1]][1]
+
+
       if (input$stratification_choice == "yes" && input$updatedData_ext == "Pop Data") {
         selectInput("choosen_stratification",
-          "Stratify By:",
-          #df %>% names(),
-          pop_data() %>% names(),
-          selected = "Country"
+                    "Stratify By:",
+                    df %>% names(),
+                    selected = "Country"
         )
       }
     })
@@ -594,6 +762,11 @@ server <- function(input, output, session) {
     input$curve_upload,
     input$pop_data
   ), {
+
+    # req(input$check_log)
+    # req(input$type_visualization)
+    # req(input$choosen_stratification)
+    # req(input$stratification_choice)
 
     ## visualization
     output$visualize <- renderPlot({
@@ -678,6 +851,9 @@ server <- function(input, output, session) {
     })
   })
 
+
+
+
   observeEvent(input$stratify_by, {
     # Show busy spinner by simulating a long computation
     Sys.sleep(3)
@@ -694,11 +870,11 @@ server <- function(input, output, session) {
     if (input$file_name == "Noise Data") {
       output$average <- renderUI({
         radioButtons("noise_choice", "Do you want to use average values:",
-          choices = c(
-            "Yes" = "yes",
-            "No" = "no"
-          ),
-          selected = "no"
+                     choices = c(
+                       "Yes" = "yes",
+                       "No" = "no"
+                     ),
+                     selected = "no"
         )
       })
     } else if (input$file_name == "Curve Data") {
@@ -967,9 +1143,9 @@ server <- function(input, output, session) {
         # Conditionally display the selectInput based on available columns
         if (any(is.element(cols, c("age")))) {
           selectInput("stratify_by",
-            "Stratify By:",
-            choices = cols,
-            multiple = TRUE
+                      "Stratify By:",
+                      choices = cols,
+                      multiple = TRUE
           )
         } else {
           h4("No applicable columns for stratification found.")
@@ -986,6 +1162,7 @@ server <- function(input, output, session) {
     input$pop_upload,
     input$noise_upload
   ), {
+    #req(input$stratify_by)
     req(input$stratification_type)
 
     pop_df <- read_data_file(input$pop_upload)
@@ -1020,43 +1197,4 @@ server <- function(input, output, session) {
       summary(est)
     })
   })
-
-  ## clear environment
-  observeEvent(input$clear_btn, {
-    req(input$clear_btn)
-    #runjs("location.reload();")  # JavaScript to reload the page
-
-    # set reactive objects to NULL
-    pop_data(NULL)
-    curve_data(NULL)
-    noise_data(NULL)
-
-    # clear enviroment
-    rm(list = ls())
-
-    #clear dropdown files
-    uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
-    uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
-    uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
-
-    updateSelectInput(session, "selectedData", choices = uploaded_files$files)
-    updateSelectInput(session, "updatedData", choices = uploaded_files$files)
-    updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
-
-
-
-    # clear outputs
-    output$est_incidence <- renderTable({ NULL})
-    output$stratify_by <- renderUI({NULL})
-    output$antigen_type <- renderUI({NULL})
-    output$visualize <- renderPlot({NULL})
-    output$stratification <- renderUI({NULL})
-    output$stratification <- renderUI({NULL})
-    output$other_head <- renderTable({NULL})
-    output$head <- renderTable({NULL})
-    output$numeric_summary <- renderTable({NULL})
-
-
-  })
 }
-
