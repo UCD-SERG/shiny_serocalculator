@@ -1,11 +1,6 @@
 
-library(testthat)
-library(httr)
-
-source("functions/url.R")
-
 test_that("check_url returns TRUE for a valid URL", {
-  expect_true(check_url("https://www.example.com"))
+  expect_true(check_url("https://www.facebook.com/"))
 })
 
 test_that("check_url returns FALSE for an invalid URL", {

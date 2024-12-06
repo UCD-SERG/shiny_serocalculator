@@ -1,6 +1,4 @@
 
-source("libraries/load_libraries.R")
-
 # Function to determine file type and read the file
 read_data_file <- function(file) {
   req(file) # Ensure the file is not NULL

@@ -1,6 +1,8 @@
-Title: Serocalculator Shiny App
+Package: shiny.serocalculator
+Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
-Authors@R: c(
+Authors@R: 
+    c(
   person(given = "Peter", family = "Teunis", email = "p.teunis@emory.edu", role = c("aut", "cph"), comment = "Author of the method and original code."),
   person(given = "Kristina", family = "Lai", email = "kwlai@ucdavis.edu", role = c("aut", "cre")), 
   person(given = "Chris", family = "Orwa", role = "aut"), 
@@ -13,7 +15,7 @@ Depends: R (>= 4.1.0)
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.0.0
+RoxygenNote: 7.3.2
 Imports:
   ggthemes,
   readxl,
@@ -27,4 +29,8 @@ Imports:
   dplyr,
   shinythemes,
   shiny,
-  shinybusy
+  shinybusy,
+  shinyjs,
+  testthat,
+  httr
+

@@ -9,7 +9,7 @@ test_that("Column names are extracted correctly from uploaded file", {
   write.csv(test_df, temp_csv, row.names = FALSE)
 
   # Run the test on the server
-  testServer(server, {
+  testServer(shinyApp, {
     # Simulate the file upload
     session$setInputs(upload = list(name = "testfile.csv", datapath = temp_csv))
 
