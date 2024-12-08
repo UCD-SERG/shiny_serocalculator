@@ -1,5 +1,5 @@
 Package: shiny.serocalculator
-Title: What the Package Does (One Line, Title Case)
+Title: estimates of the frequency with which seroconversions
 Version: 0.0.0.9000
 Authors@R: 
     c(
@@ -30,7 +30,10 @@ Imports:
   shinythemes,
   shiny,
   shinybusy,
+  shinytest2,
   shinyjs,
   testthat,
-  httr
-
+  httr,
+  httptest,
+  vroom,
+  dplyr

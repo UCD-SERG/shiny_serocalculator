@@ -1,9 +1,4 @@
 
-library(shinytest2)
-library(testthat)
-
-source("functions/read_file.R")
-
 test_that("read_data_file reads CSV and RDS files correctly and errors on unsupported types", {
   # Create a test data frame to use for writing files
   test_df <- data.frame(a = 1:3, b = 4:6)
@@ -15,7 +10,7 @@ test_that("read_data_file reads CSV and RDS files correctly and errors on unsupp
   csv_file <- list(name = "testfile.csv", datapath = temp_csv)
 
   # Check that the CSV file is read correctly
-  result_csv <- read_data_file(csv_file)
+  result_csv <- shiny.serocalculator:::read_data_file(csv_file)
   expect_equal(result_csv, test_df)
 
   # Clean up CSV temporary file
@@ -28,7 +23,7 @@ test_that("read_data_file reads CSV and RDS files correctly and errors on unsupp
   rds_file <- list(name = "testfile.rds", datapath = temp_rds)
 
   # Check that the RDS file is read correctly
-  result_rds <- read_data_file(rds_file)
+  result_rds <- shiny.serocalculator:::read_data_file(rds_file)
   expect_equal(result_rds, test_df)
 
   # Clean up RDS temporary file
@@ -41,7 +36,7 @@ test_that("read_data_file reads CSV and RDS files correctly and errors on unsupp
   txt_file <- list(name = "testfile.txt", datapath = temp_txt)
 
   # Check that an unsupported file type triggers an error
-  expect_error(read_data_file(txt_file), "Unsupported file type. Please upload a .csv or .rds file.")
+  expect_error(shiny.serocalculator:::read_data_file(txt_file), "Unsupported file type. Please upload a .csv or .rds file.")
 
   # Clean up TXT temporary file
   unlink(temp_txt)

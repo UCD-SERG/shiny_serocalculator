@@ -39,7 +39,7 @@ import_data_ui <- function(id) {
           tabPanel(
             "File Preview",
             tableOutput(ns("head")),
-            DTOutput(ns("other_head"))
+            DT::DTOutput(ns("other_head"))
           )
         )
       )
