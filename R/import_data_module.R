@@ -17,6 +17,7 @@ import_data_ui <- function(id) {
         uiOutput(ns("pop_type")),
         uiOutput(ns("pop_upload_type")),
         uiOutput(ns("curve_upload")),
+        uiOutput(ns("noise_upload")),
         uiOutput(ns("average")),
         uiOutput(ns("antigen")),
         uiOutput(ns("y_low")),
@@ -195,6 +196,20 @@ import_data_server <- function(id,
       }
     })
 
+    output$noise_upload <- renderUI({
+      req(input$file_name)
+
+      if(input$file_name == "Curve Data"){
+        fileInput(
+          ns("noise_upload"),
+          "Choose File from Computer (.csv, .rds)",
+          buttonLabel = "Upload...",
+          multiple = TRUE,
+          accept = c(".csv", ".rds")
+        )
+      }
+    })
+
     ## ------------------ NOISE DATA -------------------------------------------
 
 
@@ -212,6 +227,7 @@ import_data_server <- function(id,
                        selected = "no"
           )
         })
+
       } else if (input$file_name == "Curve Data") {
         output$average <- renderUI({
           NULL
@@ -312,19 +328,30 @@ import_data_server <- function(id,
       updateSelectInput(session, "updatedData", choices = uploaded_files$files)
     })
 
+    # Observe the file upload for Curve Data
     observeEvent(input$curve_upload, {
-      req(input$curve_upload)
+      req(input$curve_upload) # Ensure that a file is uploaded
 
+      # Update the uploaded_files with new files
       uploaded_files$files <- c(uploaded_files$files, "Curve Data")
+
+      # Update the select input with the new list of uploaded files
       updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
     })
 
+    # Observe the file upload for Noise Data
     observeEvent(input$noise_upload, {
-      req(input$noise_upload)
+      req(input$noise_upload) # Ensure that a file is uploaded
 
+      # Update the uploaded_files with new files
       uploaded_files$files <- c(uploaded_files$files, "Noise Data")
+
+      # Update the select input with the new list of uploaded files
       updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
     })
+
 
     observeEvent(input$pop_data_url_btn, {
       req(input$pop_data_url)
@@ -362,7 +389,26 @@ import_data_server <- function(id,
       pop_data(NULL)
       curve_data(NULL)
       noise_data(NULL)
-      updateSelectInput(session, "updatedData", choices = NULL)
+
+      #clear dropdown files
+      uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
+
+      updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
+
+      # clear outputs
+      output$est_incidence <- renderTable({ NULL})
+      output$stratify_by <- renderUI({NULL})
+      output$antigen_type <- renderUI({NULL})
+      output$visualize <- renderPlot({NULL})
+      output$stratification <- renderUI({NULL})
+      output$stratification <- renderUI({NULL})
+      output$other_head <- renderTable({NULL})
+      output$head <- renderTable({NULL})
+      output$numeric_summary <- renderTable({NULL})
     })
   })
 }

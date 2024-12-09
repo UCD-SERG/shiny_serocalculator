@@ -51,12 +51,15 @@ server <- function(input, output, session) {
     noise_data = noise_data
   )
 
+  # inspect data
+  inspect_data_server("inspect_data", reactiveData)
 
-  # # Call the estimate_seroincidence_server module
-  # estimate_seroincidence_server(
-  #   id = "estimate_seroincidence",
-  #   pop_data = pop_data,
-  #   curve_data = curve_data,
-  #   noise_data = noise_data
-  # )
+
+  # Call the estimate_seroincidence_server module
+  estimate_seroincidence_server(
+    id = "estimate_seroincidence",
+    pop_data = pop_data,
+    curve_data = curve_data,
+    noise_data = noise_data
+  )
 }

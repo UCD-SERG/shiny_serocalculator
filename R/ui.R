@@ -17,12 +17,16 @@ ui <- shinyUI(
       timeout = 100
     ),
 
-    # Tab for project summary
+    # data summary tab
     summary_tab_ui("summary"),
 
     # Import data tab
     import_data_ui("import_data"),
 
+    # Inspect data tab
+    inspect_data_ui("inspect_data"),
+
+    # Inspect incidence tab
     estimate_seroincidence_ui("estimate_seroincidence"),
 
     report_ui("report")
