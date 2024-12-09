@@ -1,5 +1,8 @@
 Package: shiny.serocalculator
+<<<<<<< HEAD
 Title: estimates of the frequency with which seroconversions
+=======
+>>>>>>> c3ebafc87afb968418ac5b921ffca9d0f63b9bae
 Version: 0.0.0.9000
 Authors@R: 
     c(

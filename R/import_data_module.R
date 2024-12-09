@@ -52,7 +52,8 @@ import_data_server <- function(id,
                                uploaded_files,
                                pop_data,
                                curve_data,
-                               noise_data) {
+                               noise_data)
+  {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -65,7 +66,6 @@ import_data_server <- function(id,
     ), {
       # Ensure updatedData is available
       req(input$updatedData)
-
       output$head <- renderTable({
         if (input$updatedData == "Noise Data") {
           # Check if a file has been uploaded for Noise Data
@@ -172,7 +172,7 @@ import_data_server <- function(id,
             multiple = TRUE,
             accept = c(".csv", ".rds")
           )
-        } else{
+        } else {
           tagList(
             textInput(ns("pop_data_url"), "Provide OSF URL:"),
             actionButton(ns("pop_data_url_btn"), "Download Data")
@@ -305,12 +305,9 @@ import_data_server <- function(id,
       output$result <- renderText("Task completed")
     })
 
-
-
     # Handle file uploads and assign data
     observeEvent(input$pop_upload, {
       req(input$pop_upload)
-
       uploaded_files$files <- c(uploaded_files$files, "Pop Data")
       updateSelectInput(session, "updatedData", choices = uploaded_files$files)
     })
