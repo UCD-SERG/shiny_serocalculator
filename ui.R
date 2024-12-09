@@ -22,7 +22,7 @@ shinyUI(navbarPage(
     margins = c(200, 800),
     timeout = 100
   ),
-  theme = shinythemes::shinytheme("united"),
+  theme = shinythemes::shinytheme("sandstone"),
 
   # project summary
   tabPanel(

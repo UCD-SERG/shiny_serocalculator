@@ -869,7 +869,7 @@ server <- function(input, output, session) {
 
     if (input$file_name == "Noise Data") {
       output$average <- renderUI({
-        radioButtons("noise_choice", "Do you want to use average values:",
+        radioButtons("noise_choice", "Do you want to manually enter values:",
                      choices = c(
                        "Yes" = "yes",
                        "No" = "no"
@@ -973,7 +973,7 @@ server <- function(input, output, session) {
     output$provide_averages <- renderUI({
       if (input$file_name == "Noise Data") {
         if (input$noise_choice == "yes") {
-          actionButton("set_average", "Set Averages")
+          actionButton("set_average", "Set Values")
         }
       }
     })
@@ -986,12 +986,20 @@ server <- function(input, output, session) {
   output$output_html <- renderUI({
     HTML("<p>The <strong>serocalculator </strong>R package provides a rapid and computationally simple method for calculating seroconversion rates,
          as originally published in <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.3592> Simonsen (2009) </a></cite> and <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2012) </a></cite>,
-         and further developed in subsequent publications by <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436514000371?via%3Dihub>de Graaf (2014)</a></cite>,
-         <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436516300135?via%3Dihub>Teunis (2016)</a></cite>, and <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a>.</cite> </p>
+         and further developed in subsequent publications by
+         <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436514000371?via%3Dihub>de Graaf (2014)</a></cite>,
+         <cite><a href=https://www.sciencedirect.com/science/article/pii/S1755436516300135?via%3Dihub>Teunis (2016)</a></cite>,
+         <cite><a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a></cite>,
+         <cite><a href=https://www.thelancet.com/journals/lanmic/article/PIIS2666-5247(22)00114-8/fulltext> Aiemjoy (2022)</a></cite>,
+         <cite><a href=https://www.ajtmh.org/view/journals/tpmd/111/2/article-p267.xml> Aiemjoy (2024)</a>.</cite></p>
 
          <p>In short, longitudinal seroresponses from confirmed cases with a known symptom onset date are
-         assumed to represent the time course of human serum antibodies against a specific pathogen. Therefore, by using these longitudinal
-         antibody dynamics with any cross–sectional sample of the same antibodies in a human population, an incidence estimate can be calculated.</p>
+         assumed to represent the time course of human serum antibodies against a specific pathogen.
+         While the exact time of infection is impossible to measure in an individual, antibody levels
+         measured in a cross–sectional population sample can be translated into an estimate of the frequency with which seroconversions
+         (infections) occur in the sampled population. So the presence of many high antibody concentrations indicates that many people in
+         the population likely experienced infection recently, while mostly low concentrations indicate a low frequency of infections in the
+         sampled population.</p>
 
          <p>Further details on the methodology can be found on the  <a href=https://ucd-serg.github.io/serocalculator/articles/serocalculator.html> main package website.  </a></p>
 
@@ -999,12 +1007,12 @@ server <- function(input, output, session) {
          Users should follow the steps to: </p>
 
 
-         <ul>
-            <li> Import the required datasets</li>
+         <ol>
+            <li> Import the required datasets </li>
             <li> Inspect their data</li>
             <li> Estimate seroincidence</li>
             <li> Prepare a report (optional)</li>
-        </ul> </p>
+        </ol> </p>
          <p>Required datasets:
          <ul>
             <li> Cross-sectional population-based dataset with age and quantitative antibody results</li>
@@ -1015,12 +1023,28 @@ server <- function(input, output, session) {
   })
 
   output$data_requirement <- renderText({
-    HTML("<p>Required datasets:
+    HTML("<p> <strong> Required datasets </strong>
+
+    The following data is required to perform the analyis the analysis. The data sets can be uploaded from your personal computer in .csv or .rds format,
+    or linked from our OSF repositories (<a href=https://osf.io/ne8pc/>https://osf.io/ne8pc/</a>). The Noise Data can be uploaded, linked or entered manually.
 
         <ul>
           <li> <strong>Cross-sectional Population Data (Pop Data)</strong>
                   <p>A dataset with one row per sample and columns for antigen isotype, quantitative antibody results, and age in years. Additional columns and variables can be included for stratification.</p>
-          <li> <strong>Noise Data</strong>
+
+          <li><strong>Antibody Decay Curve Data (Curve Data) </strong></li>
+          <p>A data set containing antibody decay curve parameters fit using a two-phase within-host
+          Bayesian hierarchical framework obtaining predictive posterior samples using Markov chain Monte Carlo sampling.
+          Note that variable names <u>must</u> follow these guidelines. For more information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a></p>
+            <ul>
+              <li>y0: baseline antibody level</li>
+              <li>y1: antibody peak level </li>
+              <li>t1: time from symptom onset to peak antibody response </li>
+              <li>alpha: antibody decay rate (1/days for the current longitudinal parameter sets)</li>
+              <li>r: shape factor of antibody decay</li>
+            </ul>
+        </p>
+           <li> <strong>Noise Data</strong>
                   <p>A dataset containing the following variables, specifying noise parameters for each antigen isotype.
                   Note that variable names <u>must</u> follow these guidelines. For more information see <a hfref=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a>.
                   <ul>
@@ -1030,17 +1054,6 @@ server <- function(input, output, session) {
                     <li>y.high: Upper limit of detection of the antibody assay</li>
                     <li>eps: measurement noise</li>
                   </ul></p>
-          <li><strong>Antibody Decay Curve Data</strong></li>
-          <p>A data set containing antibody decay curve parameters fit using a Bayesian hierarchical framework obtaining predictive posterior samples using Markov chain Monte Carlo sampling. Note that variable names <u>must</u> follow these guidelines. For more information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a></p>
-            <ul>
-              <li>y0: baseline antibody level</li>
-              <li>y1: antibody peak level (ELISA units)</li>
-              <li>t1: duration of infection</li>
-              <li>alpha: antibody decay rate (1/days for the current longitudinal parameter sets)</li>
-              <li>r: shape factor of antibody decay</li>
-            </ul>
-        </ul>
-        </p>
          <p>File limit: <strong>500MB</strong></p>")
   })
 
