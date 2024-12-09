@@ -48,50 +48,120 @@ estimate_seroincidence_ui <- function(id) {
 }
 
 
-# Module Server
 estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) {
   moduleServer(id, function(input, output, session) {
 
-    # Render UI for antigen_type (you can customize based on your data)
-    output$antigen_type <- renderUI({
-      selectInput(session$ns("antigen_iso"),
-                  "Choose Antigen Isotype",
-                  choices = unique(pop_data()$antigen_iso),
-                  selected = unique(pop_data()$antigen_iso)[1])
+    # Default noise parameters
+    observe({
+      default_noise_params <- serocalculator::load_noise_params("https://osf.io/download/h64cw")
+      noise_data(default_noise_params)
     })
 
-    # Render UI for stratify_by (dynamic based on selected antigen_iso or other logic)
-    output$stratify_by <- renderUI({
-      if (input$stratification_type == "stratified") {
-        selectInput(session$ns("stratify_column"),
-                    "Choose Stratification Column",
-                    choices = colnames(pop_data()))
-      } else {
-        NULL  # Hide stratification column for overall estimation
-      }
+    # Load noise data from uploaded file
+    observeEvent(input$file_name, {
+      req(input$file_name == "Noise Data", input$upload)
+
+      noise_df <- read_data_file(input$upload)
+      noise_data(noise_df)
     })
 
-    # Placeholder for status text
-    output$status1 <- renderText({
-      paste("Selected Stratification Type:", input$stratification_type)
+    # Update noise data from UI input
+    observeEvent(input$set_average, {
+      new_row <- data.frame(
+        antigen = input$antigen,
+        y_low = as.numeric(input$y_low),
+        y_high = as.numeric(input$y_high),
+        eps = as.numeric(input$eps),
+        nu = as.numeric(input$nu),
+        stringsAsFactors = FALSE
+      )
+
+      updated_noise <- rbind(noise_data(), new_row)
+      noise_data(updated_noise)
     })
 
-    # Compute estimate incidence (this should use the actual logic based on your data)
-    output$est_incidence <- renderTable({
-      # Here you can add the logic for calculating the seroincidence estimate based on inputs
-      # For example:
-      if (input$stratification_type == "overall") {
-        result <- data.frame(Estimate = sum(pop_data()$value))  # Example estimate
-      } else {
-        # Logic for stratified estimation
-        result <- data.frame(Estimate = tapply(pop_data()$value, pop_data()$stratify_column, sum))
-      }
-      result
+    # Dynamic UI: Select antigen types
+    observeEvent(input$updatedData_ext, {
+      req(input$updatedData_ext == "Pop Data", pop_data())
+
+      output$antigen_type <- renderUI({
+        antigen_types <- unique(pop_data()$antigen_iso)
+
+        selectInput(
+          inputId = session$ns("output_antigen"),
+          label = "Choose Antigen Type:",
+          choices = antigen_types,
+          multiple = TRUE
+        )
+      })
     })
 
-    # Display computation result
-    output$result <- renderText({
-      paste("Seroincidence Estimation Completed.")
+    # Dynamic UI: Stratification options
+    observeEvent(input$stratification_type, {
+      req(input$stratification_type == "stratified", pop_data())
+
+      output$stratify_by <- renderUI({
+        # Select columns suitable for stratification
+        stratifiable_columns <- pop_data() %>%
+          select(where(~ !is.numeric(.))) %>%
+          select(-antigen_iso) %>%
+          names()
+
+        if (length(stratifiable_columns) > 0) {
+          selectInput(
+            inputId = session$ns("stratify_by"),
+            label = "Stratify By:",
+            choices = stratifiable_columns,
+            multiple = TRUE
+          )
+        } else {
+          h4("No applicable columns for stratification found.")
+        }
+      })
+    })
+
+    # estimate and render seroincidence results
+    observeEvent(c(
+      input$stratify_by, input$stratification_type,
+      input$output_antigen, input$curve_upload,
+      input$pop_upload, input$noise_upload
+    ), {
+      req(input$stratification_type, input$output_antigen)
+
+      # Load data files
+      pop_df <- read_data_file(input$pop_upload)
+      pop_data(pop_df)
+
+      noise_df <- read_data_file(input$noise_upload)
+      noise_data(noise_df)
+
+      curve_df <- read_data_file(input$curve_upload)
+      curve_data(curve_df)
+
+      # calculate seroincidence
+      output$est_incidence <- renderTable({
+        if (input$stratification_type == "stratified") {
+          est <- serocalculator::est.incidence.by(
+            pop_data = pop_data(),
+            curve_params = curve_data(),
+            noise_params = noise_data(),
+            strata = input$stratify_by,
+            antigen_isos = input$output_antigen,
+            verbose = TRUE
+          )
+        } else if (input$stratification_type == "overall") {
+          est <- serocalculator::est.incidence(
+            pop_data = pop_data(),
+            curve_params = curve_data(),
+            noise_params = noise_data(),
+            antigen_isos = input$output_antigen,
+            verbose = TRUE
+          )
+        }
+
+        summary(est)
+      })
     })
   })
 }
+

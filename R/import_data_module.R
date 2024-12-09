@@ -16,6 +16,8 @@ import_data_ui <- function(id) {
         ),
         uiOutput(ns("pop_type")),
         uiOutput(ns("pop_upload_type")),
+        uiOutput(ns("curve_upload")),
+        uiOutput(ns("noise_upload")),
         uiOutput(ns("average")),
         uiOutput(ns("antigen")),
         uiOutput(ns("y_low")),
@@ -39,7 +41,7 @@ import_data_ui <- function(id) {
           tabPanel(
             "File Preview",
             tableOutput(ns("head")),
-            DTOutput(ns("other_head"))
+            DT::DTOutput(ns("other_head"))
           )
         )
       )
@@ -51,7 +53,8 @@ import_data_server <- function(id,
                                uploaded_files,
                                pop_data,
                                curve_data,
-                               noise_data) {
+                               noise_data)
+  {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -62,8 +65,8 @@ import_data_server <- function(id,
       input$curve_upload,
       input$pop_upload
     ), {
-      req(input$updatedData) # Ensure updatedData is available
-
+      # Ensure updatedData is available
+      req(input$updatedData)
       output$head <- renderTable({
         if (input$updatedData == "Noise Data") {
           # Check if a file has been uploaded for Noise Data
@@ -160,7 +163,7 @@ import_data_server <- function(id,
 
     # Dynamic file input or URL-based data selection
     output$pop_upload_type <- renderUI({
-      req(input$pop_type)
+      req(input$file_name, input$pop_type)
       if (input$file_name == "Pop Data") {
         if (input$pop_type == "Upload") {
           fileInput(
@@ -179,12 +182,176 @@ import_data_server <- function(id,
       }
     })
 
+    output$curve_upload <- renderUI({
+      req(input$file_name)
+
+      if(input$file_name == "Curve Data"){
+        fileInput(
+          ns("curve_upload"),
+          "Choose File from Computer (.csv, .rds)",
+          buttonLabel = "Upload...",
+          multiple = TRUE,
+          accept = c(".csv", ".rds")
+        )
+      }
+    })
+
+    output$noise_upload <- renderUI({
+      req(input$file_name)
+
+      if(input$file_name == "Curve Data"){
+        fileInput(
+          ns("noise_upload"),
+          "Choose File from Computer (.csv, .rds)",
+          buttonLabel = "Upload...",
+          multiple = TRUE,
+          accept = c(".csv", ".rds")
+        )
+      }
+    })
+
+    ## ------------------ NOISE DATA -------------------------------------------
+
+
+  observeEvent(input$file_name, {
+      req(input$file_name)
+
+      if (input$file_name == "Noise Data") {
+        output$average <- renderUI({
+          radioButtons(ns("noise_choice"),
+                       "Do you want to use average values:",
+                       choices = c(
+                         "Yes" = "yes",
+                         "No" = "no"
+                       ),
+                       selected = "no"
+          )
+        })
+
+      } else if (input$file_name == "Curve Data") {
+        output$average <- renderUI({
+          NULL
+        })
+      } else if (input$file_name == "Pop Data") {
+        output$average <- renderUI({
+          NULL
+        })
+      }
+    })
+
+    output$y_low <- renderUI({
+      req(input$file_name, input$noise_choice)
+
+      if (input$file_name == "Noise Data") {
+        if (input$noise_choice == "yes") {
+          numericInput("y_low", "y low:", value = 0.479)
+        } else if (input$noise_choice == "no") {
+          fileInput(
+            "upload",
+            "Choose File from Computer (.csv, .rds)",
+            buttonLabel = "Upload...",
+            multiple = TRUE,
+            accept = c(".csv", ".rds")
+          )
+        }
+      } else {
+        NULL  # Render nothing if file name isn't "Noise Data"
+      }
+    })
+
+    output$y_high <- renderUI({
+      req(input$file_name, input$noise_choice)
+
+      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
+        numericInput("y_high", "y high:", value = 5000000)
+      } else {
+        NULL  # Render nothing for other cases
+      }
+    })
+
+    output$eps <- renderUI({
+      req(input$file_name, input$noise_choice)
+
+      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
+          numericInput("eps", "eps:", value = 0.259)
+      } else {
+        NULL  # Render nothing for other cases
+      }
+    })
+
+    output$nu <- renderUI({
+      req(input$file_name, input$noise_choice)
+
+      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
+          numericInput("nu", "nu:", value = 2.60)
+      } else {
+        NULL  # Render nothing for other cases
+      }
+    })
+
+    output$antigen <- renderUI({
+      req(input$file_name, input$noise_choice)
+
+      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
+          textInput("antigen", "antigen:", value = "HlyE_IgA")
+      } else {
+        NULL  # Render nothing for other cases
+      }
+    })
+
+    output$provide_averages <- renderUI({
+      req(input$file_name, input$noise_choice)
+
+      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
+          actionButton("set_average", "Set Averages")
+      } else {
+        NULL  # Render nothing for other cases
+      }
+    })
+
+    #------------------------------------------------------------------------------
+    #                     BUSY SPINNER
+    #------------------------------------------------------------------------------
+
+    observeEvent(input$stratify_by, {
+      # Simulate a long-running task
+      Sys.sleep(3)
+
+      # Update the output
+      output$result <- renderText("Task completed")
+    })
+
     # Handle file uploads and assign data
     observeEvent(input$pop_upload, {
       req(input$pop_upload)
       uploaded_files$files <- c(uploaded_files$files, "Pop Data")
       updateSelectInput(session, "updatedData", choices = uploaded_files$files)
     })
+
+    # Observe the file upload for Curve Data
+    observeEvent(input$curve_upload, {
+      req(input$curve_upload) # Ensure that a file is uploaded
+
+      # Update the uploaded_files with new files
+      uploaded_files$files <- c(uploaded_files$files, "Curve Data")
+
+      # Update the select input with the new list of uploaded files
+      updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
+    })
+
+    # Observe the file upload for Noise Data
+    observeEvent(input$noise_upload, {
+      req(input$noise_upload) # Ensure that a file is uploaded
+
+      # Update the uploaded_files with new files
+      uploaded_files$files <- c(uploaded_files$files, "Noise Data")
+
+      # Update the select input with the new list of uploaded files
+      updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
+    })
+
 
     observeEvent(input$pop_data_url_btn, {
       req(input$pop_data_url)
@@ -222,7 +389,26 @@ import_data_server <- function(id,
       pop_data(NULL)
       curve_data(NULL)
       noise_data(NULL)
-      updateSelectInput(session, "updatedData", choices = NULL)
+
+      #clear dropdown files
+      uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
+
+      updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
+
+      # clear outputs
+      output$est_incidence <- renderTable({ NULL})
+      output$stratify_by <- renderUI({NULL})
+      output$antigen_type <- renderUI({NULL})
+      output$visualize <- renderPlot({NULL})
+      output$stratification <- renderUI({NULL})
+      output$stratification <- renderUI({NULL})
+      output$other_head <- renderTable({NULL})
+      output$head <- renderTable({NULL})
+      output$numeric_summary <- renderTable({NULL})
     })
   })
 }
