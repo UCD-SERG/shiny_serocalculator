@@ -36,4 +36,5 @@ Imports:
   httr,
   httptest,
   vroom,
-  dplyr
+  dplyr,
+  serocalculator
