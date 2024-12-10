@@ -167,7 +167,7 @@ import_data_server <- function(id,
       if (input$file_name == "Pop Data") {
         if (input$pop_type == "Upload") {
           fileInput(
-            ns("pop_up"),
+            ns("pop_upload"),
             "Choose File from Computer (.csv, .rds)",
             buttonLabel = "Upload...",
             multiple = TRUE,
