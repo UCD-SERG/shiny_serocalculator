@@ -1,5 +1,17 @@
-# Define the server
 server <- function(input, output, session) {
+
+  # Reactive object to hold uploaded data
+  data <- reactive({
+    req(input$upload)
+    ext <- tools::file_ext(input$upload$name)
+
+    # Read the data based on the file extension
+    switch(ext,
+           "csv" = read.csv(input$upload$datapath),
+           "rds" = readRDS(input$upload$datapath),
+           return(NULL) # Return NULL for unsupported extensions
+    )
+  })
 
   # Define global reactive values for data
   uploaded_files <- reactiveValues(files = NULL)
@@ -9,7 +21,7 @@ server <- function(input, output, session) {
   filename <- reactiveVal(NULL)
   data_df <- reactiveVal(NULL)
 
-  # reactive object (data frame) for default noise values
+  # Reactive object (data frame) for default noise values
   noise_values <- reactiveValues(new_val = data.frame(
     antigen = character(),
     y_low = numeric(),
@@ -19,30 +31,23 @@ server <- function(input, output, session) {
     stringsAsFactors = FALSE
   ))
 
-  # get uploaded column names ----
+  # Get uploaded column names
   column_names <- reactive({
-    # ensure data is uploaded
     req(input$upload)
 
-    # load file
     null_file <- is.null(input$upload$datapath)
-
     if (null_file) {
       return(NULL)
     }
 
-    # read file
     df <- vroom::vroom(input$upload$datapath, delim = ",")
-
-    # get column names
-    df %>% names()
+    names(df)
   })
 
-
-  # summary tab module
+  # Summary tab module
   summary_tab_server("summary")
 
-  # Call the import_data_server module with the required arguments
+  # Call the `import_data_server` module with the required arguments
   import_data_server(
     id = "import_data",
     uploaded_files = uploaded_files,
@@ -51,11 +56,7 @@ server <- function(input, output, session) {
     noise_data = noise_data
   )
 
-  # inspect data
-  inspect_data_server("inspect_data", reactiveData)
-
-
-  # Call the estimate_seroincidence_server module
+  # Call the `estimate_seroincidence_server` module
   estimate_seroincidence_server(
     id = "estimate_seroincidence",
     pop_data = pop_data,

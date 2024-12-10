@@ -11,27 +11,18 @@ inspect_data_ui <- function(id) {
       sidebarPanel(
         width = 3,
         h4("Available Data"),
+        helpText("Select uploaded data and visualize it."),
 
-        # Description
-        helpText("This section allows the selection of uploaded data and visualize."),
-
-        # Select input widget for column selection
+        # Select input for dataset
         selectInput(ns("updatedData_ext"), "Available Data to Choose", choices = NULL),
 
-        # Choose type of visualization
+        # Dynamic UI elements
         uiOutput(ns("choose_visualization")),
-
-        # Choose 'yes' or 'no' for stratification
         uiOutput(ns("stratification_radio")),
-
-        # Choose visualization stratification
         uiOutput(ns("stratification")),
-
-        # Choose log scale
         uiOutput(ns("log"))
       ),
       mainPanel(
-        "",
         tabsetPanel(
           tabPanel("Numeric Summary", uiOutput(ns("numeric_summary"))),
           tabPanel("Visualize", plotOutput(ns("visualize")))
@@ -46,87 +37,96 @@ inspect_data_server <- function(id, dataReactive) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Reactive values to store data
-    reactive_data <- reactiveValues(pop = NULL, curve = NULL, noise = NULL)
-
-    # Observe selected data type and update UI accordingly
+    # Observe selected data type and update visualization options
     observeEvent(input$updatedData_ext, {
       req(input$updatedData_ext)
 
       # Choose visualization type based on selected data
       output$choose_visualization <- renderUI({
-        if (input$updatedData_ext == "Pop Data") {
-          selectInput(
+        switch(
+          input$updatedData_ext,
+          "Pop Data" = selectInput(
             ns("type_visualization"),
             "Choose Type of Visualization",
             choices = c("Density", "Age Scatter")
-          )
-        } else if (input$updatedData_ext == "Curve Data") {
-          selectInput(
+          ),
+          "Curve Data" = selectInput(
             ns("type_visualization"),
             "Choose Type of Visualization",
             choices = c("Distribution", "Decay"),
             selected = "Distribution"
-          )
-        }
+          ),
+          NULL
+        )
       })
 
       # Log checkbox for Pop Data
       output$log <- renderUI({
         if (input$updatedData_ext == "Pop Data") {
-          checkboxInput(ns("check_log"), "Log", value = TRUE)
+          checkboxInput(ns("check_log"), "Log Scale", value = TRUE)
+        } else {
+          NULL
         }
       })
 
-      # Stratification radio buttons for Pop Data
+      # Stratification radio buttons
       output$stratification_radio <- renderUI({
         if (input$updatedData_ext == "Pop Data") {
           radioButtons(
             ns("stratification_choice"),
             "Do you want to stratify?",
-            choices = list("Yes" = "yes", "No" = "no"),
-            selected = "yes"
+            choices = c("Yes" = "yes", "No" = "no"),
+            selected = "no"
           )
+        } else {
+          NULL
+        }
+      })
+
+      # Stratification column selector
+      output$stratification <- renderUI({
+        if (input$stratification_choice == "yes") {
+          data <- dataReactive()
+          selectInput(
+            ns("choosen_stratification"),
+            "Select Stratification Column",
+            choices = names(data),
+            multiple = TRUE
+          )
+        } else {
+          NULL
         }
       })
     })
 
-    # Update numeric summary based on the selected file
-    observeEvent(dataReactive(), {
-      req(input$updatedData_ext)
-      output$numeric_summary <- renderTable({
+    # Numeric summary
+    output$numeric_summary <- renderUI({
+      req(dataReactive())
+      renderTable({
         data <- dataReactive()
         skimr::skim(data) %>%
           skimr::yank("numeric")
       })
     })
 
-    # Update visualization based on user inputs
-    observeEvent(c(
-      input$type_visualization,
-      input$check_log,
-      input$stratification_choice,
-      input$choosen_stratification
-    ), {
-      req(input$type_visualization)
+    # Visualization output
+    output$visualize <- renderPlot({
+      req(input$type_visualization, dataReactive())
 
-      output$visualize <- renderPlot({
-        data <- dataReactive()
-        viz_type <- input$type_visualization
+      data <- dataReactive()
 
-        if (viz_type == "Distribution") {
-          ggplot2::ggplot(data, aes(x = value)) +
-            geom_density() +
-            theme_minimal()
-        } else if (viz_type == "Age Scatter" && input$updatedData_ext == "Pop Data") {
-          serocalculator:::autoplot.pop_data(
-            data,
-            type = "age-scatter",
-            strata = if (input$stratification_choice == "yes") input$choosen_stratification else NULL,
-            log = input$check_log
-          )
-        }
-      })
+      if (input$type_visualization == "Distribution" && input$updatedData_ext == "Curve Data") {
+        ggplot(data, aes(x = value)) +
+          geom_density() +
+          theme_minimal()
+      } else if (input$type_visualization == "Age Scatter" && input$updatedData_ext == "Pop Data") {
+        serocalculator::autoplot.pop_data(
+          data,
+          type = "age-scatter",
+          strata = if (input$stratification_choice == "yes") input$choosen_stratification else NULL,
+          log = input$check_log
+        )
+      }
     })
   })
 }

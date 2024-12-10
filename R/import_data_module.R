@@ -16,8 +16,8 @@ import_data_ui <- function(id) {
         ),
         uiOutput(ns("pop_type")),
         uiOutput(ns("pop_upload_type")),
+        uiOutput(ns("pop_upload")),
         uiOutput(ns("curve_upload")),
-        uiOutput(ns("noise_upload")),
         uiOutput(ns("average")),
         uiOutput(ns("antigen")),
         uiOutput(ns("y_low")),
@@ -150,7 +150,7 @@ import_data_server <- function(id,
       if (input$file_name == "Pop Data") {
         output$pop_type <- renderUI({
           selectInput(
-            ns("pop_type"),
+            ns("pop_typ"),
             "Choose Type",
             choices = c("Upload", "OSF"),
             selected = "Upload"
@@ -167,7 +167,7 @@ import_data_server <- function(id,
       if (input$file_name == "Pop Data") {
         if (input$pop_type == "Upload") {
           fileInput(
-            ns("pop_upload"),
+            ns("pop_up"),
             "Choose File from Computer (.csv, .rds)",
             buttonLabel = "Upload...",
             multiple = TRUE,
@@ -196,116 +196,90 @@ import_data_server <- function(id,
       }
     })
 
-    output$noise_upload <- renderUI({
-      req(input$file_name)
-
-      if(input$file_name == "Curve Data"){
-        fileInput(
-          ns("noise_upload"),
-          "Choose File from Computer (.csv, .rds)",
-          buttonLabel = "Upload...",
-          multiple = TRUE,
-          accept = c(".csv", ".rds")
-        )
-      }
-    })
-
     ## ------------------ NOISE DATA -------------------------------------------
 
 
-  observeEvent(input$file_name, {
+    observeEvent(input$file_name, {
       req(input$file_name)
 
       if (input$file_name == "Noise Data") {
         output$average <- renderUI({
-          radioButtons(ns("noise_choice"),
-                       "Do you want to use average values:",
-                       choices = c(
-                         "Yes" = "yes",
-                         "No" = "no"
-                       ),
-                       selected = "no"
+          radioButtons(
+            ns("noise_choice"),
+            "Do you want to use average values:",
+            choices = c(
+              "Yes" = "yes",
+              "No" = "no"
+            ),
+            selected = "no"
+          )
+        })
+      } else {
+        # Clear the average input for non-Noise Data
+        output$average <- renderUI({ NULL })
+      }
+    })
+
+    # Render Noise Data UI components
+    observeEvent(input$noise_choice, {
+      req(input$file_name == "Noise Data", input$noise_choice)
+
+      # Render components only if Noise Data and choice is "yes"
+      if (input$noise_choice == "yes") {
+        output$y_low <- renderUI({
+          numericInput(
+            inputId = ns("y_low"),
+            label = "y low:",
+            value = 0.479
           )
         })
 
-      } else if (input$file_name == "Curve Data") {
-        output$average <- renderUI({
-          NULL
-        })
-      } else if (input$file_name == "Pop Data") {
-        output$average <- renderUI({
-          NULL
-        })
-      }
-    })
-
-    output$y_low <- renderUI({
-      req(input$file_name, input$noise_choice)
-
-      if (input$file_name == "Noise Data") {
-        if (input$noise_choice == "yes") {
-          numericInput("y_low", "y low:", value = 0.479)
-        } else if (input$noise_choice == "no") {
-          fileInput(
-            "upload",
-            "Choose File from Computer (.csv, .rds)",
-            buttonLabel = "Upload...",
-            multiple = TRUE,
-            accept = c(".csv", ".rds")
+        output$y_high <- renderUI({
+          numericInput(
+            inputId = ns("y_high"),
+            label = "y high:",
+            value = 5000000
           )
-        }
+        })
+
+        output$eps <- renderUI({
+          numericInput(
+            inputId = ns("eps"),
+            label = "eps:",
+            value = 0.259
+          )
+        })
+
+        output$nu <- renderUI({
+          numericInput(
+            inputId = ns("nu"),
+            label = "nu:",
+            value = 2.60
+          )
+        })
+
+        output$antigen <- renderUI({
+          textInput(
+            inputId = ns("antigen"),
+            label = "antigen:",
+            value = "HlyE_IgA"
+          )
+        })
+
+        output$provide_averages <- renderUI({
+          actionButton(
+            inputId = ns("set_average"),
+            label = "Set Averages"
+          )
+        })
       } else {
-        NULL  # Render nothing if file name isn't "Noise Data"
-      }
-    })
-
-    output$y_high <- renderUI({
-      req(input$file_name, input$noise_choice)
-
-      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
-        numericInput("y_high", "y high:", value = 5000000)
-      } else {
-        NULL  # Render nothing for other cases
-      }
-    })
-
-    output$eps <- renderUI({
-      req(input$file_name, input$noise_choice)
-
-      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
-          numericInput("eps", "eps:", value = 0.259)
-      } else {
-        NULL  # Render nothing for other cases
-      }
-    })
-
-    output$nu <- renderUI({
-      req(input$file_name, input$noise_choice)
-
-      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
-          numericInput("nu", "nu:", value = 2.60)
-      } else {
-        NULL  # Render nothing for other cases
-      }
-    })
-
-    output$antigen <- renderUI({
-      req(input$file_name, input$noise_choice)
-
-      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
-          textInput("antigen", "antigen:", value = "HlyE_IgA")
-      } else {
-        NULL  # Render nothing for other cases
-      }
-    })
-
-    output$provide_averages <- renderUI({
-      req(input$file_name, input$noise_choice)
-
-      if (input$file_name == "Noise Data" && input$noise_choice == "yes") {
-          actionButton("set_average", "Set Averages")
-      } else {
-        NULL  # Render nothing for other cases
+        # Clear outputs when noise choice is "no"
+        output$y_low <- renderUI({ NULL })
+        output$y_high <- renderUI({ NULL })
+        output$eps <- renderUI({ NULL })
+        output$nu <- renderUI({ NULL })
+        output$antigen <- renderUI({ NULL })
+        output$provide_averages <- renderUI({ NULL })
       }
     })
 
