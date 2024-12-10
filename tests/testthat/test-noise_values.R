@@ -1,9 +1,6 @@
-# Load libraries
-library(shinytest2)
-library(testthat)
 
 test_that("noise_values initializes with correct structure and empty data", {
-  testServer(server, {
+  testServer(shiny.serocalculator:::server, {
     # Check that noise_values reactiveValues object has been initialized
     # Isolate to access reactiveValues outside of reactive context
     noise <- isolate(noise_values$new_val)
