@@ -1,5 +1,3 @@
-
-
 # Function to check if the URL is working
 check_url <- function(url) {
   response <- tryCatch(

@@ -1,4 +1,3 @@
-
 # Function to determine file type and read the file
 read_data_file <- function(file) {
   req(file) # Ensure the file is not NULL
@@ -14,5 +13,3 @@ read_data_file <- function(file) {
     stop("Unsupported file type. Please upload a .csv or .rds file.")
   }
 }
-
-

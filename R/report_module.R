@@ -1,8 +1,6 @@
-
-
 # UI Module for Report
 report_ui <- function(id) {
-  ns <- NS(id)  # Namespace for unique IDs
+  ns <- NS(id) # Namespace for unique IDs
 
   navbarMenu(
     title = "Report",

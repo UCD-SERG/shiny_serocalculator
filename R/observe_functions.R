@@ -1,5 +1,6 @@
 
-# helper function to classify data based on file name
+#' @importFrom shiny observeEvent
+
 get_classified_data <- function(df, file_name) {
   if (is.null(df)) {
     return(NULL)

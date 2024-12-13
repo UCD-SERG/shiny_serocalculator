@@ -1,5 +1,5 @@
-
-test_that("read_data_file reads CSV and RDS files correctly and errors on unsupported types", {
+test_that(
+  "read_data_file reads CSV and RDS files correctly", {
   # Create a test data frame to use for writing files
   test_df <- data.frame(a = 1:3, b = 4:6)
 

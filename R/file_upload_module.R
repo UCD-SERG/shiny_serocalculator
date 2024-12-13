@@ -1,5 +1,4 @@
-
-fileUploadUI <- function(id, label = "Upload File") {
+file_upload_ui <- function(id, label = "Upload File") {
   ns <- NS(id)
   tagList(
     fileInput(ns("file"), label, accept = c(".csv", ".xlsx", ".txt")),
@@ -8,7 +7,7 @@ fileUploadUI <- function(id, label = "Upload File") {
 }
 
 # Module Server
-fileUploadServer <- function(id) {
+file_upload_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     # Reactive to store uploaded data
     uploaded_data <- reactiveVal(NULL)
@@ -20,8 +19,7 @@ fileUploadServer <- function(id) {
       file_path <- input$file$datapath
 
       # Process file based on its extension
-      data <- switch(
-        file_ext,
+      data <- switch(file_ext,
         csv = read.csv(file_path),
         xlsx = readxl::read_excel(file_path),
         txt = read.delim(file_path),

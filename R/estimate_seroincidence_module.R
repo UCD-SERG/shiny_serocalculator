@@ -1,6 +1,25 @@
-# Module UI
+
+
+#' @importFrom shiny tabPanel
+#' @importFrom shiny uiOutput
+#' @importFrom shiny helpText
+#' @importFrom shiny observeEvent
+#' @importFrom shiny observe
+#' @importFrom serocalculator load_noise_params
+#' @importFrom shiny req
+#' @importFrom shiny renderUI
+#' @importFrom shiny selectInput
+#' @importFrom dplyr select
+#' @importFrom dplyr where
+#' @importFrom shiny h4
+#' @importFrom shiny renderTable
+#' @importFrom shiny sidebarLayout
+#' @importFrom dplyr %>%
+#' @importFrom shiny NS
+#' @importFrom shiny radioButtons
+
 estimate_seroincidence_ui <- function(id) {
-  ns <- NS(id)  # Namespace to ensure unique IDs
+  ns <- NS(id)
 
   tabPanel(
     "Estimate Seroincidence",
@@ -13,7 +32,8 @@ estimate_seroincidence_ui <- function(id) {
         h4("Estimation Filters"),
 
         # description
-        helpText("Provide the parameters for filtering estimation of seroincidence"),
+        helpText("Provide the parameters
+                        for filtering estimation of seroincidence"),
 
         # choose antigen_iso type
         uiOutput(ns("antigen_type")),
@@ -38,8 +58,9 @@ estimate_seroincidence_ui <- function(id) {
       mainPanel(
         "",
         tabsetPanel(
-          tabPanel("Estimate Seroincidence",
-                   tableOutput(ns("est_incidence"))
+          tabPanel(
+            "Estimate Seroincidence",
+            tableOutput(ns("est_incidence"))
           )
         )
       )
@@ -47,13 +68,19 @@ estimate_seroincidence_ui <- function(id) {
   )
 }
 
-
-estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) {
-  moduleServer(id, function(input, output, session) {
-
+#' @importFrom shiny moduleServer
+#' @importFrom dplyr %>%
+#' @importFrom shiny NS
+estimate_seroincidence_server <- function(id,
+                                          pop_data,
+                                          curve_data,
+                                          noise_data) {
+  moduleServer(id, function(input,
+                            output,
+                            session) {
     # Default noise parameters
     observe({
-      default_noise_params <- serocalculator::load_noise_params("https://osf.io/download/h64cw")
+      default_noise_params <- load_noise_params("https://osf.io/download/h64cw")
       noise_data(default_noise_params)
     })
 
@@ -164,4 +191,3 @@ estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) 
     })
   })
 }
-

@@ -1,5 +1,5 @@
 import_data_ui <- function(id) {
-  ns <- NS(id) # Namespace to differentiate inputs/outputs
+  ns <- shiny::NS(id)
   tabPanel(
     "Import Data",
     sidebarLayout(
@@ -53,8 +53,7 @@ import_data_server <- function(id,
                                uploaded_files,
                                pop_data,
                                curve_data,
-                               noise_data)
-  {
+                               noise_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -65,114 +64,106 @@ import_data_server <- function(id,
       input$curve_upload,
       input$pop_upload
     ), {
-      # Ensure updatedData is available
       req(input$updatedData)
+
       output$head <- renderTable({
         if (input$updatedData == "Noise Data") {
-          # Check if a file has been uploaded for Noise Data
           req(input$noise_upload)
-
-          # Read the uploaded file using the helper function
           df <- read_data_file(input$noise_upload)
-
-          # Update the reactiveVal with the new noise data
           noise_data(df)
-
-          head(noise_data()) # Display the head of the noise data
+          head(noise_data())
         } else if (input$updatedData == "Curve Data") {
-          # Check if a file has been uploaded for Curve Data
           req(input$curve_upload)
-
-          # Read the uploaded file using the helper function
           df <- read_data_file(input$curve_upload)
-
-          # Update the reactiveVal with the new curve data
           curve_data(df)
-
-          head(curve_data()) # Display the head of the curve data
+          head(curve_data())
         } else if (input$updatedData == "Pop Data") {
-          # Check if a file has been uploaded for Pop Data
           req(input$pop_upload)
-
-          # Read the uploaded file using the helper function
           df <- read_data_file(input$pop_upload)
-
-          # Update the reactiveVal with the new pop data
           pop_data(df)
-
-          head(pop_data()) # Display the head of the pop data
+          head(pop_data())
         }
       })
     })
 
-
+    # UI for displaying data requirements
     output$data_requirement <- renderText({
       HTML("<p>Required datasets:
-
         <ul>
           <li> <strong>Cross-sectional Population Data (Pop Data)</strong>
-                  <p>A dataset with one row per sample and columns for antigen isotype, quantitative antibody results, and age in years. Additional columns and variables can be included for stratification.</p>
+              <p>A dataset with one row per sample and
+              columns for antigen isotype,
+              quantitative antibody results,
+              and age in years. Additional columns and variables
+              can be included for stratification.</p>
+          </li>
           <li> <strong>Noise Data</strong>
-                  <p>A dataset containing the following variables, specifying noise parameters for each antigen isotype.
-                  Note that variable names <u>must</u> follow these guidelines. For more information see <a hfref=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a>.
-                  <ul>
-                    <li>antigen_iso: antigen isotype whose noise parameters are being specified on each row</li>
-                    <li>nu: biological noise</li>
-                    <li>y.low: Lower limit of detection of the antibody assay</li>
-                    <li>y.high: Upper limit of detection of the antibody assay</li>
-                    <li>eps: measurement noise</li>
-                  </ul></p>
-          <li><strong>Antibody Decay Curve Data</strong></li>
-          <p>A data set containing antibody decay curve parameters fit using a Bayesian hierarchical framework obtaining predictive posterior samples using Markov chain Monte Carlo sampling. Note that variable names <u>must</u> follow these guidelines. For more information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a></p>
-            <ul>
-              <li>y0: baseline antibody level</li>
-              <li>y1: antibody peak level (ELISA units)</li>
-              <li>t1: duration of infection</li>
-              <li>alpha: antibody decay rate (1/days for the current longitudinal parameter sets)</li>
-              <li>r: shape factor of antibody decay</li>
-            </ul>
+              <p>A dataset containing the following variables,
+              specifying noise parameters for each
+              antigen isotype. Note that variable
+              names <u>must</u> follow these guidelines.
+              For more
+              information see
+              <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis
+              (2020)</a>.
+              <ul>
+                <li>antigen_iso: antigen isotype whose noise
+                parameters are being specified on each
+                row</li>
+                <li>nu: biological noise</li>
+                <li>y.low: Lower limit of detection of the antibody assay</li>
+                <li>y.high: Upper limit of detection of the antibody assay</li>
+                <li>eps: measurement noise</li>
+              </ul></p>
+          </li>
+          <li><strong>Antibody Decay Curve Data</strong>
+              <p>A dataset containing antibody decay curve parameters fit using a Bayesian hierarchical
+              framework obtaining predictive posterior samples using Markov chain Monte Carlo
+              sampling. Note that variable names <u>must</u> follow these guidelines. For more
+              information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a></p>
+              <ul>
+                <li>y0: baseline antibody level</li>
+                <li>y1: antibody peak level (ELISA units)</li>
+                <li>t1: duration of infection</li>
+                <li>alpha: antibody decay rate (1/days for the current longitudinal parameter sets)</li>
+                <li>r: shape factor of antibody decay</li>
+              </ul>
+          </li>
         </ul>
         </p>
-         <p>File limit: <strong>500MB</strong></p>")
+        <p>File limit: <strong>500MB</strong></p>")
     })
 
-    # Display the data in the table
+    # UI for displaying uploaded data head
     output$head <- renderTable({
-      if (!is.null(pop_data())) {
+      req(input$updatedData) # Ensure an updated data type is selected
+      if (input$updatedData == "Pop Data") {
         head(pop_data())
+      } else if (input$updatedData == "Curve Data") {
+        head(curve_data())
+      } else if (input$updatedData == "Noise Data") {
+        head(noise_data())
       }
     })
 
-
-
     # Dynamic UI for "pop_type"
     observeEvent(input$file_name, {
+      req(input$file_name)
       if (input$file_name == "Pop Data") {
         output$pop_type <- renderUI({
-          selectInput(
-            ns("pop_typ"),
-            "Choose Type",
-            choices = c("Upload", "OSF"),
-            selected = "Upload"
-          )
+          selectInput(ns("pop_typ"), "Choose Type", choices = c("Upload", "OSF"), selected = "Upload")
         })
       } else {
         output$pop_type <- renderUI(NULL)
       }
     })
 
-    # Dynamic file input or URL-based data selection
+    # Dynamic UI for Pop Data upload type
     output$pop_upload_type <- renderUI({
       req(input$file_name, input$pop_type)
       if (input$file_name == "Pop Data") {
         if (input$pop_type == "Upload") {
-          fileInput(
-            ns("pop_upload"),
-            "Choose File from Computer (.csv, .rds)",
-            buttonLabel = "Upload...",
-            multiple = TRUE,
-            accept = c(".csv", ".rds")
-          )
+          fileInput(ns("pop_upload"), "Choose File from Computer (.csv, .rds)", buttonLabel = "Upload...", multiple = TRUE, accept = c(".csv", ".rds"))
         } else {
           tagList(
             textInput(ns("pop_data_url"), "Provide OSF URL:"),
@@ -182,116 +173,60 @@ import_data_server <- function(id,
       }
     })
 
+    # Dynamic UI for Curve Data upload
     output$curve_upload <- renderUI({
       req(input$file_name)
-
-      if(input$file_name == "Curve Data"){
-        fileInput(
-          ns("curve_upload"),
-          "Choose File from Computer (.csv, .rds)",
-          buttonLabel = "Upload...",
-          multiple = TRUE,
-          accept = c(".csv", ".rds")
-        )
+      if (input$file_name == "Curve Data") {
+        fileInput(ns("curve_upload"), "Choose File from Computer (.csv, .rds)", buttonLabel = "Upload...", multiple = TRUE, accept = c(".csv", ".rds"))
       }
     })
 
-    ## ------------------ NOISE DATA -------------------------------------------
-
-
+    # Dynamic UI for Noise Data options
     observeEvent(input$file_name, {
       req(input$file_name)
-
       if (input$file_name == "Noise Data") {
         output$average <- renderUI({
-          radioButtons(
-            ns("noise_choice"),
-            "Do you want to use average values:",
-            choices = c(
-              "Yes" = "yes",
-              "No" = "no"
-            ),
-            selected = "no"
-          )
+          radioButtons(ns("noise_choice"), "Do you want to use average values:", choices = c("Yes" = "yes", "No" = "no"), selected = "no")
         })
       } else {
-        # Clear the average input for non-Noise Data
-        output$average <- renderUI({ NULL })
+        output$average <- renderUI(NULL)
       }
     })
 
-    # Render Noise Data UI components
     observeEvent(input$noise_choice, {
       req(input$file_name == "Noise Data", input$noise_choice)
-
-      # Render components only if Noise Data and choice is "yes"
       if (input$noise_choice == "yes") {
         output$y_low <- renderUI({
-          numericInput(
-            inputId = ns("y_low"),
-            label = "y low:",
-            value = 0.479
-          )
+          numericInput(ns("y_low"), "y low:", value = 0.479)
         })
-
         output$y_high <- renderUI({
-          numericInput(
-            inputId = ns("y_high"),
-            label = "y high:",
-            value = 5000000
-          )
+          numericInput(ns("y_high"), "y high:", value = 5000000)
         })
-
         output$eps <- renderUI({
-          numericInput(
-            inputId = ns("eps"),
-            label = "eps:",
-            value = 0.259
-          )
+          numericInput(ns("eps"), "eps:", value = 0.259)
         })
-
         output$nu <- renderUI({
-          numericInput(
-            inputId = ns("nu"),
-            label = "nu:",
-            value = 2.60
-          )
+          numericInput(ns("nu"), "nu:", value = 2.60)
         })
-
         output$antigen <- renderUI({
-          textInput(
-            inputId = ns("antigen"),
-            label = "antigen:",
-            value = "HlyE_IgA"
-          )
+          textInput(ns("antigen"), "antigen:", value = "HlyE_IgA")
         })
-
         output$provide_averages <- renderUI({
-          actionButton(
-            inputId = ns("set_average"),
-            label = "Set Averages"
-          )
+          actionButton(ns("set_average"), "Set Averages")
         })
       } else {
-        # Clear outputs when noise choice is "no"
-        output$y_low <- renderUI({ NULL })
-        output$y_high <- renderUI({ NULL })
-        output$eps <- renderUI({ NULL })
-        output$nu <- renderUI({ NULL })
-        output$antigen <- renderUI({ NULL })
-        output$provide_averages <- renderUI({ NULL })
+        output$y_low <- renderUI(NULL)
+        output$y_high <- renderUI(NULL)
+        output$eps <- renderUI(NULL)
+        output$nu <- renderUI(NULL)
+        output$antigen <- renderUI(NULL)
+        output$provide_averages <- renderUI(NULL)
       }
     })
 
-    #------------------------------------------------------------------------------
-    #                     BUSY SPINNER
-    #------------------------------------------------------------------------------
-
+    # Busy spinner for long-running task
     observeEvent(input$stratify_by, {
-      # Simulate a long-running task
       Sys.sleep(3)
-
-      # Update the output
       output$result <- renderText("Task completed")
     })
 
@@ -304,29 +239,21 @@ import_data_server <- function(id,
 
     # Observe the file upload for Curve Data
     observeEvent(input$curve_upload, {
-      req(input$curve_upload) # Ensure that a file is uploaded
-
-      # Update the uploaded_files with new files
+      req(input$curve_upload)
       uploaded_files$files <- c(uploaded_files$files, "Curve Data")
-
-      # Update the select input with the new list of uploaded files
       updateSelectInput(session, "updatedData", choices = uploaded_files$files)
       updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
     })
 
     # Observe the file upload for Noise Data
     observeEvent(input$noise_upload, {
-      req(input$noise_upload) # Ensure that a file is uploaded
-
-      # Update the uploaded_files with new files
+      req(input$noise_upload)
       uploaded_files$files <- c(uploaded_files$files, "Noise Data")
-
-      # Update the select input with the new list of uploaded files
       updateSelectInput(session, "updatedData", choices = uploaded_files$files)
       updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
     })
 
-
+    # Handle OSF URL for Pop Data
     observeEvent(input$pop_data_url_btn, {
       req(input$pop_data_url)
       if (check_url(input$pop_data_url)) {
@@ -342,47 +269,6 @@ import_data_server <- function(id,
       } else {
         showNotification("URL provided is not valid", type = "error")
       }
-    })
-
-    # Dynamic file preview
-    observeEvent(input$updatedData, {
-      output$head <- renderTable({
-        if (input$updatedData == "Pop Data") {
-          head(pop_data())
-        } else if (input$updatedData == "Curve Data") {
-          head(curve_data())
-        } else if (input$updatedData == "Noise Data") {
-          head(noise_data())
-        }
-      })
-    })
-
-    # Clear environment logic
-    observeEvent(input$clear_btn, {
-      uploaded_files$files <- NULL
-      pop_data(NULL)
-      curve_data(NULL)
-      noise_data(NULL)
-
-      #clear dropdown files
-      uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
-      uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
-      uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
-
-      updateSelectInput(session, "selectedData", choices = uploaded_files$files)
-      updateSelectInput(session, "updatedData", choices = uploaded_files$files)
-      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
-
-      # clear outputs
-      output$est_incidence <- renderTable({ NULL})
-      output$stratify_by <- renderUI({NULL})
-      output$antigen_type <- renderUI({NULL})
-      output$visualize <- renderPlot({NULL})
-      output$stratification <- renderUI({NULL})
-      output$stratification <- renderUI({NULL})
-      output$other_head <- renderTable({NULL})
-      output$head <- renderTable({NULL})
-      output$numeric_summary <- renderTable({NULL})
     })
   })
 }

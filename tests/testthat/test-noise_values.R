@@ -1,4 +1,3 @@
-
 test_that("noise_values initializes with correct structure and empty data", {
   testServer(shiny.serocalculator:::server, {
     # Check that noise_values reactiveValues object has been initialized

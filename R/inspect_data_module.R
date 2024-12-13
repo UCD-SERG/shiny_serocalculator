@@ -1,5 +1,3 @@
-
-
 # UI for the Inspect Data module
 inspect_data_ui <- function(id) {
   ns <- NS(id)
@@ -43,8 +41,7 @@ inspect_data_server <- function(id, dataReactive) {
 
       # Choose visualization type based on selected data
       output$choose_visualization <- renderUI({
-        switch(
-          input$updatedData_ext,
+        switch(input$updatedData_ext,
           "Pop Data" = selectInput(
             ns("type_visualization"),
             "Choose Type of Visualization",
