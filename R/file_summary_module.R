@@ -1,3 +1,10 @@
+
+#' @importFrom shiny renderPrint
+#' @importFrom shiny sidebarPanel
+#' @importFrom shiny tagList
+#' @importFrom shiny sidebarPanel
+#' @importFrom shiny verbatimTextOutput
+#' @importFrom shiny renderText
 file_summary_ui <- function(id) {
   ns <- NS(id)
   tagList(

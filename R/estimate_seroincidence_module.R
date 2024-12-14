@@ -1,5 +1,6 @@
 
-
+#' @title ui for displaying to seroincidence estimation
+#'
 #' @importFrom shiny tabPanel
 #' @importFrom shiny uiOutput
 #' @importFrom shiny helpText
@@ -17,7 +18,13 @@
 #' @importFrom dplyr %>%
 #' @importFrom shiny NS
 #' @importFrom shiny radioButtons
-
+#' @importFrom shiny sidebarPanel
+#' @importFrom shiny textOutput
+#' @importFrom shiny mainPanel
+#' @importFrom shiny tabsetPanel
+#' @importFrom shiny tableOutput
+#'
+#' @param id a `string` to identify a namespace
 estimate_seroincidence_ui <- function(id) {
   ns <- NS(id)
 
@@ -68,9 +75,16 @@ estimate_seroincidence_ui <- function(id) {
   )
 }
 
+#' @title server-side computation of seroincidence estimation
 #' @importFrom shiny moduleServer
 #' @importFrom dplyr %>%
 #' @importFrom shiny NS
+#'
+#' @param id identify a namespace
+#' @param pop_data an object of population data
+#' @param curve_data an object of curve data with an extra antigen column
+#' @param noise_data an object of noise data
+#' @param antigen_iso  a vector of antigen isotype
 estimate_seroincidence_server <- function(id,
                                           pop_data,
                                           curve_data,

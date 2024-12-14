@@ -1,3 +1,7 @@
+
+#' @importFrom utils read.csv
+#' @importFrom utils read.delim
+#' @importFrom utils head
 file_upload_ui <- function(id, label = "Upload File") {
   ns <- NS(id)
   tagList(

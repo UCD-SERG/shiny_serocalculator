@@ -1,4 +1,9 @@
-# define server
+
+#' @importFrom shiny reactive
+#' @importFrom shiny reactiveValues
+#' @importFrom shiny reactiveVal
+#' @importFrom utils read.csv
+
 server <- function(input, output, session) {
   # Reactive object to hold uploaded data
   data <- reactive({

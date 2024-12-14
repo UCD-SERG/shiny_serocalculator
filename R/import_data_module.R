@@ -1,3 +1,16 @@
+
+#' @importFrom shiny renderText
+#' @importFrom shiny HTML
+#' @importFrom shiny fileInput
+#' @importFrom shiny tagList
+#' @importFrom shiny renderText
+#' @importFrom shiny textInput
+#' @importFrom shiny actionButton
+#' @importFrom shiny numericInput
+#' @importFrom shiny updateSelectInput
+#' @importFrom shiny withProgress
+#' @importFrom shiny incProgress
+#' @importFrom shiny showNotification
 import_data_ui <- function(id) {
   ns <- shiny::NS(id)
   tabPanel(

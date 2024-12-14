@@ -1,4 +1,16 @@
-# UI for the Inspect Data module
+#' @title ui visually inspect uploaded data
+#'
+#' @importFrom shiny plotOutput
+#' @importFrom shiny mainPanel
+#' @importFrom shiny sidebarPanel
+#' @importFrom shiny checkboxInput
+#' @importFrom shiny renderPlot
+#' @importFrom ggplot2 ggplot
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 geom_density
+#' @importFrom ggplot2 theme_minimal
+#'
+#' @param id a `string` to identify a namespace
 inspect_data_ui <- function(id) {
   ns <- NS(id)
 
@@ -30,7 +42,10 @@ inspect_data_ui <- function(id) {
   )
 }
 
-# Server logic for the Inspect Data module
+#' @title server-side data inspection
+#' @param id identify namespace
+#' @param dataReactive a reactive object holding uploaded data
+#' @param value a continuous attribute
 inspect_data_server <- function(id, dataReactive) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -117,7 +132,7 @@ inspect_data_server <- function(id, dataReactive) {
           geom_density() +
           theme_minimal()
       } else if (input$type_visualization == "Age Scatter" && input$updatedData_ext == "Pop Data") {
-        serocalculator::autoplot.pop_data(
+        serocalculator:::autoplot.pop_data(
           data,
           type = "age-scatter",
           strata = if (input$stratification_choice == "yes") input$choosen_stratification else NULL,

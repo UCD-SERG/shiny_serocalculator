@@ -1,4 +1,6 @@
-# UI Module for Report
+
+#' @importFrom shiny navbarMenu
+#' @importFrom shiny icon
 report_ui <- function(id) {
   ns <- NS(id) # Namespace for unique IDs
 
