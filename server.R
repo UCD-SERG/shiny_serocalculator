@@ -588,7 +588,7 @@ server <- function(input, output, session) {
         # Dynamically create drop-down list of column names
         selectInput(
           "age_select",
-          "Select Age Column:",
+          "Select age variable:",
           choices = cols
         )
       }
@@ -606,7 +606,7 @@ server <- function(input, output, session) {
         # Dynamically create drop-down list of column names
         selectInput(
           "value_select",
-          "Select Value Column:",
+          "Select quantitative antibody response variable:",
           choices = cols
         )
       }
@@ -624,7 +624,7 @@ server <- function(input, output, session) {
         # Dynamically create drop-down list of column names
         selectInput(
           "id_select",
-          "Select Id Column:",
+          "Select sample ID variable:",
           choices = cols
         )
       }
@@ -1030,16 +1030,23 @@ server <- function(input, output, session) {
 
         <ul>
           <li> <strong>Cross-sectional Population Data (Pop Data)</strong>
-                  <p>A dataset with one row per sample and columns for antigen isotype, quantitative antibody results, and age in years. Additional columns and variables can be included for stratification.</p>
-
+                  <p>A dataset with one row per sample and columns for antigen isotype, quantitative antibody results, and age in years.</p>
+ <ul>
+              <li>Additional columns and variables can be included for stratification</li>
+              <li>Age unit is years, decimal points are fine</li>
+              <li>The scale of the antibody response variable must be the same as the longituidnal antibody decay data (curve data) </li>
+              <li>Do not upload any identifying health information </li>
+   </p>
+            </ul>
           <li><strong>Antibody Decay Curve Data (Curve Data) </strong></li>
           <p>A data set containing antibody decay curve parameters fit using a two-phase within-host
           Bayesian hierarchical framework obtaining predictive posterior samples using Markov chain Monte Carlo sampling.
-          Note that variable names <u>must</u> follow these guidelines. For more information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a></p>
+          Note that variable names <u>must</u> follow these guidelines. For more information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a>.
+          The scale of y0 and y1 must be the same as the antibody response variable in the population data frame</p>
             <ul>
               <li>y0: baseline antibody level</li>
               <li>y1: antibody peak level </li>
-              <li>t1: time from symptom onset to peak antibody response </li>
+              <li>t1: time from symptom onset to peak antibody response (in days) </li>
               <li>alpha: antibody decay rate (1/days for the current longitudinal parameter sets)</li>
               <li>r: shape factor of antibody decay</li>
             </ul>
