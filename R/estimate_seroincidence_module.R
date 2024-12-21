@@ -88,13 +88,14 @@ estimate_seroincidence_ui <- function(id) {
 estimate_seroincidence_server <- function(id,
                                           pop_data,
                                           curve_data,
-                                          noise_data) {
+                                          noise_data,
+                                          antigen_iso) {
   moduleServer(id, function(input,
                             output,
                             session) {
     # Default noise parameters
     observe({
-      default_noise_params <- load_noise_params("https://osf.io/download/h64cw")
+      default_noise_params <- serocalculator::load_noise_params("https://osf.io/download/h64cw")
       noise_data(default_noise_params)
     })
 

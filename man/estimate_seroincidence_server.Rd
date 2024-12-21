@@ -4,7 +4,13 @@
 \alias{estimate_seroincidence_server}
 \title{server-side computation of seroincidence estimation}
 \usage{
-estimate_seroincidence_server(id, pop_data, curve_data, noise_data)
+estimate_seroincidence_server(
+  id,
+  pop_data,
+  curve_data,
+  noise_data,
+  antigen_iso
+)
 }
 \arguments{
 \item{id}{identify a namespace}

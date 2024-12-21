@@ -46,7 +46,7 @@ inspect_data_ui <- function(id) {
 #' @param id identify namespace
 #' @param dataReactive a reactive object holding uploaded data
 #' @param value a continuous attribute
-inspect_data_server <- function(id, dataReactive) {
+inspect_data_server <- function(id, dataReactive, value) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 

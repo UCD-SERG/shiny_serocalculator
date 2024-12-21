@@ -1,7 +1,7 @@
 
 #' @importFrom shiny fluidPage
 #' @importFrom shiny navbarPage
-#'
+
 ui <- function(...) {
   # define UI
   fluidPage(
