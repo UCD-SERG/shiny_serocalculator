@@ -7,7 +7,7 @@ ui <- function(...) {
   fluidPage(
     navbarPage(
       title = "Serocalculator App",
-      theme = shinythemes::shinytheme("united"),
+      theme = shinythemes::shinytheme("sandstone"),
 
       # Initialize shinyjs
       shinyjs::useShinyjs(),

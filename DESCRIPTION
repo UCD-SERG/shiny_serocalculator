@@ -23,6 +23,7 @@ Imports:
   serocalculator,
   DT,
   dplyr,
+  shinyWidgets,
   shinythemes,
   shinybusy,
   shinyjs,
