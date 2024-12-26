@@ -102,7 +102,7 @@ import_data_ui <- function(id) {
           tabPanel("Data Requirements", htmlOutput(ns("data_requirement"))),
           tabPanel(
             "File Preview",
-            tableOutput(ns("head")),
+            DT::DTOutput(ns("head")),
             DT::DTOutput(ns("other_head"))
           )
         )
@@ -261,18 +261,45 @@ import_data_server <- function(id,
       }
     })
 
-  # MODULE 5: Updates reactive objects with files uploaded
+    # MODULE 4: Update reactive objects to hold uploaded data
     # Observe changes in updatedData and uploaded files
+    # observeEvent(c(
+    #   input$updatedData,
+    #   input$noise_upload,
+    #   input$curve_upload,
+    #   input$pop_upload,
+    #   input$file_upload
+    # ), {
+    #   req(input$file_upload)
+    #
+    #   output$head <- renderDT({
+    #     if (input$noise_upload == "Noise Data") {
+    #       df <- read_data_file(input$file_upload)
+    #       noise_data(df)
+    #       head(noise_data())
+    #     } else if (input$curve_upload == "Curve Data") {
+    #       df <- read_data_file(input$file_upload)
+    #       curve_data(df)
+    #       head(curve_data())
+    #     } else if (input$pop_upload == "Pop Data") {
+    #       df <- read_data_file(input$file_upload)
+    #       pop_data(df)
+    #
+    #       DT::datatable(head(pop_data())
+    #     }
+    #   })
+    # })
+
+  # MODULE 5: Updates reactive objects with files uploaded
     observeEvent(c(
-      input$updatedData,
       input$noise_upload,
       input$curve_upload,
       input$pop_upload
     ), {
-      req(input$updatedData) # Ensure updatedData is available
+      #req(input$updatedData) # Ensure updatedData is available
 
-      output$head <- renderTable({
-        if (input$updatedData == "Noise Data") {
+      output$head <- renderDT({
+        if (input$data_upload_type == "Noise Data") {
           # Check if a file has been uploaded for Noise Data
           req(input$noise_upload)
 
@@ -283,7 +310,7 @@ import_data_server <- function(id,
           noise_data(df)
 
           head(noise_data()) # Display the head of the noise data
-        } else if (input$updatedData == "Curve Data") {
+        } else if (input$data_upload_type == "Curve Data") {
           # Check if a file has been uploaded for Curve Data
           req(input$curve_upload)
 
@@ -294,7 +321,7 @@ import_data_server <- function(id,
           curve_data(df)
 
           head(curve_data()) # Display the head of the curve data
-        } else if (input$updatedData == "Pop Data") {
+        } else if (input$data_upload_type == "Pop Data") {
           # Check if a file has been uploaded for Pop Data
           req(input$pop_upload)
 
@@ -302,9 +329,12 @@ import_data_server <- function(id,
           df <- read_data_file(input$pop_upload)
 
           # Update the reactiveVal with the new pop data
-          pop_data(df) # Assuming pop_data is a reactiveVal
+          pop_data(df)
 
-          head(pop_data()) # Display the head of the pop data
+          datatable(
+            data = pop_data(),
+            editable = TRUE
+          )
         }
       })
     })
@@ -354,33 +384,6 @@ import_data_server <- function(id,
   #
   #   })
   # })
-
-  # MODULE 4: Update reactive objects to hold uploaded data
-  # Observe changes in updatedData and uploaded files
-  # observeEvent(c(
-  #   input$updatedData,
-  #   input$noise_upload,
-  #   input$curve_upload,
-  #   input$pop_upload,
-  #   input$file_upload
-  # ), {
-  #   req(input$file_upload)
-  #
-  #   output$head <- renderDT({
-  #     if (input$file_upload == "Noise Data") {
-  #       df <- read_data_file(input$file_upload)
-  #       noise_data(df)
-  #       head(noise_data())
-  #     } else if (input$file_upload == "Curve Data") {
-  #       df <- read_data_file(input$file_upload)
-  #       curve_data(df)
-  #       head(curve_data())
-  #     } else if (input$file_upload == "Pop Data") {
-  #       df <- read_data_file(input$file_upload)
-  #       pop_data(df)
-  #       head(pop_data())
-  #     }
-  #   })
 
     output$data_requirement <- renderText({
       HTML("<p> <strong> Required datasets </strong>
