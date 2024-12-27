@@ -39,6 +39,11 @@ import_data_ui <- function(id) {
         # file upload
         uiOutput(ns("pop_upload_type")),
 
+        # noise
+        uiOutput(ns("average")),
+
+        uiOutput(ns("noise_params")),
+
         # File Upload Indicators
         div(
           id = "pop_data_indicator_container",
@@ -161,13 +166,13 @@ import_data_server <- function(id,
       }
     })
 
-    # Dynamically render UI based on conditions
+
+
     output$pop_upload_type <- renderUI({
-       req(input$pop_type_ext) # Ensure pop_type is available
-       req(input$data_upload_type) # Ensure file_name is available
+      req(input$pop_type_ext) # Ensure pop_type is available
+      req(input$data_upload_type) # Ensure file_name is available
 
-
-      if (input$data_upload_type == "Pop Data" ) {
+      if (input$data_upload_type == "Pop Data") {
         if (input$pop_type_ext == "Upload") {
           # File upload interface for Pop Data
           fileInput(
@@ -200,17 +205,39 @@ import_data_server <- function(id,
           accept = c(".csv", ".rds")
         )
       } else if (input$data_upload_type == "Noise Data") {
-        # File upload interface for Noise Data
-        fileInput(
-          inputId = ns("noise_upload"),
-          label = "Choose File from Computer (.csv, .rds)",
-          buttonLabel = "Upload...",
-          multiple = TRUE,
-          accept = c(".csv", ".rds")
-        )
+        radioButtons(ns("noise_choice"),
+                     "Do you want to use average values:",
+                     choices = c("Yes" = "yes", "No" = "no"),
+                     selected = "no")
       }
     })
 
+    # Render UI components for Noise Data when average values are used
+    observeEvent(input$noise_choice, {
+      req(input$noise_choice)
+      if (input$noise_choice == "yes") {
+        output$noise_params <- renderUI({
+          tagList(
+            numericInput(ns("y_low"), "y low:", value = 0.479),
+            numericInput(ns("y_high"), "y high:", value = 5000000),
+            numericInput(ns("eps"), "eps:", value = 0.259),
+            numericInput(ns("nu"), "nu:", value = 2.60),
+            textInput(ns("antigen"), "antigen:", value = "HlyE_IgA"),
+            actionButton(ns("set_average"), "Set Averages")
+          )
+        })
+      } else {
+        output$noise_params <- renderUI({
+          fileInput(
+            inputId = ns("noise_upload"),
+            label = "Choose File from Computer (.csv, .rds)",
+            buttonLabel = "Upload...",
+            multiple = TRUE,
+            accept = c(".csv", ".rds")
+          )
+        })
+      }
+    })
 
     # MODULE 1: This should be module one (file upload)
     observeEvent(input$pop_upload, {
@@ -261,42 +288,12 @@ import_data_server <- function(id,
       }
     })
 
-    # MODULE 4: Update reactive objects to hold uploaded data
-    # Observe changes in updatedData and uploaded files
-    # observeEvent(c(
-    #   input$updatedData,
-    #   input$noise_upload,
-    #   input$curve_upload,
-    #   input$pop_upload,
-    #   input$file_upload
-    # ), {
-    #   req(input$file_upload)
-    #
-    #   output$head <- renderDT({
-    #     if (input$noise_upload == "Noise Data") {
-    #       df <- read_data_file(input$file_upload)
-    #       noise_data(df)
-    #       head(noise_data())
-    #     } else if (input$curve_upload == "Curve Data") {
-    #       df <- read_data_file(input$file_upload)
-    #       curve_data(df)
-    #       head(curve_data())
-    #     } else if (input$pop_upload == "Pop Data") {
-    #       df <- read_data_file(input$file_upload)
-    #       pop_data(df)
-    #
-    #       DT::datatable(head(pop_data())
-    #     }
-    #   })
-    # })
-
   # MODULE 5: Updates reactive objects with files uploaded
     observeEvent(c(
       input$noise_upload,
       input$curve_upload,
       input$pop_upload
     ), {
-      #req(input$updatedData) # Ensure updatedData is available
 
       output$head <- renderDT({
         if (input$data_upload_type == "Noise Data") {
@@ -309,7 +306,10 @@ import_data_server <- function(id,
           # Update the reactiveVal with the new noise data
           noise_data(df)
 
-          head(noise_data()) # Display the head of the noise data
+          datatable(
+            data = noise_data(),
+            editable = TRUE
+          )
         } else if (input$data_upload_type == "Curve Data") {
           # Check if a file has been uploaded for Curve Data
           req(input$curve_upload)
@@ -320,7 +320,10 @@ import_data_server <- function(id,
           # Update the reactiveVal with the new curve data
           curve_data(df)
 
-          head(curve_data()) # Display the head of the curve data
+          datatable(
+            data = curve_data(),
+            editable = TRUE
+          )
         } else if (input$data_upload_type == "Pop Data") {
           # Check if a file has been uploaded for Pop Data
           req(input$pop_upload)
@@ -339,51 +342,49 @@ import_data_server <- function(id,
       })
     })
 
-  #   # MODULE 3: Clear Environment
-  #   ## clear environment
-  #   observeEvent(input$clear_btn, {
-  #     req(input$clear_btn)
-  #
-  #     # clear indicators
-  #     shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "Tomato";')
-  #     shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "Tomato";')
-  #     shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "Tomato";')
-  #
-  #     # clear file upload
-  #     updateFileInput(session, "file_upload", label = "Upload a File", value = NULL)
-  #
-  #     # set reactive objects to NULL
-  #     pop_data(NULL)
-  #     curve_data(NULL)
-  #     noise_data(NULL)
-  #
-  #     # clear enviroment
-  #     rm(list = ls())
-  #
-  #     #clear dropdown files
-  #     uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
-  #     uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
-  #     uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
-  #
-  #     updateSelectInput(session, "selectedData", choices = uploaded_files$files)
-  #     updateSelectInput(session, "updatedData", choices = uploaded_files$files)
-  #     updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
-  #
-  #
-  #     # clear outputs
-  #     output$est_incidence <- renderTable({ NULL})
-  #     output$stratify_by <- renderUI({NULL})
-  #     output$antigen_type <- renderUI({NULL})
-  #     output$visualize <- renderPlot({NULL})
-  #     output$stratification <- renderUI({NULL})
-  #     output$stratification <- renderUI({NULL})
-  #     output$other_head <- renderTable({NULL})
-  #     output$head <- renderTable({NULL})
-  #     output$numeric_summary <- renderTable({NULL})
-  #
-  #
-  #   })
-  # })
+    # MODULE 3: Clear Environment
+    ## clear environment
+    observeEvent(input$clear_btn, {
+      req(input$clear_btn)
+
+      # clear indicators
+      shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "Tomato";')
+      shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "Tomato";')
+      shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "Tomato";')
+
+      # clear file upload
+      updateFileInput(session, "file_upload", label = "Upload a File", value = NULL)
+
+      # set reactive objects to NULL
+      pop_data(NULL)
+      curve_data(NULL)
+      noise_data(NULL)
+
+      # clear enviroment
+      rm(list = ls())
+
+      #clear dropdown files
+      uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
+
+      updateSelectInput(session, "selectedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData", choices = uploaded_files$files)
+      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
+
+
+      # clear outputs
+      output$est_incidence <- renderTable({ NULL})
+      output$stratify_by <- renderUI({NULL})
+      output$antigen_type <- renderUI({NULL})
+      output$visualize <- renderPlot({NULL})
+      output$stratification <- renderUI({NULL})
+      output$stratification <- renderUI({NULL})
+      output$other_head <- renderDT({NULL})
+      output$head <- renderDT({NULL})
+      output$numeric_summary <- renderTable({NULL})
+
+  })
 
     output$data_requirement <- renderText({
       HTML("<p> <strong> Required datasets </strong>
