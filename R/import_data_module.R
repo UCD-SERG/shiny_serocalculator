@@ -15,13 +15,19 @@
 #' @param id define namespace
 import_data_ui <- function(id) {
   ns <- shiny::NS(id)
+
   tabPanel(
     "Import Data",
+    tags$head(
+      tags$style(HTML("hr {border-top: 1px solid #828994;}"))
+    ),
     sidebarLayout(
       position = "left",
       sidebarPanel(
         width = 3,
         h4("Data Upload"),
+
+        hr(),
 
         helpText("Use this section to upload the different types of data"),
 
@@ -39,10 +45,31 @@ import_data_ui <- function(id) {
         # file upload
         uiOutput(ns("pop_upload_type")),
 
+        hr(),
+
+        h5("POP DATA PARAMETERS",
+           id = "pop_parameters",
+           style = "font-weight: bold;"),
+
+        #select id
+        uiOutput(ns("select_id")),
+
+        # select age
+        uiOutput(ns("select_age")),
+
+        # select value
+        uiOutput(ns("select_value")),
+
         # noise
         uiOutput(ns("average")),
 
         uiOutput(ns("noise_params")),
+
+        hr(),
+
+        h5("FILE UPLOAD INDICATOR",
+           id = "dynamic_heading",
+           style = "font-weight: bold;"),
 
         # File Upload Indicators
         div(
@@ -99,8 +126,10 @@ import_data_ui <- function(id) {
           span("Noise Data", style = "font-size: 14px; font-weight: bold;")
         ),
 
+        hr(),
+
         # clear environment button
-        actionButton("clear_btn", "Clear Environment")
+        actionButton(ns("clear_btn"), "Clear Environment")
       ),
       mainPanel(
         tabsetPanel(
@@ -146,6 +175,42 @@ import_data_server <- function(id,
     pop_data <- reactiveVal(NULL)
     curve_data <- reactiveVal(NULL)
     noise_data <- reactiveVal(NULL)
+
+    ## clear environment
+    observeEvent(input$clear_btn, {
+      req(input$clear_btn)
+
+      # clear indicators
+      shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "Tomato";')
+      shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "Tomato";')
+      shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "Tomato";')
+
+      # set reactive objects to NULL
+      pop_data(NULL)
+      curve_data(NULL)
+      noise_data(NULL)
+
+      # clear enviroment
+      rm(list = ls())
+
+      #clear dropdown files
+      uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
+
+      # clear outputs
+      output$est_incidence <- renderTable({ NULL})
+      output$stratify_by <- renderUI({NULL})
+      output$antigen_type <- renderUI({NULL})
+      output$visualize <- renderPlot({NULL})
+      output$stratification <- renderUI({NULL})
+      output$stratification <- renderUI({NULL})
+      output$other_head <- renderDT({NULL})
+      output$head <- NULL
+      output$numeric_summary <- renderTable({NULL})
+
+    })
+
 
     # MODULE 0: Choose how to get pop_data
     # Select how to get pop data
@@ -288,7 +353,8 @@ import_data_server <- function(id,
       }
     })
 
-  # MODULE 5: Updates reactive objects with files uploaded
+
+  # reactive objects with files uploaded
     observeEvent(c(
       input$noise_upload,
       input$curve_upload,
@@ -342,49 +408,100 @@ import_data_server <- function(id,
       })
     })
 
-    # MODULE 3: Clear Environment
-    ## clear environment
-    observeEvent(input$clear_btn, {
-      req(input$clear_btn)
+    #########################################################
+    observeEvent(c(
+      input$noise_upload,
+      input$curve_upload,
+      input$pop_upload
+    ), {
+        if (input$data_upload_type == "Noise Data") {
+          # Check if a file has been uploaded for Noise Data
+          req(input$noise_upload)
 
-      # clear indicators
-      shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "Tomato";')
-      shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "Tomato";')
-      shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "Tomato";')
+          # Read the uploaded file using the helper function
+          df <- read_data_file(input$noise_upload)
 
-      # clear file upload
-      updateFileInput(session, "file_upload", label = "Upload a File", value = NULL)
+          # Update the reactiveVal with the new noise data
+          noise_data(df)
 
-      # set reactive objects to NULL
-      pop_data(NULL)
-      curve_data(NULL)
-      noise_data(NULL)
+        } else if (input$data_upload_type == "Curve Data") {
+          # Check if a file has been uploaded for Curve Data
+          req(input$curve_upload)
 
-      # clear enviroment
-      rm(list = ls())
+          # Read the uploaded file using the helper function
+          df <- read_data_file(input$curve_upload)
 
-      #clear dropdown files
-      uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
-      uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
-      uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
+          # Update the reactiveVal with the new curve data
+          curve_data(df)
 
-      updateSelectInput(session, "selectedData", choices = uploaded_files$files)
-      updateSelectInput(session, "updatedData", choices = uploaded_files$files)
-      updateSelectInput(session, "updatedData_ext", choices = uploaded_files$files)
+        } else if (input$data_upload_type == "Pop Data") {
+          # Check if a file has been uploaded for Pop Data
+          req(input$pop_upload)
+
+          # Read the uploaded file using the helper function
+          df <- read_data_file(input$pop_upload)
+
+          # Update the reactiveVal with the new pop data
+          pop_data(df)
+        }
+    })
 
 
-      # clear outputs
-      output$est_incidence <- renderTable({ NULL})
-      output$stratify_by <- renderUI({NULL})
-      output$antigen_type <- renderUI({NULL})
-      output$visualize <- renderPlot({NULL})
-      output$stratification <- renderUI({NULL})
-      output$stratification <- renderUI({NULL})
-      output$other_head <- renderDT({NULL})
-      output$head <- renderDT({NULL})
-      output$numeric_summary <- renderTable({NULL})
 
-  })
+    # UI to select age column in drop-down
+    output$select_age <- renderUI({
+      if (input$data_upload_type == "Pop Data") {
+        # Get column names from pop_data
+        cols <- names(pop_data())
+
+        # Add a blank entry at the top for display
+        cols <- c("", cols)
+
+        # Dynamically create drop-down list of column names
+        selectInput(
+          "age_select",
+          "Select Age Column:",
+          choices = cols
+        )
+      }
+    })
+
+    # UI to select value column in drop-down
+    output$select_value <- renderUI({
+      if (input$data_upload_type == "Pop Data") {
+        # Get column names from pop_data
+        cols <- names(pop_data())
+
+        # Add a blank entry at the top for display
+        cols <- c("", cols)
+
+        # Dynamically create drop-down list of column names
+        selectInput(
+          "value_select",
+          "Select Value Column:",
+          choices = cols
+        )
+      }
+    })
+
+
+    # UI to select age column in drop-down
+    output$select_id <- renderUI({
+      if (input$data_upload_type == "Pop Data") {
+        # Get column names from pop_data
+        cols <- names(pop_data())
+
+        # Add a blank entry at the top for display
+        cols <- c("", cols)
+
+        # Dynamically create drop-down list of column names
+        selectInput(
+          "id_select",
+          "Select Id Column:",
+          choices = cols
+        )
+      }
+    })
 
     output$data_requirement <- renderText({
       HTML("<p> <strong> Required datasets </strong>
@@ -428,7 +545,5 @@ import_data_server <- function(id,
          <p>File limit: <strong>500MB</strong></p>")
     })
   })
-
-
 
 }
