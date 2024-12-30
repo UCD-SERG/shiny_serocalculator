@@ -60,6 +60,16 @@ import_data_ui <- function(id) {
         # select value
         uiOutput(ns("select_value")),
 
+        # antigen type
+        uiOutput(ns("antigen_type")),
+
+        # curve data indicator
+        create_indicators(
+          n = 3,
+          colors = c("Tomato", "LightBlue", "Yellow"),
+          label = "Pop Data"
+        ),
+
         # noise
         uiOutput(ns("average")),
 
@@ -176,42 +186,6 @@ import_data_server <- function(id,
     curve_data <- reactiveVal(NULL)
     noise_data <- reactiveVal(NULL)
 
-    ## clear environment
-    observeEvent(input$clear_btn, {
-      req(input$clear_btn)
-
-      # clear indicators
-      shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "Tomato";')
-      shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "Tomato";')
-      shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "Tomato";')
-
-      # set reactive objects to NULL
-      pop_data(NULL)
-      curve_data(NULL)
-      noise_data(NULL)
-
-      # clear enviroment
-      rm(list = ls())
-
-      #clear dropdown files
-      uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
-      uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
-      uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
-
-      # clear outputs
-      output$est_incidence <- renderTable({ NULL})
-      output$stratify_by <- renderUI({NULL})
-      output$antigen_type <- renderUI({NULL})
-      output$visualize <- renderPlot({NULL})
-      output$stratification <- renderUI({NULL})
-      output$stratification <- renderUI({NULL})
-      output$other_head <- renderDT({NULL})
-      output$head <- NULL
-      output$numeric_summary <- renderTable({NULL})
-
-    })
-
-
     # MODULE 0: Choose how to get pop_data
     # Select how to get pop data
     observeEvent(input$data_upload_type, {
@@ -304,7 +278,7 @@ import_data_server <- function(id,
       }
     })
 
-    # MODULE 1: This should be module one (file upload)
+   # file upload
     observeEvent(input$pop_upload, {
       req(input$data_upload_type == "Pop Data") # Check if "Pop Data" is selected
       if (!is.null(input$pop_upload)) {
@@ -352,6 +326,27 @@ import_data_server <- function(id,
         shinyjs::runjs('document.getElementById("status_circle").style.backgroundColor = "Tomato";')
       }
     })
+
+  # get antigen in pop_data
+    observeEvent(input$pop_upload,{
+      output$antigen_type <- renderUI({
+        req(pop_data())
+
+        if ("antigen_iso" %in% names(pop_data())) {
+          checkboxGroupInput(
+            inputId = ns("antigen_type_ext"),
+            label = "Antigen Type",
+            choices = unique(pop_data()$antigen_iso),
+            selected = unique(pop_data()$antigen_iso)
+          )
+        } else {
+          # Display a message if 'antigen_iso' is not in the data
+          validate(need(FALSE, "Antigen column ('antigen_iso') not present in data."))
+        }
+      })
+    })
+
+  # check if antigen is present in curve data
 
 
   # reactive objects with files uploaded
@@ -501,6 +496,41 @@ import_data_server <- function(id,
           choices = cols
         )
       }
+    })
+
+    ## clear environment
+    observeEvent(input$clear_btn, {
+      req(input$clear_btn)
+
+      # clear indicators
+      shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "Tomato";')
+      shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "Tomato";')
+      shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "Tomato";')
+
+      # set reactive objects to NULL
+      pop_data(NULL)
+      curve_data(NULL)
+      noise_data(NULL)
+
+      # clear enviroment
+      rm(list = ls())
+
+      #clear dropdown files
+      uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
+      uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
+
+      # clear outputs
+      output$est_incidence <- renderTable({ NULL})
+      output$stratify_by <- renderUI({NULL})
+      output$antigen_type <- renderUI({NULL})
+      output$visualize <- renderPlot({NULL})
+      output$stratification <- renderUI({NULL})
+      output$stratification <- renderUI({NULL})
+      output$other_head <- renderDT({NULL})
+      output$head <- NULL
+      output$numeric_summary <- renderTable({NULL})
+
     })
 
     output$data_requirement <- renderText({
