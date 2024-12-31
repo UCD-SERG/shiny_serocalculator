@@ -63,12 +63,11 @@ import_data_ui <- function(id) {
         # antigen type
         uiOutput(ns("antigen_type")),
 
-        # curve data indicator
-        create_indicators(
-          n = 3,
-          colors = c("Tomato", "LightBlue", "Yellow"),
-          label = "Pop Data"
-        ),
+        # curve antigen availability indicator
+        uiOutput(ns("curve_antigen_display")),
+
+        # noise availability indicator
+        uiOutput(ns("noise_antigen_display")),
 
         # noise
         uiOutput(ns("average")),
@@ -403,6 +402,68 @@ import_data_server <- function(id,
       })
     })
 
+    ##############################################################
+
+
+    observeEvent(input$noise_upload, {
+
+      if (!is.null(input$noise_upload)) {
+
+        output$noise_antigen_display <- renderUI({
+          # Extract unique antigens
+          antigens <- unique(pop_data()$antigen_iso)
+
+          # Compare antigen sets and determine colors
+          colors <- ifelse(
+            antigens %in% unique(noise_data()$antigen_iso),
+            "MediumSeaGreen",
+            "Tomato"
+          )
+
+          # Call create_indicators
+          create_indicators(
+            n = length(antigens),
+            colors = colors,
+            label = "Noise Data",
+            antigen_name = antigens
+          )
+        })
+
+      }
+
+    })
+
+
+    observeEvent(input$curve_upload, {
+
+      if (!is.null(input$curve_upload)) {
+
+        output$curve_antigen_display <- renderUI({
+          # Extract unique antigens
+          antigens <- unique(pop_data()$antigen_iso)
+
+          # Compare antigen sets and determine colors
+          colors <- ifelse(
+            antigens %in% unique(curve_data()$antigen_iso),
+            "MediumSeaGreen",
+            "Tomato"
+          )
+
+          # Call create_indicators
+          create_indicators(
+            n = length(antigens),
+            colors = colors,
+            label = "Curve Data",
+            antigen_name = antigens
+          )
+        })
+
+      }
+
+    })
+
+
+
     #########################################################
     observeEvent(c(
       input$noise_upload,
@@ -530,6 +591,8 @@ import_data_server <- function(id,
       output$other_head <- renderDT({NULL})
       output$head <- NULL
       output$numeric_summary <- renderTable({NULL})
+      output$noise_antigen_display <- renderUI({NULL})
+      output$curve_antigen_display <- renderUI({NULL})
 
     })
 

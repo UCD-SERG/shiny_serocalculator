@@ -1,4 +1,4 @@
-create_indicators <- function(n, colors, label = "Indicator") {
+create_indicators <- function(n, colors, label = "Indicator", antigen_names) {
   if (length(colors) < n) {
     stop("The length of the colors vector must be at least equal to n.")
   }
@@ -9,14 +9,15 @@ create_indicators <- function(n, colors, label = "Indicator") {
       id = paste0("indicator_", i),
       style = sprintf(
         "
-        width: 50px;
+        width: 70px;
         height: 25px;
         background-color: %s;
-        border: 0px solid white;
+        border: 1px solid white;
         display: inline-block;
-        margin-right: 0px;",
+        margin-right: 2px;",
         colors[i]
-      )
+      ),
+      antigen_names[i]
     )
   })
 
