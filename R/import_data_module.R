@@ -138,7 +138,9 @@ import_data_ui <- function(id) {
         hr(),
 
         # clear environment button
-        actionButton(ns("clear_btn"), "Clear Environment")
+        actionButton(ns("clear_btn"), "Clear Environment"),
+
+        selectInput(ns("updatedData_ext"), "Available Data to Choose", choices = NULL)
       ),
       mainPanel(
         tabsetPanel(
@@ -310,30 +312,7 @@ import_data_server <- function(id,
       }
     })
 
-    # Update file list
-    observeEvent(c(input$pop_upload,
-                   input$curve_upload,
-                   input$noise_upload), {
-
-                     if(!is.null(pop_upload)){
-                       uploaded_files$files <- c(
-                         uploaded_files$files,
-                         "Pop Data"
-                       )
-                     } else if (!is.null(curve_upload)){
-                       uploaded_files$files <- c(
-                         uploaded_files$files,
-                         "Curve Data"
-                       )
-                     } else if(!is.null(noise_upload)) {
-                       uploaded_files$files <- c(
-                         uploaded_files$files,
-                         "Noise Data"
-                       )
-                     }
-                   })
-
-    # MODULE 2: Coloring file upload
+    # file upload indicator
     observeEvent(c(input$noise_upload,
                    input$pop_upload,
                    input$curve_upload), {
@@ -485,7 +464,22 @@ import_data_server <- function(id,
     })
 
 
-
+    # observeEvent(c(input$pop_upload,
+    #                input$curve_upload,
+    #                input_noise_upload), {
+    #   if (!is.null(input$pop_upload)) {
+    #     uploaded_files$files <- c(uploaded_files$files, "Pop Data")
+    #   }
+    #   if (!is.null(input$curve_upload)) {
+    #     uploaded_files$files <- c(uploaded_files$files, "Curve Data")
+    #   }
+    #   if (!is.null(input$noise_upload)) {
+    #     uploaded_files$files <- c(uploaded_files$files, "Noise Data")
+    #   }
+    #
+    #   # Update the selectInput choices after handling all uploads
+    #   updateSelectInput(session, "updatedData_ext", choices = c('C','D'))
+    # })
     #########################################################
     observeEvent(c(
       input$noise_upload,

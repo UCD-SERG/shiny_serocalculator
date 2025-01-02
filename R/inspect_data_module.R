@@ -113,9 +113,9 @@ inspect_data_server <- function(id, dataReactive, value) {
 
     # Numeric summary
     output$numeric_summary <- renderUI({
-      req(dataReactive())
+      req(pop_data())
       renderTable({
-        data <- dataReactive()
+        data <- pop_data()
         skimr::skim(data) %>%
           skimr::yank("numeric")
       })
