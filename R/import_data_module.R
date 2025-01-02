@@ -185,7 +185,6 @@ import_data_server <- function(id,
     curve_data <- reactiveVal(NULL)
     noise_data <- reactiveVal(NULL)
 
-    # MODULE 0: Choose how to get pop_data
     # Select how to get pop data
     observeEvent(input$data_upload_type, {
       req(input$data_upload_type)
@@ -207,8 +206,8 @@ import_data_server <- function(id,
 
 
     output$pop_upload_type <- renderUI({
-      req(input$pop_type_ext) # Ensure pop_type is available
-      req(input$data_upload_type) # Ensure file_name is available
+      req(input$pop_type_ext)
+      req(input$data_upload_type)
 
       if (input$data_upload_type == "Pop Data") {
         if (input$pop_type_ext == "Upload") {
@@ -279,7 +278,7 @@ import_data_server <- function(id,
 
    # file upload
     observeEvent(input$pop_upload, {
-      req(input$data_upload_type == "Pop Data") # Check if "Pop Data" is selected
+      req(input$data_upload_type == "Pop Data")
       if (!is.null(input$pop_upload)) {
         # Enable "Curve Data"
         updatePickerInput(
@@ -310,6 +309,29 @@ import_data_server <- function(id,
         )
       }
     })
+
+    # Update file list
+    observeEvent(c(input$pop_upload,
+                   input$curve_upload,
+                   input$noise_upload), {
+
+                     if(!is.null(pop_upload)){
+                       uploaded_files$files <- c(
+                         uploaded_files$files,
+                         "Pop Data"
+                       )
+                     } else if (!is.null(curve_upload)){
+                       uploaded_files$files <- c(
+                         uploaded_files$files,
+                         "Curve Data"
+                       )
+                     } else if(!is.null(noise_upload)) {
+                       uploaded_files$files <- c(
+                         uploaded_files$files,
+                         "Noise Data"
+                       )
+                     }
+                   })
 
     # MODULE 2: Coloring file upload
     observeEvent(c(input$noise_upload,
@@ -635,6 +657,20 @@ import_data_server <- function(id,
                     <li>y.high: Upper limit of detection of the antibody assay</li>
                     <li>eps: measurement noise</li>
                   </ul></p>
+        <p>
+          <li><strong>Biological noise</strong>
+              <p>typically comes from cross-reactivity with other molecules or other pathogens causing an overestimation
+              of antibody concentration. In this case, biological noise needs to be pre-estimated using negative controls,
+              typically using the 95th percentile of the distribution of antibody responses to the antigen-isotype in a
+              population with no exposure.</p>
+          </li>
+          <li><strong>Measurement noise</strong>
+            <p>epresents measurement error from the laboratory testing process (e.g. user differences in pipetting technique,
+            random ELISA plate effects). It is defined by a CV (coefficient of variation) as the ratio of the standard deviation
+            to the mean for replicates. Note that the CV should ideally be measured across plates rather than within the same plate.
+            Measurement noise can over- or under-estimate antibody concentration. </p>
+          </li>
+        </p>
          <p>File limit: <strong>500MB</strong></p>")
     })
   })

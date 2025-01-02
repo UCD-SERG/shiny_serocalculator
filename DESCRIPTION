@@ -12,7 +12,9 @@ Description: Translates antibody levels measured in cross-sectional population
   samples into estimates of the frequency with which seroconversions (infections) 
   occur in the sampled populations.
 Depends: R (>= 4.1.0),
-          shiny
+          shiny,
+          shinyWidgets,
+          DT
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -21,16 +23,15 @@ Imports:
   ggplot2,
   readxl,
   serocalculator,
-  DT,
   dplyr,
-  shinyWidgets,
   shinythemes,
   shinybusy,
   shinyjs,
   httr,
   vroom,
   skimr,
-  rlang
+  rlang,
+  htmltools
 Suggests:
     shinytest2
 
