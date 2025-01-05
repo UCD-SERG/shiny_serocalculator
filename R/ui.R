@@ -1,4 +1,3 @@
-
 #' @importFrom shiny fluidPage
 #' @importFrom shiny navbarPage
 
@@ -22,8 +21,10 @@ ui <- function(...) {
       tabPanel("Summary", summary_tab_ui("summary")),
       tabPanel("Import Data", import_data_ui("import_data")),
       tabPanel("Inspect Data", inspect_data_ui("inspect_data")),
-      tabPanel("Estimate Seroincidence",
-               estimate_seroincidence_ui("estimate_seroincidence"))
+      tabPanel(
+        "Estimate Seroincidence",
+        estimate_seroincidence_ui("estimate_seroincidence")
+      )
     )
   )
 }

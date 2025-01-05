@@ -72,7 +72,8 @@ server <- function(input, output, session) {
   inspect_data_server(
     id = "inspect_data",
     pop_data = pop_data,
-    uploaded_files = uploaded_files
+    curve_data = curve_data,
+    noise_data = noise_data
   )
 
   # estimate_seroincidence_server(
