@@ -1,4 +1,3 @@
-
 #' @importFrom shiny renderText
 #' @importFrom shiny HTML
 #' @importFrom shiny fileInput
@@ -26,17 +25,15 @@ import_data_ui <- function(id) {
       sidebarPanel(
         width = 3,
         h4("Data Upload"),
-
         hr(),
-
         helpText("Use this section to upload the different types of data"),
 
         # choose data type
         pickerInput(ns("data_upload_type"),
-                    label = "Choose Type",
-                    choices = c("Pop Data", "Curve Data", "Noise Data"),
-                    selected = "Pop Data",
-                    choicesOpt = list(disabled = c(FALSE, TRUE, TRUE))
+          label = "Choose Type",
+          choices = c("Pop Data", "Curve Data", "Noise Data"),
+          selected = "Pop Data",
+          choicesOpt = list(disabled = c(FALSE, TRUE, TRUE))
         ),
 
         # how to upload pop_data ("OSF" | "File Upload")
@@ -44,14 +41,13 @@ import_data_ui <- function(id) {
 
         # file upload
         uiOutput(ns("pop_upload_type")),
-
         hr(),
-
         h5("POP DATA PARAMETERS",
-           id = "pop_parameters",
-           style = "font-weight: bold;"),
+          id = "pop_parameters",
+          style = "font-weight: bold;"
+        ),
 
-        #select id
+        # select id
         uiOutput(ns("select_id")),
 
         # select age
@@ -71,14 +67,12 @@ import_data_ui <- function(id) {
 
         # noise
         uiOutput(ns("average")),
-
         uiOutput(ns("noise_params")),
-
         hr(),
-
         h5("FILE UPLOAD INDICATOR",
-           id = "dynamic_heading",
-           style = "font-weight: bold;"),
+          id = "dynamic_heading",
+          style = "font-weight: bold;"
+        ),
 
         # File Upload Indicators
         div(
@@ -98,7 +92,6 @@ import_data_ui <- function(id) {
           ),
           span("Pop Data", style = "font-size: 14px; font-weight: bold;")
         ),
-
         div(
           id = "curve_data_indicator_container",
           style = "display: flex; align-items: center; margin-bottom: 10px;",
@@ -116,7 +109,6 @@ import_data_ui <- function(id) {
           ),
           span("Curve Data", style = "font-size: 14px; font-weight: bold;")
         ),
-
         div(
           id = "noise_data_indicator_container",
           style = "display: flex; align-items: center; margin-bottom: 10px;",
@@ -134,20 +126,22 @@ import_data_ui <- function(id) {
           ),
           span("Noise Data", style = "font-size: 14px; font-weight: bold;")
         ),
-
         hr(),
 
         # clear environment button
         actionButton(ns("clear_btn"), "Clear Environment"),
-
-        selectInput(ns("updatedData_ext"), "Available Data to Choose", choices = NULL)
       ),
       mainPanel(
         tabsetPanel(
           tabPanel("Data Requirements", htmlOutput(ns("data_requirement"))),
           tabPanel(
             "File Preview",
-            DT::DTOutput(ns("head")),
+            h3("Pop Data"),
+            DT::DTOutput(ns("pop_preview")),
+            h3("Curve Data"),
+            DT::DTOutput(ns("curve_preview")),
+            h3("Noise Data"),
+            DT::DTOutput(ns("noise_preview")),
             DT::DTOutput(ns("other_head"))
           )
         )
@@ -169,24 +163,6 @@ import_data_server <- function(id,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Reactive object to hold uploaded data
-    data <- reactive({
-      req(input$file_upload)
-      ext <- tools::file_ext(input$upload$name)
-
-      # Read the data based on the file extension
-      switch(ext,
-             "csv" = read.csv(input$upload$datapath),
-             "rds" = readRDS(input$upload$datapath),
-             return(NULL) # Return NULL for unsupported extensions
-      )
-    })
-
-    uploaded_files <- reactiveValues(files = NULL)
-    pop_data <- reactiveVal(NULL)
-    curve_data <- reactiveVal(NULL)
-    noise_data <- reactiveVal(NULL)
-
     # Select how to get pop data
     observeEvent(input$data_upload_type, {
       req(input$data_upload_type)
@@ -201,11 +177,9 @@ import_data_server <- function(id,
           )
         })
       } else {
-        output$pop_type <- renderUI(NULL) # Ensures UI element is cleared for non "Pop Data" file names
+        output$pop_type <- renderUI(NULL)
       }
     })
-
-
 
     output$pop_upload_type <- renderUI({
       req(input$pop_type_ext)
@@ -245,9 +219,10 @@ import_data_server <- function(id,
         )
       } else if (input$data_upload_type == "Noise Data") {
         radioButtons(ns("noise_choice"),
-                     "Do you want to use average values:",
-                     choices = c("Yes" = "yes", "No" = "no"),
-                     selected = "no")
+          "Do you want to use average values:",
+          choices = c("Yes" = "yes", "No" = "no"),
+          selected = "no"
+        )
       }
     })
 
@@ -278,7 +253,7 @@ import_data_server <- function(id,
       }
     })
 
-   # file upload
+    # file upload
     observeEvent(input$pop_upload, {
       req(input$data_upload_type == "Pop Data")
       if (!is.null(input$pop_upload)) {
@@ -313,22 +288,24 @@ import_data_server <- function(id,
     })
 
     # file upload indicator
-    observeEvent(c(input$noise_upload,
-                   input$pop_upload,
-                   input$curve_upload), {
+    observeEvent(c(
+      input$noise_upload,
+      input$pop_upload,
+      input$curve_upload
+    ), {
       if (!is.null(input$pop_upload) && input$data_upload_type == "Pop Data") {
         shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "MediumSeaGreen";')
       } else if (!is.null(input$curve_upload) && input$data_upload_type == "Curve Data") {
         shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "MediumSeaGreen";')
-      } else if (!is.null(input$noise_upload) && input$data_upload_type == "Noise Data"){
+      } else if (!is.null(input$noise_upload) && input$data_upload_type == "Noise Data") {
         shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "MediumSeaGreen";')
       } else {
         shinyjs::runjs('document.getElementById("status_circle").style.backgroundColor = "Tomato";')
       }
     })
 
-  # get antigen in pop_data
-    observeEvent(input$pop_upload,{
+    # get antigen in pop_data
+    observeEvent(input$pop_upload, {
       output$antigen_type <- renderUI({
         req(pop_data())
 
@@ -346,46 +323,12 @@ import_data_server <- function(id,
       })
     })
 
-  # check if antigen is present in curve data
 
+    ############################### PREVIEW DATA ########################################
 
-  # reactive objects with files uploaded
-    observeEvent(c(
-      input$noise_upload,
-      input$curve_upload,
-      input$pop_upload
-    ), {
-
-      output$head <- renderDT({
-        if (input$data_upload_type == "Noise Data") {
-          # Check if a file has been uploaded for Noise Data
-          req(input$noise_upload)
-
-          # Read the uploaded file using the helper function
-          df <- read_data_file(input$noise_upload)
-
-          # Update the reactiveVal with the new noise data
-          noise_data(df)
-
-          datatable(
-            data = noise_data(),
-            editable = TRUE
-          )
-        } else if (input$data_upload_type == "Curve Data") {
-          # Check if a file has been uploaded for Curve Data
-          req(input$curve_upload)
-
-          # Read the uploaded file using the helper function
-          df <- read_data_file(input$curve_upload)
-
-          # Update the reactiveVal with the new curve data
-          curve_data(df)
-
-          datatable(
-            data = curve_data(),
-            editable = TRUE
-          )
-        } else if (input$data_upload_type == "Pop Data") {
+    observeEvent(input$pop_upload, {
+      if (input$data_upload_type == "Pop Data") {
+        output$pop_preview <- renderDT({
           # Check if a file has been uploaded for Pop Data
           req(input$pop_upload)
 
@@ -395,21 +338,63 @@ import_data_server <- function(id,
           # Update the reactiveVal with the new pop data
           pop_data(df)
 
+
           datatable(
             data = pop_data(),
             editable = TRUE
           )
-        }
-      })
+        })
+      }
     })
 
-    ##############################################################
+
+    observeEvent(input$curve_upload, {
+      if (input$data_upload_type == "Curve Data") {
+        output$curve_preview <- renderDT({
+          # Check if a file has been uploaded for Pop Data
+          req(input$curve_upload)
+
+          # Read the uploaded file using the helper function
+          df <- read_data_file(input$curve_upload)
+
+          # Update the reactiveVal with the new pop data
+          curve_data(df)
+
+
+          datatable(
+            data = curve_data(),
+            editable = TRUE
+          )
+        })
+      }
+    })
+
+    observeEvent(input$noise_upload, {
+      if (input$data_upload_type == "Noise Data") {
+        output$noise_preview <- renderDT({
+          # Check if a file has been uploaded for Pop Data
+          req(input$noise_upload)
+
+          # Read the uploaded file using the helper function
+          df <- read_data_file(input$curve_upload)
+
+          # Update the reactiveVal with the new pop data
+          noise_data(df)
+
+
+          datatable(
+            data = noise_data(),
+            editable = TRUE
+          )
+        })
+      }
+    })
+
+    ######################################################################### 3
 
 
     observeEvent(input$noise_upload, {
-
       if (!is.null(input$noise_upload)) {
-
         output$noise_antigen_display <- renderUI({
           # Extract unique antigens
           antigens <- unique(pop_data()$antigen_iso)
@@ -429,16 +414,12 @@ import_data_server <- function(id,
             antigen_name = antigens
           )
         })
-
       }
-
     })
 
 
     observeEvent(input$curve_upload, {
-
       if (!is.null(input$curve_upload)) {
-
         output$curve_antigen_display <- renderUI({
           # Extract unique antigens
           antigens <- unique(pop_data()$antigen_iso)
@@ -458,66 +439,9 @@ import_data_server <- function(id,
             antigen_name = antigens
           )
         })
-
       }
-
     })
-
-
-    # observeEvent(c(input$pop_upload,
-    #                input$curve_upload,
-    #                input_noise_upload), {
-    #   if (!is.null(input$pop_upload)) {
-    #     uploaded_files$files <- c(uploaded_files$files, "Pop Data")
-    #   }
-    #   if (!is.null(input$curve_upload)) {
-    #     uploaded_files$files <- c(uploaded_files$files, "Curve Data")
-    #   }
-    #   if (!is.null(input$noise_upload)) {
-    #     uploaded_files$files <- c(uploaded_files$files, "Noise Data")
-    #   }
-    #
-    #   # Update the selectInput choices after handling all uploads
-    #   updateSelectInput(session, "updatedData_ext", choices = c('C','D'))
-    # })
     #########################################################
-    observeEvent(c(
-      input$noise_upload,
-      input$curve_upload,
-      input$pop_upload
-    ), {
-        if (input$data_upload_type == "Noise Data") {
-          # Check if a file has been uploaded for Noise Data
-          req(input$noise_upload)
-
-          # Read the uploaded file using the helper function
-          df <- read_data_file(input$noise_upload)
-
-          # Update the reactiveVal with the new noise data
-          noise_data(df)
-
-        } else if (input$data_upload_type == "Curve Data") {
-          # Check if a file has been uploaded for Curve Data
-          req(input$curve_upload)
-
-          # Read the uploaded file using the helper function
-          df <- read_data_file(input$curve_upload)
-
-          # Update the reactiveVal with the new curve data
-          curve_data(df)
-
-        } else if (input$data_upload_type == "Pop Data") {
-          # Check if a file has been uploaded for Pop Data
-          req(input$pop_upload)
-
-          # Read the uploaded file using the helper function
-          df <- read_data_file(input$pop_upload)
-
-          # Update the reactiveVal with the new pop data
-          pop_data(df)
-        }
-    })
-
 
 
     # UI to select age column in drop-down
@@ -592,24 +516,45 @@ import_data_server <- function(id,
       # clear enviroment
       rm(list = ls())
 
-      #clear dropdown files
+      # clear dropdown files
       uploaded_files$files <- setdiff(uploaded_files$files, "Pop Data")
       uploaded_files$files <- setdiff(uploaded_files$files, "Noise Data")
       uploaded_files$files <- setdiff(uploaded_files$files, "Curve Data")
 
       # clear outputs
-      output$est_incidence <- renderTable({ NULL})
-      output$stratify_by <- renderUI({NULL})
-      output$antigen_type <- renderUI({NULL})
-      output$visualize <- renderPlot({NULL})
-      output$stratification <- renderUI({NULL})
-      output$stratification <- renderUI({NULL})
-      output$other_head <- renderDT({NULL})
-      output$head <- NULL
-      output$numeric_summary <- renderTable({NULL})
-      output$noise_antigen_display <- renderUI({NULL})
-      output$curve_antigen_display <- renderUI({NULL})
-
+      output$est_incidence <- renderTable({
+        NULL
+      })
+      output$stratify_by <- renderUI({
+        NULL
+      })
+      output$antigen_type <- renderUI({
+        NULL
+      })
+      output$visualize <- renderPlot({
+        NULL
+      })
+      output$stratification <- renderUI({
+        NULL
+      })
+      output$stratification <- renderUI({
+        NULL
+      })
+      output$other_head <- renderDT({
+        NULL
+      })
+      output$pop_preview <- NULL
+      output$curve_preview <- NULL
+      output$noise_preview <- NULL
+      output$numeric_summary <- renderTable({
+        NULL
+      })
+      output$noise_antigen_display <- renderUI({
+        NULL
+      })
+      output$curve_antigen_display <- renderUI({
+        NULL
+      })
     })
 
     output$data_requirement <- renderText({
@@ -668,5 +613,4 @@ import_data_server <- function(id,
          <p>File limit: <strong>500MB</strong></p>")
     })
   })
-
 }

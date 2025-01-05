@@ -24,7 +24,7 @@ inspect_data_ui <- function(id) {
         helpText("Select uploaded data and visualize it."),
 
         # Select input for dataset
-        selectInput(ns("updatedData_ext"), "Available Data to Choose", choices = NULL),
+        #selectInput(ns("updatedData_ext"), "Available Data to Choose", choices = NULL),
 
         # Dynamic UI elements
         uiOutput(ns("choose_visualization")),
@@ -46,7 +46,7 @@ inspect_data_ui <- function(id) {
 #' @param id identify namespace
 #' @param dataReactive a reactive object holding uploaded data
 #' @param value a continuous attribute
-inspect_data_server <- function(id, dataReactive, value) {
+inspect_data_server <- function(id, pop_data, uploaded_files, value) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -117,7 +117,8 @@ inspect_data_server <- function(id, dataReactive, value) {
       renderTable({
         data <- pop_data()
         skimr::skim(data) %>%
-          skimr::yank("numeric")
+          skimr::yank("numeric") %>%
+          dplyr::mutate(n_observations = nrow(data))
       })
     })
 
@@ -141,4 +142,5 @@ inspect_data_server <- function(id, dataReactive, value) {
       }
     })
   })
+
 }
