@@ -14,7 +14,9 @@ Description: Translates antibody levels measured in cross-sectional population
 Depends: R (>= 4.1.0),
           shiny,
           shinyWidgets,
-          DT
+          DT,
+          golem,
+          pkgload
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -76,10 +76,10 @@ server <- function(input, output, session) {
     noise_data = noise_data
   )
 
-  # estimate_seroincidence_server(
-  #   id = "estimate_seroincidence",
-  #   pop_data = pop_data,
-  #   curve_data = curve_data,
-  #   noise_data = noise_data
-  # )
+  estimate_seroincidence_server(
+    id = "estimate_seroincidence",
+    pop_data = pop_data,
+    curve_data = curve_data,
+    noise_data = noise_data
+  )
 }
