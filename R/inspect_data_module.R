@@ -54,6 +54,14 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data, value) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    data <- import_data_server(
+      id = "import_data",
+      uploaded_files = uploaded_files,
+      pop_data = pop_data,
+      curve_data = curve_data,
+      noise_data = noise_data
+    )
+
     # Observe selected data type and update visualization options
     observeEvent(input$updatedData_ext, {
       req(input$updatedData_ext)

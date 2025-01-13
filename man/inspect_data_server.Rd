@@ -4,12 +4,10 @@
 \alias{inspect_data_server}
 \title{server-side data inspection}
 \usage{
-inspect_data_server(id, dataReactive, value)
+inspect_data_server(id, pop_data, curve_data, noise_data, value)
 }
 \arguments{
 \item{id}{identify namespace}
-
-\item{dataReactive}{a reactive object holding uploaded data}
 
 \item{value}{a continuous attribute}
 }
