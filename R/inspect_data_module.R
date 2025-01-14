@@ -32,7 +32,7 @@ inspect_data_ui <- function(id) {
 
         # Dynamic UI elements
         uiOutput(ns("choose_visualization")),
-        # uiOutput(ns("stratification_radio")),
+        uiOutput(ns("stratification_radio")),
         uiOutput(ns("stratification")),
         uiOutput(ns("antigen_type")),
         uiOutput(ns("log"))
@@ -54,37 +54,37 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data, value) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    # Load data from the `import_data_server` module
     data <- import_data_server(
       id = "import_data",
-      uploaded_files = uploaded_files,
       pop_data = pop_data,
       curve_data = curve_data,
       noise_data = noise_data
     )
 
-    # Observe selected data type and update visualization options
+    # Observe selected data type and dynamically update UI
     observeEvent(input$updatedData_ext, {
       req(input$updatedData_ext)
 
-      # Choose visualization type based on selected data
+      # UI for visualization type
       output$choose_visualization <- renderUI({
-        switch(input$updatedData_ext,
-               "Pop Data" = selectInput(
-                 ns("type_visualization"),
-                 "Choose Type of Visualization",
-                 choices = c("Density", "Age Scatter")
-               ),
-               "Curve Data" = selectInput(
-                 ns("type_visualization"),
-                 "Choose Type of Visualization",
-                 choices = c("Distribution", "Decay"),
-                 selected = "Distribution"
-               ),
-               NULL
+        vis_choices <- switch(
+          input$updatedData_ext,
+          "Pop Data" = c("Density", "Age Scatter"),
+          "Curve Data" = c("Distribution", "Decay"),
+          NULL
         )
+        if (!is.null(vis_choices)) {
+          selectInput(
+            ns("type_visualization"),
+            "Choose Type of Visualization",
+            choices = vis_choices,
+            selected = vis_choices[1]
+          )
+        }
       })
 
-      # Log option for Pop Data
+      # Log scale option for Pop Data
       output$log <- renderUI({
         if (input$updatedData_ext == "Pop Data") {
           checkboxInput(ns("check_log"), "Log Scale", value = TRUE)
@@ -93,94 +93,85 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data, value) {
         }
       })
 
-      # Numeric summary of the dataset
+      # Numeric summary of the selected dataset
       output$numeric_summary <- renderUI({
-        data <- switch(input$updatedData_ext,
-                       "Pop Data" = pop_data(),
-                       "Curve Data" = curve_data(),
-                       "Noise Data" = noise_data(),
-                       NULL
+        selected_data <- switch(
+          input$updatedData_ext,
+          "Pop Data" = data$pop_data(),
+          "Curve Data" = data$curve_data(),
+          "Noise Data" = data$noise_data(),
+          NULL
         )
 
         renderTable({
-          skimr::skim(data) %>%
-            skimr::yank("numeric") %>%
-            dplyr::mutate(n_observations = nrow(data))
+          skimr::skim(selected_data) %>%
+            skimr::yank("numeric") #%>%
+            #dplyr::mutate(n_observations = nrow(selected_data))
         })
       })
 
-      # Visualization rendering based on selected type
+      # Visualization
       output$visualize <- renderPlot({
         req(input$type_visualization)
-
-        # Load the appropriate dataset based on the selection
-        data <- switch(input$updatedData_ext,
-                       "Pop Data" = pop_data(),
-                       "Curve Data" = curve_data(),
-                       "Noise Data" = noise_data(),
-                       NULL
+        selected_data <- switch(
+          input$updatedData_ext,
+          "Pop Data" = data$pop_data(),
+          "Curve Data" = data$curve_data(),
+          "Noise Data" = data$noise_data(),
+          NULL
         )
-
-        req(data)  # Ensure data is not NULL
+        req(selected_data)
 
         if (input$type_visualization == "Density") {
-          req("value" %in% names(data))  # Ensure 'value' column exists
 
-          # Remove rows with missing data in 'value'
-          data_clean <- na.omit(data)
-
-          ggplot(data_clean, aes(x = value)) +
+          ggplot(data_clean, aes(x = selected_data[[value]])) +
             geom_density() +
             theme_minimal() +
-            labs(title = "Density Plot of Value", x = "Value", y = "Density")
+            labs(title = "Density Plot", x = "Value", y = "Density")
 
         } else if (input$type_visualization == "Age Scatter") {
-          req("age" %in% names(data))  # Ensure 'age' column exists
-          req("value" %in% names(data))  # Ensure 'value' column exists
+          req(all(c("age", value) %in% names(selected_data)))
 
-          ggplot(data, aes(x = age, y = value)) +
+          ggplot(selected_data, aes(x = age, y = selected_data[[value]])) +
             geom_point() +
             theme_minimal() +
-            labs(title = "Age vs Value Scatter Plot", x = "Age", y = "Value")
+            labs(title = "Age vs Value", x = "Age", y = "Value")
         }
       })
 
-      # Stratification column selection based on updated data
-      observeEvent(input$updatedData_ext, {
-        output$stratification <- renderUI({
+      # Stratification column selection for Pop Data
+      output$stratification <- renderUI({
+        if (input$updatedData_ext == "Pop Data") {
           df <- isolate(pop_data()) %>%
-            select(-antigen_iso) %>%
-            select(where(~ !is.numeric(.)))
+            dplyr::select(where(~ !is.numeric(.)))  # Non-numeric columns
 
-          valid_choices <- df %>% names()
+          valid_choices <- names(df)
           selectInput(
             ns("choosen_stratification"),
             "Select Stratification Column",
             choices = valid_choices,
             multiple = TRUE
           )
-        })
+        }
       })
 
-      # Antigen type selection (for 'Pop Data' if antigen_iso column exists)
+      # Antigen type selection
       output$antigen_type <- renderUI({
         req(pop_data())
 
         if ("antigen_iso" %in% names(pop_data())) {
           checkboxGroupInput(
-            inputId = ns("antigen_type_ext"),
-            label = "Antigen Type",
+            ns("antigen_type_ext"),
+            "Antigen Type",
             choices = unique(pop_data()$antigen_iso),
             selected = unique(pop_data()$antigen_iso)
           )
         } else {
-          # Provide feedback if 'antigen_iso' column is not present
           validate(need(FALSE, "Antigen column ('antigen_iso') not present in data."))
         }
       })
     })
-
-    # -- END --
   })
 }
+
 
