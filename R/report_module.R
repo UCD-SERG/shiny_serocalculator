@@ -1,4 +1,3 @@
-
 #' @importFrom shiny navbarMenu
 #' @importFrom shiny icon
 report_ui <- function(id) {

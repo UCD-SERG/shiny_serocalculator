@@ -1,4 +1,3 @@
-
 data_requirement_ui <- function(id) {
   ns <- NS(id)
 
@@ -6,13 +5,12 @@ data_requirement_ui <- function(id) {
 }
 
 data_requirement_server <- function(id) {
-
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-      # UI for displaying data requirements
-      output$data_requirement <- renderText({
-        HTML("<p>Required datasets:
+    # UI for displaying data requirements
+    output$data_requirement <- renderText({
+      HTML("<p>Required datasets:
           <ul>
             <li> <strong>Cross-sectional Population Data (Pop Data)</strong>
                 <p>A dataset with one row per sample and
@@ -56,6 +54,6 @@ data_requirement_server <- function(id) {
           </ul>
           </p>
           <p>File limit: <strong>500MB</strong></p>")
-      })
-})
+    })
+  })
 }

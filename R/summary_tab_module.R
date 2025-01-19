@@ -1,4 +1,3 @@
-
 #' @importFrom shiny h2
 #' @importFrom shiny htmlOutput
 summary_tab_ui <- function(id) {

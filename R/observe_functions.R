@@ -1,4 +1,3 @@
-
 #' @importFrom shiny observeEvent
 
 get_classified_data <- function(df, file_name) {

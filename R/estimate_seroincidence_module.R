@@ -1,4 +1,3 @@
-
 #' @title ui for displaying to seroincidence estimation
 #'
 #' @importFrom shiny tabPanel
