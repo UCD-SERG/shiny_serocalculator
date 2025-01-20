@@ -284,7 +284,7 @@ import_data_server <- function(id,
         )
       } else if (input$data_upload_type == "Noise Data") {
         radioButtons(ns("noise_choice"),
-          "Do you want to use average values:",
+          "Do you want to manually enter values:",
           choices = c("Yes" = "yes", "No" = "no"),
           selected = "no"
         )
@@ -383,7 +383,7 @@ import_data_server <- function(id,
           )
         } else {
           # Display a message if 'antigen_iso' is not in the data
-          validate(need(FALSE, "Antigen column ('antigen_iso') not present in data."))
+          validate(need(FALSE, "Antigen-isotype variable ('antigen_iso') not present in data."))
         }
       })
     })
@@ -462,7 +462,7 @@ import_data_server <- function(id,
         # Dynamically create drop-down list of column names
         selectInput(
           "age_select",
-          "Select Age Column:",
+          "Select age variable:",
           choices = cols
         )
       }
@@ -486,7 +486,7 @@ import_data_server <- function(id,
         # Dynamically create drop-down list of column names
         selectInput(
           "value_select",
-          "Select Value Column:",
+          "Select antibody response variable:",
           choices = cols
         )
       }
@@ -513,7 +513,7 @@ import_data_server <- function(id,
         # Dynamically create drop-down list of column names
         selectInput(
           "id_select",
-          "Select Id Column:",
+          "Select sample ID variable:",
           choices = cols
         )
       }

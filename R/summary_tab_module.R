@@ -19,9 +19,14 @@ summary_tab_server <- function(id) {
         and further developed in subsequent publications by <cite><a href='https://www.sciencedirect.com/science/article/pii/S1755436514000371?via%3Dihub'>de Graaf (2014)</a></cite>,
         <cite><a href='https://www.sciencedirect.com/science/article/pii/S1755436516300135?via%3Dihub'>Teunis (2016)</a></cite>, and <cite><a href='https://onlinelibrary.wiley.com/doi/10.1002/sim.8578'>Teunis (2020)</a>.</cite></p>
 
-        <p>In short, longitudinal seroresponses from confirmed cases with a known symptom onset date are
-        assumed to represent the time course of human serum antibodies against a specific pathogen. Therefore, by using these longitudinal
-        antibody dynamics with any cross-sectional sample of the same antibodies in a human population, an incidence estimate can be calculated.</p>
+        <p> This approach uses quantitative antibody responses to calculate the seroconversion rate (the rate at which individuals are infected in a population).
+        In short, concentrations of antibodies for particular pathogens reflect how long it has been since an individual was last
+        infected by that pathogen. Large numbers of individuals with high antibody concentrations in a cross-sectional
+        survey indicate a high seroconversion rate, whereas small numbers of individuals with high antibody concentrations
+        indicate a seroconversion rate.
+
+        We used models of antibody decay dynamics to intrepet the quantiative antibody responses in the population. The antibody dynamics are modeled
+        seperately among confirmed cases where antibody responses are measured longitudinally after infection.
 
         <p>Further details on the methodology can be found on the <a href='https://ucd-serg.github.io/serocalculator/articles/serocalculator.html'>main package website</a>.</p>
 
