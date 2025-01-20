@@ -519,13 +519,6 @@ import_data_server <- function(id,
       }
     })
 
-    # Store the selected parameters in a reactive list
-    observe({
-      select_id(input$select_id)
-      select_age(input$select_age)
-      select_value(input$select_value)
-    })
-
     ## clear environment
     observeEvent(input$clear_btn, {
       req(input$clear_btn)

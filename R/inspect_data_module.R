@@ -50,13 +50,8 @@ inspect_data_ui <- function(id) {
 #' @title server-side data inspection
 #' @param id identify namespace
 #' @param value a continuous attribute
-inspect_data_server <- function(id,
-                                pop_data,
-                                curve_data,
-                                noise_data) {
-  moduleServer(id, function(input,
-                            output,
-                            session) {
+inspect_data_server <- function(id, pop_data, curve_data, noise_data,...) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
     ############################# UI Updates #################################
@@ -67,9 +62,9 @@ inspect_data_server <- function(id,
 
       output$choose_visualization <- renderUI({
         vis_choices <- switch(input$updatedData_ext,
-          "Pop Data" = c("Density", "Age Scatter"),
-          "Curve Data" = c("Distribution", "Decay"),
-          NULL
+                              "Pop Data" = c("Density", "Age Scatter"),
+                              "Curve Data" = c("Distribution", "Decay"),
+                              NULL
         )
         if (!is.null(vis_choices)) {
           selectInput(
@@ -90,18 +85,17 @@ inspect_data_server <- function(id,
         }
       })
 
-      # display summary of numeric columns in dataset
+      # Display summary of numeric columns in dataset
       output$numeric_summary <- renderUI({
         # Dynamically select data based on the input
         selected_data <- switch(input$updatedData_ext,
-          "Pop Data" = pop_data,
-          "Curve Data" = curve_data,
-          "Noise Data" = noise_data,
-          NULL
+                                "Pop Data" = pop_data,
+                                "Curve Data" = curve_data,
+                                "Noise Data" = noise_data,
+                                NULL
         )
 
         # Convert reactive to data.frame
-        # selectedDF <- isolate(selected_data())
         selectedDF <- isolate(selected_data())
 
         # Check if the data is not empty and has numeric columns
@@ -112,57 +106,9 @@ inspect_data_server <- function(id,
               dplyr::mutate(n_observations = nrow(selectedDF))
           })
         } else {
-          # If data is empty, display a message
           renderText("No data available to display summary.")
         }
       })
-
-
-
-      ############################ Visualization #############################
-
-      output$visualize <- renderPlot({
-        # Dynamically select the dataset based on user input
-        selected_data <- switch(input$updatedData_ext,
-          "Pop Data" = pop_data,
-          "Curve Data" = curve_data,
-          "Noise Data" = noise_data,
-          NULL
-        )
-
-        # Convert reactive data object to data.frame
-        selectedDF <- isolate(selected_data())
-
-        # Check if data is available and proceed
-        if (is.null(selectedDF) || nrow(selectedDF) == 0) {
-          return(NULL)
-        }
-
-
-        # Validate necessary inputs
-        if (input$type_visualization == "Density") {
-          selectedDF %>%
-            serocalculator:::as_pop_data(
-              antigen_isos = NULL,
-              age = input$select_age,
-              value = input$select_value,
-              id = input$select_id
-            ) %>%
-            serocalculator:::autoplot.pop_data(
-              type = "density",
-              strata = input$choosen_stratification,
-              log = input$check_log
-            )
-        } else if (input$type_visualization == "Age Scatter") {
-          selectedDF %>%
-            serocalculator:::autoplot.pop_data(
-              type = "age-scatter",
-              strata = input$choosen_stratification,
-              log = input$check_log
-            )
-        }
-      })
-
 
       ############################ Stratification UI ############################
 
@@ -183,18 +129,47 @@ inspect_data_server <- function(id,
         }
       })
 
-      ########################### Antigen Type Selection ######################
 
-      output$antigen_type <- renderUI({
-        if ("antigen_iso" %in% names(read_data_file(input$pop_upload))) {
-          checkboxGroupInput(
-            ns("antigen_type_ext"),
-            "Antigen Type",
-            choices = unique(isolate(pop_data())$antigen_iso),
-            selected = unique(isolate(pop_data())$antigen_iso)[1]
+      ############################ Visualization #############################
+
+      output$visualize <- renderPlot({
+        # Dynamically select the dataset based on user input
+        selected_data <- switch(input$updatedData_ext,
+                                "Pop Data" = pop_data,
+                                "Curve Data" = curve_data,
+                                "Noise Data" = noise_data,
+                                NULL
+        )
+
+        # Convert reactive data object to data.frame
+        selectedDF <- isolate(selected_data()) %>%
+          serocalculator:::as_pop_data(
+            antigen_isos = NULL,
+            age = "age",
+            value = "value",
+            id = "id"
           )
-        } else {
-          validate(need(FALSE, "Antigen column ('antigen_iso') not present in data."))
+
+        # Check if data is available and proceed
+        if (is.null(selectedDF) || nrow(selectedDF) == 0) {
+          return(NULL)  # Don't render plot if data is missing
+        }
+
+        # Validate necessary inputs
+        if (input$type_visualization == "Density") {
+          selectedDF %>%
+            serocalculator:::autoplot.pop_data(
+              type = "density",
+              strata = input$choosen_stratification,
+              log = input$check_log
+            )
+        } else if (input$type_visualization == "Age Scatter") {
+          selectedDF %>%
+            serocalculator:::autoplot.pop_data(
+              type = "age-scatter",
+              strata = input$choosen_stratification,
+              log = input$check_log
+            )
         }
       })
     })
