@@ -4,7 +4,7 @@
 \alias{inspect_data_server}
 \title{server-side data inspection}
 \usage{
-inspect_data_server(id, pop_data, curve_data, noise_data)
+inspect_data_server(id, pop_data, curve_data, noise_data, ...)
 }
 \arguments{
 \item{id}{identify namespace}

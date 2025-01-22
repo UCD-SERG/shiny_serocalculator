@@ -128,12 +128,14 @@ import_data_ui <- function(id) {
         ),
         hr(),
 
+
         # clear environment button
-        actionButton(ns("clear_btn"), "Clear Environment"),
+        actionButton(ns("clear_btn"), "Clear Environment")
       ),
       mainPanel(
         tabsetPanel(
-          tabPanel("Data Requirements", htmlOutput(ns("data_requirement"))),
+          tabPanel("Data Requirements",
+                   htmlOutput(ns("data_requirement"))),
           tabPanel(
             "File Preview",
             h3("Pop Data"),
@@ -163,68 +165,56 @@ import_data_server <- function(id,
 
     ############################### PREVIEW DATA ########################################
 
-    observeEvent(input$pop_upload, {
+    # observeEvent(input$pop_upload, {
+    #   if (input$data_upload_type == "Pop Data") {
+    #     output$pop_preview <- renderDT({
+    #       # Check if a file has been uploaded for Pop Data
+    #       req(input$pop_upload)
+    #
+    #       # Read the uploaded file using the helper function
+    #       df <- read_data_file(input$pop_upload)
+    #
+    #       # Update the reactiveVal with the new pop data
+    #       pop_data(df)
+    #
+    #       datatable(
+    #         data = pop_data(),
+    #         editable = TRUE
+    #       )
+    #     })
+    #   }
+    # })
+
+
+    output$pop_preview <- renderDT({
       if (input$data_upload_type == "Pop Data") {
-        output$pop_preview <- renderDT({
-          # Check if a file has been uploaded for Pop Data
-          req(input$pop_upload)
-
-          # Read the uploaded file using the helper function
-          df <- read_data_file(input$pop_upload)
-
-          # Update the reactiveVal with the new pop data
-          pop_data(df)
-
-
-          datatable(
-            data = pop_data(),
-            editable = TRUE
-          )
-        })
+        req(input$pop_upload) # Ensure a file is uploaded
+        df <- read_data_file(input$pop_upload) # Read uploaded file
+        pop_data(df) # Update reactiveVal
+        datatable(data = pop_data(), editable = TRUE) # Render datatable
       }
     })
 
-
-    observeEvent(input$curve_upload, {
+    output$curve_preview <- renderDT({
       if (input$data_upload_type == "Curve Data") {
-        output$curve_preview <- renderDT({
-          # Check if a file has been uploaded for Pop Data
-          req(input$curve_upload)
-
-          # Read the uploaded file using the helper function
-          df <- read_data_file(input$curve_upload)
-
-          # Update the reactiveVal with the new pop data
-          curve_data(df)
-
-
-          datatable(
-            data = curve_data(),
-            editable = TRUE
-          )
-        })
+        req(input$curve_upload) # Ensure a file is uploaded
+        df <- read_data_file(input$curve_upload) # Read uploaded file
+        curve_data(df) # Update reactiveVal
+        datatable(data = curve_data(), editable = TRUE) # Render datatable
       }
     })
 
-    observeEvent(input$noise_upload, {
+    output$noise_preview <- renderDT({
       if (input$data_upload_type == "Noise Data") {
-        output$noise_preview <- renderDT({
-          # Check if a file has been uploaded for Pop Data
-          req(input$noise_upload)
-
-          # Read the uploaded file using the helper function
-          df <- read_data_file(input$curve_upload)
-
-          # Update the reactiveVal with the new pop data
-          noise_data(df)
-
-          datatable(
-            data = noise_data(),
-            editable = TRUE
-          )
-        })
+        req(input$noise_upload) # Ensure a file is uploaded
+        df <- read_data_file(input$noise_upload) # Read uploaded file
+        noise_data(df) # Update reactiveVal
+        datatable(data = noise_data(), editable = TRUE) # Render datatable
       }
     })
+
+
+
 
     ############################################################################
 
@@ -285,7 +275,10 @@ import_data_server <- function(id,
       } else if (input$data_upload_type == "Noise Data") {
         radioButtons(ns("noise_choice"),
           "Do you want to manually enter values:",
-          choices = c("Yes" = "yes", "No" = "no"),
+          choices = c(
+            "Yes" = "yes",
+            "No" = "no"
+          ),
           selected = "no"
         )
       }
@@ -326,7 +319,11 @@ import_data_server <- function(id,
         updatePickerInput(
           session = session,
           inputId = "data_upload_type",
-          choices = c("Pop Data", "Curve Data", "Noise Data"),
+          choices = c(
+            "Pop Data",
+            "Curve Data",
+            "Noise Data"
+          ),
           choicesOpt = list(
             disabled = c(FALSE, FALSE, TRUE) # Enable "Curve Data"
           ),
@@ -343,7 +340,11 @@ import_data_server <- function(id,
         updatePickerInput(
           session = session,
           inputId = "data_upload_type",
-          choices = c("Pop Data", "Curve Data", "Noise Data"),
+          choices = c(
+            "Pop Data",
+            "Curve Data",
+            "Noise Data"
+          ),
           choicesOpt = list(
             disabled = c(FALSE, FALSE, FALSE)
           ),
@@ -387,10 +388,6 @@ import_data_server <- function(id,
         }
       })
     })
-
-
-
-
 
     observeEvent(input$noise_upload, {
       if (!is.null(input$noise_upload)) {
@@ -453,6 +450,7 @@ import_data_server <- function(id,
 
         # Update the reactiveVal with the new pop data
         pop_data(df)
+
         # Get column names from pop_data
         cols <- names(pop_data())
 
@@ -492,7 +490,6 @@ import_data_server <- function(id,
       }
     })
 
-
     # UI to select age column in drop-down
     output$select_id <- renderUI({
       if (input$data_upload_type == "Pop Data") {
@@ -516,6 +513,22 @@ import_data_server <- function(id,
           "Select sample ID variable:",
           choices = cols
         )
+      } else if(input$data_upload_type == "Curve Data") {
+        req(input$curve_upload)
+
+        # Read the uploaded file using the helper function
+        df <- read_data_file(input$curve_upload)
+
+        # Update the reactiveVal with the new pop data
+        curve_data(df)
+      } else if(input$data_upload_type == "Noise Data") {
+        req(input$noise_upload)
+
+        # Read the uploaded file using the helper function
+        df <- read_data_file(input$noise_upload)
+
+        # Update the reactiveVal with the new pop data
+        noise_data(df)
       }
     })
 

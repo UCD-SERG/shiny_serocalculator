@@ -4,7 +4,7 @@
 #' @importFrom utils read.csv
 
 server <- function(input, output, session) {
-  ############################ REACTIVE OJECTS ###############################
+  ############################ REACTIVE OBJECTS ###############################
 
   # Reactive values to store uploaded data
   pop_data <- reactiveVal(NULL)
@@ -13,10 +13,10 @@ server <- function(input, output, session) {
 
   ######################### CALL MODULES ######################################
 
-  # summary module
-  summary_tab_server("summary")
+  # Summary module (pass data if needed)
+  summary_tab_server(id = "summary")
 
-  # import data module
+  # Import data module
   import_data_server(
     id = "import_data",
     pop_data = pop_data,
@@ -24,13 +24,19 @@ server <- function(input, output, session) {
     noise_data = noise_data
   )
 
-  # inspect data module
+  # Inspect data module
   inspect_data_server(
     id = "inspect_data",
     pop_data = pop_data,
     curve_data = curve_data,
-    noise_data = noise_data,
+    noise_data = noise_data
   )
 
-  # estimate_seroincidence_server(id = "estimate_seroincidence")
+  # Estimate seroincidence module
+  estimate_seroincidence_server(
+    id = "estimate_seroincidence",
+    pop_data = pop_data,
+    curve_data = curve_data,
+    noise_data = noise_data
+  )
 }
