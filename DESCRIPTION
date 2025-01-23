@@ -22,18 +22,18 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
-  ggplot2,
-  readxl,
-  serocalculator,
-  dplyr,
-  shinythemes,
-  shinybusy,
-  shinyjs,
-  httr,
-  vroom,
-  skimr,
-  rlang,
-  htmltools
+    ggplot2,
+    readxl,
+    serocalculator,
+    dplyr,
+    shinythemes,
+    shinybusy,
+    shinyjs,
+    httr,
+    vroom,
+    skimr,
+    rlang,
+    htmltools,
+    reactlog
 Suggests:
     shinytest2
-
