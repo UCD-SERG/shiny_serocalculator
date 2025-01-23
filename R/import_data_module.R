@@ -165,52 +165,31 @@ import_data_server <- function(id,
 
     ############################### PREVIEW DATA ########################################
 
-    # observeEvent(input$pop_upload, {
-    #   if (input$data_upload_type == "Pop Data") {
-    #     output$pop_preview <- renderDT({
-    #       # Check if a file has been uploaded for Pop Data
-    #       req(input$pop_upload)
-    #
-    #       # Read the uploaded file using the helper function
-    #       df <- read_data_file(input$pop_upload)
-    #
-    #       # Update the reactiveVal with the new pop data
-    #       pop_data(df)
-    #
-    #       datatable(
-    #         data = pop_data(),
-    #         editable = TRUE
-    #       )
-    #     })
-    #   }
-    # })
-
-
     output$pop_preview <- renderDT({
-      if (input$data_upload_type == "Pop Data") {
+      #if (input$data_upload_type == "Pop Data") {
         req(input$pop_upload) # Ensure a file is uploaded
         df <- read_data_file(input$pop_upload) # Read uploaded file
         pop_data(df) # Update reactiveVal
         datatable(data = pop_data(), editable = TRUE) # Render datatable
-      }
+      #}
     })
 
     output$curve_preview <- renderDT({
-      if (input$data_upload_type == "Curve Data") {
+      #if (input$data_upload_type == "Curve Data") {
         req(input$curve_upload) # Ensure a file is uploaded
         df <- read_data_file(input$curve_upload) # Read uploaded file
         curve_data(df) # Update reactiveVal
         datatable(data = curve_data(), editable = TRUE) # Render datatable
-      }
+      #}
     })
 
     output$noise_preview <- renderDT({
-      if (input$data_upload_type == "Noise Data") {
+      #if (input$data_upload_type == "Noise Data") {
         req(input$noise_upload) # Ensure a file is uploaded
         df <- read_data_file(input$noise_upload) # Read uploaded file
         noise_data(df) # Update reactiveVal
         datatable(data = noise_data(), editable = TRUE) # Render datatable
-      }
+      #}
     })
 
 

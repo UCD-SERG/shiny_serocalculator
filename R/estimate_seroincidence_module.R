@@ -84,42 +84,61 @@ estimate_seroincidence_ui <- function(id) {
 #' @param curve_data an object of curve data with an extra antigen column
 #' @param noise_data an object of noise data
 #' @param antigen_iso  a vector of antigen isotype
-estimate_seroincidence_server <- function(id,
-                                          pop_data,
-                                          curve_data,
-                                          noise_data) {
+estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    # Debugging: Observe the input data
     observe({
+      print("Pop Data:")
       print(pop_data())
+      print("Curve Data:")
       print(curve_data())
+      print("Noise Data:")
       print(noise_data())
     })
-    #
-    #   # Render seroincidence results
-    #   output$est_incidence <- renderTable({
-    #     # Ensure required data is available
-    #     # req(pop_data(), curve_data(), noise_data())
-    #
-    #     tryCatch(
-    #       {
-    #         # Estimate seroincidence
-    #         result <- serocalculator::est.incidence(
-    #           pop_data = pop_df(),
-    #           curve_params = curve_df(),
-    #           noise_params = noise_df(),
-    #           verbose = TRUE
-    #         )
-    #
-    #         # Return a summary of the results
-    #         summary(result)
-    #       },
-    #       error = function(e) {
-    #         # Return error message in a data frame format
-    #         data.frame(Error = e$message)
-    #       }
-    #     )
-    #   })
+
+    output$est_incidence <- renderTable({
+      # Validate all inputs
+      req(
+        pop_data(),
+        curve_data(),
+        noise_data(),
+        cancelOutput = TRUE  # Stop rendering if any data is missing
+      )
+
+      # Check if any dataset is empty
+      validate(
+        need(nrow(pop_data()) > 0, "Pop Data is empty."),
+        need(nrow(curve_data()) > 0, "Curve Data is empty."),
+        need(nrow(noise_data()) > 0, "Noise Data is empty.")
+      )
+
+      # Try to estimate seroincidence
+      tryCatch(
+        {
+          result <- serocalculator:::est.incidence(
+            pop_data = isolate(pop_data()),
+            curve_params = isolate(curve_data()),
+            noise_params = isolate(noise_data()),
+            antigen_isos = isolate(pop_data())$antigen_iso %>% unique(),
+            verbose = TRUE
+          )
+
+          # Notify the user of success
+          showNotification("Seroincidence estimated successfully.", type = "message")
+
+          # Return a summary of the results
+          summary(result)
+        },
+        error = function(e) {
+          # Notify the user of an error
+          showNotification(paste("Error estimating seroincidence:", e$message), type = "error")
+
+          # Return the error message as a data frame
+          data.frame(Error = e$message)
+        }
+      )
+    })
   })
 }
