@@ -25,7 +25,7 @@ inspect_data_ui <- function(id) {
 
         # Select input for dataset
         selectInput(ns("updatedData_ext"),
-          "Available Data to Choose",
+          "Select data",
           choices = c("Pop Data", "Curve Data", "Noise Data"),
           selected = "Pop Data"
         ),
@@ -69,7 +69,7 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data) {
         if (!is.null(vis_choices)) {
           selectInput(
             ns("type_visualization"),
-            "Choose Type of Visualization",
+            "Select type of visualization",
             choices = vis_choices,
             selected = vis_choices[1]
           )
@@ -123,7 +123,7 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data) {
 
           selectInput(
             ns("choosen_stratification"),
-            "Select Stratification Column",
+            "Select stratification variable",
             choices = valid_choices,
             multiple = FALSE
           )
@@ -138,7 +138,7 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data) {
 
         checkboxGroupInput(
           session$ns("output_antigen"),
-          label = "Choose antigen Type:",
+          label = "Select antigen-isotype:",
           choices = antigen_types,
           selected = antigen_types[1]
         )

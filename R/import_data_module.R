@@ -463,7 +463,7 @@ import_data_server <- function(id,
         # Dynamically create drop-down list of column names
         selectInput(
           "value_select",
-          "Select antibody response variable:",
+          "Select quantitative antibody response variable:",
           choices = cols
         )
       }
@@ -489,7 +489,7 @@ import_data_server <- function(id,
         # Dynamically create drop-down list of column names
         selectInput(
           "id_select",
-          "Select sample ID variable:",
+          "Select participant ID variable:",
           choices = cols
         )
       } else if(input$data_upload_type == "Curve Data") {
