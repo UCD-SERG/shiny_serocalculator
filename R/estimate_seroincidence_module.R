@@ -1,29 +1,9 @@
-#' @title ui for displaying to seroincidence estimation
-#'
-#' @importFrom shiny tabPanel
-#' @importFrom shiny uiOutput
-#' @importFrom shiny helpText
-#' @importFrom shiny observeEvent
-#' @importFrom shiny observe
-#' @importFrom serocalculator load_noise_params
-#' @importFrom shiny req
-#' @importFrom shiny renderUI
-#' @importFrom shiny selectInput
-#' @importFrom dplyr select
-#' @importFrom dplyr where
-#' @importFrom shiny h4
-#' @importFrom shiny renderTable
-#' @importFrom shiny sidebarLayout
-#' @importFrom dplyr %>%
+#' @title UI for Seroincidence Estimation
+#' @importFrom shiny tabPanel sidebarLayout sidebarPanel mainPanel
+#' @importFrom shiny uiOutput textOutput tableOutput helpText h4
 #' @importFrom shiny NS
-#' @importFrom shiny radioButtons
-#' @importFrom shiny sidebarPanel
-#' @importFrom shiny textOutput
-#' @importFrom shiny mainPanel
-#' @importFrom shiny tabsetPanel
-#' @importFrom shiny tableOutput
 #'
-#' @param id a `string` to identify a namespace
+#' @param id A string to identify a namespace
 estimate_seroincidence_ui <- function(id) {
   ns <- NS(id)
 
@@ -33,36 +13,19 @@ estimate_seroincidence_ui <- function(id) {
       position = "left",
       sidebarPanel(
         width = 3,
-
-        # title
         h4("Estimation Filters"),
-
-        # description
-        helpText("Provide the parameters
-                        for filtering estimation of seroincidence"),
-
-        # choose antigen_iso type
+        helpText("Provide parameters for filtering the seroincidence estimation:"),
         uiOutput(ns("antigen_type")),
-        #
-        #         # choose stratification type
-        #         radioButtons(
-        #           inputId = ns("stratification_type"),
-        #           label = "Choose Stratification Type:",
-        #           choices = list("Overall" = "overall", "Stratified" = "stratified"),
-        #           selected = "overall"
-        #         ),
-
-        # choose stratification column
-        uiOutput(ns("stratify_by")),
-
-        # status text
+        radioButtons(
+          inputId = ns("choose_stratification"),
+          label = "Choose Stratification Type:",
+          choices = list("Overall" = "overall", "Stratified" = "stratified"),
+          selected = "overall"
+        ),
         textOutput(ns("status1")),
-
-        # display computation results
         textOutput(ns("result"))
       ),
       mainPanel(
-        "",
         tabsetPanel(
           tabPanel(
             "Estimate Seroincidence",
@@ -74,71 +37,58 @@ estimate_seroincidence_ui <- function(id) {
   )
 }
 
-#' @title server-side computation of seroincidence estimation
-#' @importFrom shiny moduleServer
+#' @title Server Logic for Seroincidence Estimation
+#' @importFrom shiny moduleServer req renderTable showNotification observe
 #' @importFrom dplyr %>%
-#' @importFrom shiny NS
 #'
-#' @param id identify a namespace
-#' @param pop_data an object of population data
-#' @param curve_data an object of curve data with an extra antigen column
-#' @param noise_data an object of noise data
-#' @param antigen_iso  a vector of antigen isotype
+#' @param id A string to identify a namespace
+#' @param pop_data Reactive expression for population data
+#' @param curve_data Reactive expression for curve data
+#' @param noise_data Reactive expression for noise data
 estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Debugging: Observe the input data
-    observe({
-      print("Pop Data:")
-      print(pop_data())
-      print("Curve Data:")
-      print(curve_data())
-      print("Noise Data:")
-      print(noise_data())
+
+    ############################################################################
+
+    # Reactive object to filter population data
+    pop_df <- reactive({
+      subset(pop_data(), pop_data()$antigen_iso == "HlyE_IgA" & pop_data()$Country == "Pakistan") %>%
+        serocalculator::as_pop_data(
+          age = "age",
+          value = "value",
+          id = "id"
+        )
+    })
+
+    curve_df <- reactive({
+      subset(curve_data(), curve_data()$antigen_iso == "HlyE_IgA")
+    })
+
+    noise_df <- reactive({
+      subset(noise_data(), noise_data()$antigen_iso == "HlyE_IgA" & noise_data()$Country == "Pakistan")
     })
 
     output$est_incidence <- renderTable({
-      # Validate all inputs
-      req(
-        pop_data(),
-        curve_data(),
-        noise_data(),
-        cancelOutput = TRUE  # Stop rendering if any data is missing
-      )
-
-      # Check if any dataset is empty
-      validate(
-        need(nrow(pop_data()) > 0, "Pop Data is empty."),
-        need(nrow(curve_data()) > 0, "Curve Data is empty."),
-        need(nrow(noise_data()) > 0, "Noise Data is empty.")
-      )
-
-      # Try to estimate seroincidence
-      tryCatch(
-        {
-          result <- serocalculator:::est.incidence(
-            pop_data = isolate(pop_data()),
-            curve_params = isolate(curve_data()),
-            noise_params = isolate(noise_data()),
-            antigen_isos = isolate(pop_data())$antigen_iso %>% unique(),
-            verbose = TRUE
-          )
-
-          # Notify the user of success
-          showNotification("Seroincidence estimated successfully.", type = "message")
-
-          # Return a summary of the results
-          summary(result)
-        },
-        error = function(e) {
-          # Notify the user of an error
-          showNotification(paste("Error estimating seroincidence:", e$message), type = "error")
-
-          # Return the error message as a data frame
-          data.frame(Error = e$message)
-        }
-      )
+      if (input$choose_stratification == "overall") {
+        # Overall seroincidence estimation
+        est <- serocalculator::est.incidence(
+          pop_data = pop_df(),
+          curve_params = curve_df(),
+          noise_params = noise_df(),
+          verbose = TRUE
+        )
+      } else if (input$choose_stratification == "stratified") {
+        # Stratified seroincidence estimation
+        est <- serocalculator::est.incidence.by(
+          pop_data = pop_df(),
+          curve_params = curve_df(),
+          noise_params = noise_df(),
+          verbose = TRUE,
+          strata = "cluster" # replace with input
+        )
+      }
     })
   })
 }
