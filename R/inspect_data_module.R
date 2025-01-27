@@ -25,9 +25,9 @@ inspect_data_ui <- function(id) {
 
         # Select input for dataset
         selectInput(ns("updatedData_ext"),
-          "Select data",
-          choices = c("Pop Data", "Curve Data", "Noise Data"),
-          selected = "Pop Data"
+                    "Select data",
+                    choices = c("Pop Data", "Curve Data", "Noise Data"),
+                    selected = "Pop Data"
         ),
 
         # Dynamic UI elements
@@ -38,14 +38,12 @@ inspect_data_ui <- function(id) {
         uiOutput(ns("log"))
       ),
       mainPanel(
-        tabsetPanel(
-          tabPanel("Numeric Summary", uiOutput(ns("numeric_summary"))),
-          tabPanel("Visualize", plotOutput(ns("visualize")), textOutput(outputId = ns("antigen_choosen")))
-        )
+        uiOutput(ns("dynamic_tabset")) # Dynamically render the tabset
       )
     )
   )
 }
+
 
 #' @title server-side data inspection
 #' @param id identify namespace
@@ -53,6 +51,40 @@ inspect_data_ui <- function(id) {
 inspect_data_server <- function(id, pop_data, curve_data, noise_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
+    ##########################################################################
+
+    # Dynamically generate the tabset
+    output$dynamic_tabset <- renderUI({
+      if (input$updatedData_ext == "Noise Data") {
+        # Only show "Numeric Summary" tab
+        tabsetPanel(
+          id = ns("switcher"),
+          tabPanel(
+            "Numeric Summary",
+            uiOutput(ns("numeric_summary"))
+          )
+        )
+      } else {
+        # Show both "Numeric Summary" and "Visualize" tabs
+        tabsetPanel(
+          id = ns("switcher"),
+          tabPanel(
+            "Numeric Summary",
+            uiOutput(ns("numeric_summary"))
+          ),
+          tabPanel(
+            "Visualize",
+            plotOutput(ns("visualize"))
+          )
+        )
+      }
+    })
+
+
+    output$summary <- renderPrint({
+      "No Visualization"
+    })
 
     ############################# UI Updates #################################
 
@@ -116,7 +148,8 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data) {
         if (input$updatedData_ext == "Pop Data") {
           df <- isolate(pop_data()) %>%
             dplyr::select(where(~ !is.numeric(.))) %>%
-            dplyr::select(-antigen_iso)
+            dplyr::select(-antigen_iso) %>%
+            dplyr::select(-any_of(input$select_id))
 
           # available choices
           valid_choices <- names(df)

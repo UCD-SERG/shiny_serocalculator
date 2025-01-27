@@ -56,7 +56,7 @@ estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) 
     pop_df <- reactive({
       subset(pop_data(), pop_data()$antigen_iso == "HlyE_IgA" & pop_data()$Country == "Pakistan") %>%
         serocalculator::as_pop_data(
-          age = "age",
+          age = input$select_age,
           value = "value",
           id = "id"
         )
