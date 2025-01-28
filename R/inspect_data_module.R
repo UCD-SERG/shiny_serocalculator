@@ -38,7 +38,8 @@ inspect_data_ui <- function(id) {
         uiOutput(ns("log"))
       ),
       mainPanel(
-        uiOutput(ns("dynamic_tabset")) # Dynamically render the tabset
+        uiOutput(ns("dynamic_tabset")),
+        uiOutput(ns("output2"))
       )
     )
   )
@@ -48,9 +49,15 @@ inspect_data_ui <- function(id) {
 #' @title server-side data inspection
 #' @param id identify namespace
 #' @param value a continuous attribute
-inspect_data_server <- function(id, pop_data, curve_data, noise_data) {
+inspect_data_server <- function(id,
+                                pop_data,
+                                curve_data,
+                                noise_data,
+                                imported_data
+                                ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+
 
     ##########################################################################
 
@@ -149,7 +156,7 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data) {
           df <- isolate(pop_data()) %>%
             dplyr::select(where(~ !is.numeric(.))) %>%
             dplyr::select(-antigen_iso) %>%
-            dplyr::select(-any_of(input$select_id))
+            dplyr::select(-imported_data$selected_id())
 
           # available choices
           valid_choices <- names(df)
@@ -193,9 +200,9 @@ inspect_data_server <- function(id, pop_data, curve_data, noise_data) {
           selectedDF <- isolate(pop_data()) %>%
             serocalculator:::as_pop_data(
               antigen_isos = NULL,
-              age = "age",
-              value = "value",
-              id = "id"
+              age = imported_data$selected_age(),
+              value = imported_data$selected_value(),
+              id = imported_data$selected_id()
             )
 
           if (!is.null(input$antigen_type) && length(input$antigen_type) > 0) {

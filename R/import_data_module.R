@@ -161,7 +161,23 @@ import_data_server <- function(id,
   moduleServer(id, function(input,
                             output,
                             session) {
+
     ns <- session$ns
+
+    # Create a reactive value to store select_id
+    selected_id <- reactiveVal(NULL)
+    selected_age <- reactiveVal(NULL)
+    selected_value <- reactiveVal(NULL)
+
+    observeEvent(c(input$id_select,
+                   input$age_select,
+                   input$value_select), {
+      selected_id(input$id_select)
+      selected_age(input$age_select)
+      selected_value(input$value_select)
+    })
+
+
 
     ############################### PREVIEW DATA ########################################
 
@@ -438,7 +454,7 @@ import_data_server <- function(id,
 
         # Dynamically create drop-down list of column names
         selectInput(
-          "age_select",
+          inputId = ns("age_select"),
           "Select age variable:",
           choices = cols
         )
@@ -462,7 +478,7 @@ import_data_server <- function(id,
 
         # Dynamically create drop-down list of column names
         selectInput(
-          "value_select",
+          inputId = ns("value_select"),
           "Select quantitative antibody response variable:",
           choices = cols
         )
@@ -488,7 +504,7 @@ import_data_server <- function(id,
 
         # Dynamically create drop-down list of column names
         selectInput(
-          "id_select",
+          inputId = ns("id_select"),
           "Select participant ID variable:",
           choices = cols
         )
@@ -619,5 +635,15 @@ import_data_server <- function(id,
         </p>
          <p>File limit: <strong>500MB</strong></p>")
     })
+
+
+
+    return(list(
+      selected_id = selected_id,
+      selected_age = selected_age,
+      selected_value = selected_value
+    ))
   })
+
+
 }

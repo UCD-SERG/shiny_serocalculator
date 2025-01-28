@@ -2,21 +2,19 @@
 % Please edit documentation in R/estimate_seroincidence_module.R
 \name{estimate_seroincidence_server}
 \alias{estimate_seroincidence_server}
-\title{server-side computation of seroincidence estimation}
+\title{Server Logic for Seroincidence Estimation}
 \usage{
 estimate_seroincidence_server(id, pop_data, curve_data, noise_data)
 }
 \arguments{
-\item{id}{identify a namespace}
+\item{id}{A string to identify a namespace}
 
-\item{pop_data}{an object of population data}
+\item{pop_data}{Reactive expression for population data}
 
-\item{curve_data}{an object of curve data with an extra antigen column}
+\item{curve_data}{Reactive expression for curve data}
 
-\item{noise_data}{an object of noise data}
-
-\item{antigen_iso}{a vector of antigen isotype}
+\item{noise_data}{Reactive expression for noise data}
 }
 \description{
-server-side computation of seroincidence estimation
+Server Logic for Seroincidence Estimation
 }

@@ -45,7 +45,11 @@ estimate_seroincidence_ui <- function(id) {
 #' @param pop_data Reactive expression for population data
 #' @param curve_data Reactive expression for curve data
 #' @param noise_data Reactive expression for noise data
-estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) {
+estimate_seroincidence_server <- function(id,
+                                          pop_data,
+                                          curve_data,
+                                          noise_data,
+                                          imported_data = imported_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -56,9 +60,9 @@ estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) 
     pop_df <- reactive({
       subset(pop_data(), pop_data()$antigen_iso == "HlyE_IgA" & pop_data()$Country == "Pakistan") %>%
         serocalculator::as_pop_data(
-          age = input$select_age,
-          value = "value",
-          id = "id"
+          age = imported_data$selected_age(),
+          value = imported_data$selected_value(),
+          id = imported_data$selected_id()
         )
     })
 

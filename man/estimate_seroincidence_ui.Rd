@@ -2,13 +2,13 @@
 % Please edit documentation in R/estimate_seroincidence_module.R
 \name{estimate_seroincidence_ui}
 \alias{estimate_seroincidence_ui}
-\title{ui for displaying to seroincidence estimation}
+\title{UI for Seroincidence Estimation}
 \usage{
 estimate_seroincidence_ui(id)
 }
 \arguments{
-\item{id}{a \code{string} to identify a namespace}
+\item{id}{A string to identify a namespace}
 }
 \description{
-ui for displaying to seroincidence estimation
+UI for Seroincidence Estimation
 }
