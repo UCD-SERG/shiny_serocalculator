@@ -183,9 +183,9 @@ import_data_server <- function(id,
 
     output$pop_preview <- renderDT({
       #if (input$data_upload_type == "Pop Data") {
-        req(input$pop_upload) # Ensure a file is uploaded
-        df <- read_data_file(input$pop_upload) # Read uploaded file
-        pop_data(df) # Update reactiveVal
+        req(input$pop_upload)
+        df <- read_data_file(input$pop_upload)
+        pop_data(df)
         datatable(data = pop_data(), editable = TRUE) # Render datatable
       #}
     })

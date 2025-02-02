@@ -14,6 +14,7 @@ Description: Translates antibody levels measured in cross-sectional population
 Depends: R (>= 4.1.0),
           shiny,
           shinyWidgets,
+          shinyjs,
           DT,
           golem,
           pkgload
@@ -28,7 +29,6 @@ Imports:
   dplyr,
   shinythemes,
   shinybusy,
-  shinyjs,
   httr,
   vroom,
   skimr,

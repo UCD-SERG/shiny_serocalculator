@@ -22,6 +22,8 @@ estimate_seroincidence_ui <- function(id) {
           choices = list("Overall" = "overall", "Stratified" = "stratified"),
           selected = "overall"
         ),
+        uiOutput(ns("stratification_column")),
+        uiOutput(ns("antigen_available")),
         textOutput(ns("status1")),
         textOutput(ns("result"))
       ),
@@ -49,16 +51,43 @@ estimate_seroincidence_server <- function(id,
                                           pop_data,
                                           curve_data,
                                           noise_data,
-                                          imported_data = imported_data) {
+                                          imported_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    ############################################################################
+    # Choose antigen
+    output$antigen_available <- renderUI({
+      req(pop_data())
+      checkboxGroupInput(
+        inputId = ns("antigen_available"),
+        label = "Choose Antigen",
+        choices = unique(pop_data()$antigen_iso),
+        selected = unique(pop_data()$antigen_iso)
+      )
+    })
+
+    # Choose stratification
+    output$stratification_column <- renderUI({
+      req(input$choose_stratification, pop_data())
+      if (input$choose_stratification == "overall") {
+        return(NULL)
+      } else if (input$choose_stratification == "stratified") {
+        selectInput(
+          ns("stratification_column"),
+          label = "Choose Stratification",
+          choices = isolate(pop_data()) %>%
+            dplyr::select(-imported_data$selected_id()) %>%
+            names()
+        )
+      }
+    })
 
     ############################################################################
 
-    # Reactive object to filter population data
     pop_df <- reactive({
-      subset(pop_data(), pop_data()$antigen_iso == "HlyE_IgA" & pop_data()$Country == "Pakistan") %>%
+      req(pop_data())
+      pop_data() %>%
         serocalculator::as_pop_data(
           age = imported_data$selected_age(),
           value = imported_data$selected_value(),
@@ -67,32 +96,40 @@ estimate_seroincidence_server <- function(id,
     })
 
     curve_df <- reactive({
-      subset(curve_data(), curve_data()$antigen_iso == "HlyE_IgA")
+      req(curve_data())
+      curve_data()
     })
 
     noise_df <- reactive({
-      subset(noise_data(), noise_data()$antigen_iso == "HlyE_IgA" & noise_data()$Country == "Pakistan")
+      req(noise_data())
+      noise_data()
     })
 
+    ############################################################################
+
     output$est_incidence <- renderTable({
+      req(input$choose_stratification, input$antigen_available)
+
       if (input$choose_stratification == "overall") {
-        # Overall seroincidence estimation
         est <- serocalculator::est.incidence(
           pop_data = pop_df(),
           curve_params = curve_df(),
           noise_params = noise_df(),
+          antigen_isos = input$antigen_available,
           verbose = TRUE
         )
       } else if (input$choose_stratification == "stratified") {
-        # Stratified seroincidence estimation
+        req(input$stratification_column)
         est <- serocalculator::est.incidence.by(
           pop_data = pop_df(),
           curve_params = curve_df(),
           noise_params = noise_df(),
           verbose = TRUE,
-          strata = "cluster" # replace with input
+          antigen_isos = input$antigen_available,
+          strata = input$stratification_column
         )
       }
+      summary(est)
     })
   })
 }

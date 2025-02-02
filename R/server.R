@@ -25,12 +25,6 @@ server <- function(input, output, session) {
     noise_data = noise_data
   )
 
-  observeEvent(input$age_select, {
-    print(paste("Debug: input$age_select =", input$age_select))  # Debugging
-    selected_age(input$age_select)  # Update the reactive value
-    print(paste("Debug: selected_id updated to:", selected_age()))  # Debugging
-  })
-
   # Inspect data module
   inspect_data_server(
     id = "inspect_data",
