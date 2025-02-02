@@ -1,5 +1,10 @@
-
-fileSummaryUI <- function(id) {
+#' @importFrom shiny renderPrint
+#' @importFrom shiny sidebarPanel
+#' @importFrom shiny tagList
+#' @importFrom shiny sidebarPanel
+#' @importFrom shiny verbatimTextOutput
+#' @importFrom shiny renderText
+file_summary_ui <- function(id) {
   ns <- NS(id)
   tagList(
     verbatimTextOutput(ns("file_metadata")),
@@ -8,7 +13,7 @@ fileSummaryUI <- function(id) {
 }
 
 # File Summary Module Server
-fileSummaryServer <- function(id, uploaded_data) {
+file_summary_server <- function(id, uploaded_data) {
   moduleServer(id, function(input, output, session) {
     # File Metadata
     output$file_metadata <- renderPrint({

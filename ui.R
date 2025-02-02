@@ -13,10 +13,10 @@ options(shiny.maxRequestSize = 500 * 1024^2)
 shinyUI(navbarPage(
   title = "Serocalculator",
 
-  useShinyjs(),  # Initialize shinyjs
+  shinyjs::useShinyjs(),  # Initialize shinyjs
 
   # Add the busy spinner
-  header = add_busy_spinner(
+  header = shinybusy::add_busy_spinner(
     spin = "atom",
     position = "top-right",
     margins = c(200, 800),

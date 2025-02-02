@@ -1,6 +1,11 @@
-# Module UI
+#' @title UI for Seroincidence Estimation
+#' @importFrom shiny tabPanel sidebarLayout sidebarPanel mainPanel
+#' @importFrom shiny uiOutput textOutput tableOutput helpText h4
+#' @importFrom shiny NS
+#'
+#' @param id A string to identify a namespace
 estimate_seroincidence_ui <- function(id) {
-  ns <- NS(id)  # Namespace to ensure unique IDs
+  ns <- NS(id)
 
   tabPanel(
     "Estimate Seroincidence",
@@ -8,38 +13,25 @@ estimate_seroincidence_ui <- function(id) {
       position = "left",
       sidebarPanel(
         width = 3,
-
-        # title
         h4("Estimation Filters"),
-
-        # description
-        helpText("Provide the parameters for filtering estimation of seroincidence"),
-
-        # choose antigen_iso type
+        helpText("Provide parameters for filtering the seroincidence estimation:"),
         uiOutput(ns("antigen_type")),
-
-        # choose stratification type
         radioButtons(
-          inputId = ns("stratification_type"),
+          inputId = ns("choose_stratification"),
           label = "Choose Stratification Type:",
           choices = list("Overall" = "overall", "Stratified" = "stratified"),
           selected = "overall"
         ),
-
-        # choose stratification column
-        uiOutput(ns("stratify_by")),
-
-        # status text
+        uiOutput(ns("stratification_column")),
+        uiOutput(ns("antigen_available")),
         textOutput(ns("status1")),
-
-        # display computation results
         textOutput(ns("result"))
       ),
       mainPanel(
-        "",
         tabsetPanel(
-          tabPanel("Estimate Seroincidence",
-                   tableOutput(ns("est_incidence"))
+          tabPanel(
+            "Estimate Seroincidence",
+            tableOutput(ns("est_incidence"))
           )
         )
       )
@@ -47,51 +39,97 @@ estimate_seroincidence_ui <- function(id) {
   )
 }
 
-
-# Module Server
-estimate_seroincidence_server <- function(id, pop_data, curve_data, noise_data) {
+#' @title Server Logic for Seroincidence Estimation
+#' @importFrom shiny moduleServer req renderTable showNotification observe
+#' @importFrom dplyr %>%
+#'
+#' @param id A string to identify a namespace
+#' @param pop_data Reactive expression for population data
+#' @param curve_data Reactive expression for curve data
+#' @param noise_data Reactive expression for noise data
+estimate_seroincidence_server <- function(id,
+                                          pop_data,
+                                          curve_data,
+                                          noise_data,
+                                          imported_data) {
   moduleServer(id, function(input, output, session) {
+    ns <- session$ns
 
-    # Render UI for antigen_type (you can customize based on your data)
-    output$antigen_type <- renderUI({
-      selectInput(session$ns("antigen_iso"),
-                  "Choose Antigen Isotype",
-                  choices = unique(pop_data()$antigen_iso),
-                  selected = unique(pop_data()$antigen_iso)[1])
+    ############################################################################
+    # Choose antigen
+    output$antigen_available <- renderUI({
+      req(pop_data())
+      checkboxGroupInput(
+        inputId = ns("antigen_available"),
+        label = "Choose Antigen",
+        choices = unique(pop_data()$antigen_iso),
+        selected = unique(pop_data()$antigen_iso)
+      )
     })
 
-    # Render UI for stratify_by (dynamic based on selected antigen_iso or other logic)
-    output$stratify_by <- renderUI({
-      if (input$stratification_type == "stratified") {
-        selectInput(session$ns("stratify_column"),
-                    "Choose Stratification Column",
-                    choices = colnames(pop_data()))
-      } else {
-        NULL  # Hide stratification column for overall estimation
+    # Choose stratification
+    output$stratification_column <- renderUI({
+      req(input$choose_stratification, pop_data())
+      if (input$choose_stratification == "overall") {
+        return(NULL)
+      } else if (input$choose_stratification == "stratified") {
+        selectInput(
+          ns("stratification_column"),
+          label = "Choose Stratification",
+          choices = isolate(pop_data()) %>%
+            dplyr::select(-imported_data$selected_id()) %>%
+            names()
+        )
       }
     })
 
-    # Placeholder for status text
-    output$status1 <- renderText({
-      paste("Selected Stratification Type:", input$stratification_type)
+    ############################################################################
+
+    pop_df <- reactive({
+      req(pop_data())
+      pop_data() %>%
+        serocalculator::as_pop_data(
+          age = imported_data$selected_age(),
+          value = imported_data$selected_value(),
+          id = imported_data$selected_id()
+        )
     })
 
-    # Compute estimate incidence (this should use the actual logic based on your data)
+    curve_df <- reactive({
+      req(curve_data())
+      curve_data()
+    })
+
+    noise_df <- reactive({
+      req(noise_data())
+      noise_data()
+    })
+
+    ############################################################################
+
     output$est_incidence <- renderTable({
-      # Here you can add the logic for calculating the seroincidence estimate based on inputs
-      # For example:
-      if (input$stratification_type == "overall") {
-        result <- data.frame(Estimate = sum(pop_data()$value))  # Example estimate
-      } else {
-        # Logic for stratified estimation
-        result <- data.frame(Estimate = tapply(pop_data()$value, pop_data()$stratify_column, sum))
-      }
-      result
-    })
+      req(input$choose_stratification, input$antigen_available)
 
-    # Display computation result
-    output$result <- renderText({
-      paste("Seroincidence Estimation Completed.")
+      if (input$choose_stratification == "overall") {
+        est <- serocalculator::est.incidence(
+          pop_data = pop_df(),
+          curve_params = curve_df(),
+          noise_params = noise_df(),
+          antigen_isos = input$antigen_available,
+          verbose = TRUE
+        )
+      } else if (input$choose_stratification == "stratified") {
+        req(input$stratification_column)
+        est <- serocalculator::est.incidence.by(
+          pop_data = pop_df(),
+          curve_params = curve_df(),
+          noise_params = noise_df(),
+          verbose = TRUE,
+          antigen_isos = input$antigen_available,
+          strata = input$stratification_column
+        )
+      }
+      summary(est)
     })
   })
 }
