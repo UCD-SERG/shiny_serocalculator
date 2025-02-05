@@ -35,6 +35,8 @@ Imports:
   rlang,
   htmltools
 Suggests:
-    shinytest2
+    shinytest2,
+    spelling
 Config/Needs/check: shinytest2
 URL: https://ucd-serg.github.io/shiny_serocalculator/
+Language: en-US
