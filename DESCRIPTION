@@ -1,6 +1,6 @@
 Package: shiny.serocalculator
 Title: estimates of the frequency with which seroconversions
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: 
     c(
   person(given = "Peter", family = "Teunis", email = "p.teunis@emory.edu", role = c("aut", "cph"), comment = "Author of the method and original code."),
@@ -35,5 +35,8 @@ Imports:
   rlang,
   htmltools
 Suggests:
-    shinytest2
-
+    shinytest2,
+    spelling
+Config/Needs/check: shinytest2
+URL: https://ucd-serg.github.io/shiny_serocalculator/
+Language: en-US
