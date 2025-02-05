@@ -2,7 +2,7 @@ pandoc: 3.1.11
 pkgdown: 2.1.1.9000
 pkgdown_sha: 18cca452d736fea33d47b19b4ef4973db9104a75
 articles: {}
-last_built: 2025-02-05T06:57Z
+last_built: 2025-02-05T07:00Z
 urls:
   reference: https:/ucd-serg.github.io/shiny_serocalculator/preview/pr44/reference
   article: https:/ucd-serg.github.io/shiny_serocalculator/preview/pr44/articles
