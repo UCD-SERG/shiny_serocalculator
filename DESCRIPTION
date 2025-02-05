@@ -36,4 +36,5 @@ Imports:
   htmltools
 Suggests:
     shinytest2
-
+Config/Needs/check: shinytest2
+URL: https://ucd-serg.github.io/shiny_serocalculator/
