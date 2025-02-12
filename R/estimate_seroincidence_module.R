@@ -8,7 +8,7 @@ estimate_seroincidence_ui <- function(id) {
   ns <- NS(id)
 
   tabPanel(
-    "Estimate Seroincidence",
+    "Seroconversion Rate",
     sidebarLayout(
       position = "left",
       sidebarPanel(
@@ -25,7 +25,8 @@ estimate_seroincidence_ui <- function(id) {
         uiOutput(ns("stratification_column")),
         uiOutput(ns("antigen_available")),
         textOutput(ns("status1")),
-        textOutput(ns("result"))
+        textOutput(ns("result")),
+        actionButton(ns("run_estimation"), "Run")
       ),
       mainPanel(
         tabsetPanel(
@@ -78,6 +79,7 @@ estimate_seroincidence_server <- function(id,
           label = "Choose Stratification",
           choices = isolate(pop_data()) %>%
             dplyr::select(-imported_data$selected_id()) %>%
+            dplyr::select(-antigen_iso) %>%
             names()
         )
       }
@@ -107,29 +109,35 @@ estimate_seroincidence_server <- function(id,
 
     ############################################################################
 
-    output$est_incidence <- renderTable({
-      req(input$choose_stratification, input$antigen_available)
+    observeEvent(input$run_estimation, {
+      req(
+        pop_data(),
+        curve_data(),
+        noise_data()
+      )
+      output$est_incidence <- renderTable({
+        if (input$choose_stratification == "overall") {
+          est <- serocalculator::est.incidence(
+            pop_data = pop_df(),
+            curve_params = curve_df(),
+            noise_params = noise_df(),
+            antigen_isos = input$antigen_available,
+            verbose = TRUE
+          )
+        } else if (input$choose_stratification == "stratified") {
+          est <- serocalculator::est.incidence.by(
+            pop_data = pop_df(),
+            curve_params = curve_df(),
+            noise_params = noise_df(),
+            verbose = TRUE,
+            antigen_isos = input$antigen_available,
+            strata = input$stratification_column
+          )
+        }
 
-      if (input$choose_stratification == "overall") {
-        est <- serocalculator::est.incidence(
-          pop_data = pop_df(),
-          curve_params = curve_df(),
-          noise_params = noise_df(),
-          antigen_isos = input$antigen_available,
-          verbose = TRUE
-        )
-      } else if (input$choose_stratification == "stratified") {
-        req(input$stratification_column)
-        est <- serocalculator::est.incidence.by(
-          pop_data = pop_df(),
-          curve_params = curve_df(),
-          noise_params = noise_df(),
-          verbose = TRUE,
-          antigen_isos = input$antigen_available,
-          strata = input$stratification_column
-        )
-      }
-      summary(est)
+        summary_table <- summary(est)
+        return(summary_table)
+      })
     })
   })
 }

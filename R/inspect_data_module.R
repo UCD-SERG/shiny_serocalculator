@@ -13,9 +13,15 @@
 #' @param id a `string` to identify a namespace
 inspect_data_ui <- function(id) {
   ns <- NS(id)
-
   tabPanel(
     "Inspect Data",
+    div(style = "position:absolute;right:1em;",
+        actionButton("estimate_next_btn", "Next", icon("paper-plane"),
+                     style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+        tags$head(
+          tags$style(HTML("hr {border-top: 1px solid #828994;}"))
+        ),
+    ),
     sidebarLayout(
       position = "left",
       sidebarPanel(
@@ -64,7 +70,6 @@ inspect_data_server <- function(id,
     # Dynamically generate the tabset
     output$dynamic_tabset <- renderUI({
       if (input$updatedData_ext == "Noise Data") {
-        # Only show "Numeric Summary" tab
         tabsetPanel(
           id = ns("switcher"),
           tabPanel(
@@ -73,7 +78,6 @@ inspect_data_server <- function(id,
           )
         )
       } else {
-        # Show both "Numeric Summary" and "Visualize" tabs
         tabsetPanel(
           id = ns("switcher"),
           tabPanel(
@@ -134,7 +138,6 @@ inspect_data_server <- function(id,
           NULL
         )
 
-        # Convert reactive to data.frame
         selectedDF <- isolate(selected_data())
 
         # Check if the data is not empty and has numeric columns
@@ -145,14 +148,17 @@ inspect_data_server <- function(id,
               dplyr::mutate(n_observations = nrow(selectedDF))
           })
         } else {
-          renderText("No data available to display summary.")
+          validate("Please upload a dataset (Pop Data, Noise Data, or Curve Data) to enable visualization.")
         }
       })
 
       ############################ Stratification UI ###########################
 
       output$stratification <- renderUI({
-        if (input$updatedData_ext == "Pop Data") {
+        req(pop_data())
+        if(is.null(imported_data$selected_id())){
+          showNotification("ID variable not selected for Pop Data")
+        } else if (input$updatedData_ext == "Pop Data") {
           df <- isolate(pop_data()) %>%
             dplyr::select(where(~ !is.numeric(.))) %>%
             dplyr::select(-antigen_iso) %>%
@@ -173,6 +179,8 @@ inspect_data_server <- function(id,
       ############################ Antigen Choice ##############################
 
       output$antigen_type <- renderUI({
+        req(pop_data())
+
         df <- pop_data()
         antigen_types <- df$antigen_iso %>% unique()
 
@@ -218,6 +226,7 @@ inspect_data_server <- function(id,
             return(NULL)
           }
 
+          # NOTE: subset by antigen_type
           if (input$type_visualization == "Density") {
             selectedDF %>%
               serocalculator:::autoplot.pop_data(
@@ -225,18 +234,19 @@ inspect_data_server <- function(id,
                 strata = input$choosen_stratification,
                 log = input$check_log
               )
-          } else if (input$type_visualization == "Age Scatter") {
+          } else if (input$type_visualization == "Age Scatter") { # NOTE: subset by antigen_type
             selectedDF %>%
               serocalculator:::autoplot.pop_data(
                 type = "age-scatter",
                 strata = input$choosen_stratification,
-                log = input$check_log
+                log = input$check_log # check why log on/off
               )
           }
         } else if (input$updatedData_ext == "Curve Data") {
           # Convert reactive data object to data.frame
           selectedDF <- isolate(curve_data()) %>%
-            serocalculator:::as_curve_params()
+            serocalculator:::as_curve_params(antigen_isos =  input$output_antigen) %>%
+            serocalculator:::autoplot.curve_params(antigen_isos =  input$output_antigen)
 
           if (!is.null(input$antigen_type) && length(input$antigen_type) > 0) {
             selectedDF <- selectedDF %>%
@@ -245,14 +255,14 @@ inspect_data_server <- function(id,
             message("No antigen type selected; skipping filter step.")
           }
 
-          # Check if data is available and proceed
-          if (is.null(selectedDF) || nrow(selectedDF) == 0) {
-            return(NULL)
-          }
+          # # Check if data is available and proceed
+          # if (is.null(selectedDF) || nrow(selectedDF) == 0) {
+          #   return(NULL)
+          # }
 
           if (input$type_visualization == "Decay") {
             selectedDF %>%
-              serocalculator:::plot_curve_params_one_ab()
+              serocalculator:::autoplot.curve_params()
           } else if (input$type_visualization == "Distribution") {
             selectedDF %>%
               tidyr::pivot_longer(
