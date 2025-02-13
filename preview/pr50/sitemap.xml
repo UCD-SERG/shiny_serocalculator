@@ -1,16 +1,17 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
-<url><loc>/404.html</loc></url>
-<url><loc>/authors.html</loc></url>
-<url><loc>/index.html</loc></url>
-<url><loc>/reference/estimate_seroincidence_server.html</loc></url>
-<url><loc>/reference/estimate_seroincidence_ui.html</loc></url>
-<url><loc>/reference/import_data_server.html</loc></url>
-<url><loc>/reference/import_data_ui.html</loc></url>
-<url><loc>/reference/index.html</loc></url>
-<url><loc>/reference/inspect_data_server.html</loc></url>
-<url><loc>/reference/inspect_data_ui.html</loc></url>
-<url><loc>/reference/shiny.serocalculator-package.html</loc></url>
-<url><loc>/reference/summary_tab_server.html</loc></url>
-<url><loc>/reference/summary_tab_ui.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/404.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/authors.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/index.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/news/index.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/estimate_seroincidence_server.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/estimate_seroincidence_ui.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/import_data_server.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/import_data_ui.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/index.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/inspect_data_server.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/inspect_data_ui.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/shiny.serocalculator-package.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/summary_tab_server.html</loc></url>
+<url><loc>https:/ucd-serg.github.io/shiny_serocalculator/preview/pr50/reference/summary_tab_ui.html</loc></url>
 </urlset>
 
