@@ -8,6 +8,13 @@
 \description{
 Translates antibody levels measured in cross-sectional population samples into estimates of the frequency with which seroconversions (infections) occur in the sampled populations.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://ucd-serg.github.io/shiny_serocalculator/}
+}
+
+}
 \author{
 \strong{Maintainer}: Kristina Lai \email{kwlai@ucdavis.edu}
 
