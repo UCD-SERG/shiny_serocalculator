@@ -1,3 +1,5 @@
+#' @title UI for Importing Data
+
 #' @importFrom shiny renderText
 #' @importFrom shiny HTML
 #' @importFrom shiny fileInput
@@ -10,20 +12,31 @@
 #' @importFrom shiny withProgress
 #' @importFrom shiny incProgress
 #' @importFrom shiny showNotification
-#'
+#' @importFrom shinyWidgets pickerInput
+#' @importFrom shiny tabsetPanel
+#' @importFrom shiny div
+#' @importFrom shiny tags
+#' @importFrom shiny hr
+#' @importFrom shiny h5
+#' @importFrom shiny span
+#' @importFrom shiny h3
 #' @param id define namespace
 import_data_ui <- function(id) {
   ns <- shiny::NS(id)
   tabPanel(
     "Import Data",
-    div(style = "position:absolute;right:1em;",
-        actionButton("inspect_next_btn", "Next", icon("paper-plane"),
-                     style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
-        tags$head(
-          tags$style(HTML("hr {border-top: 1px solid #828994;}"))
-        ),
+    div(
+      style = "position:absolute;right:1em;",
+      actionButton(
+        "inspect_next_btn", "Next ➤",
+        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
+      ),
+      tags$head(
+        tags$style(
+          HTML("hr {border-top: 1px solid #828994;}")
+        )
+      ),
     ),
-
     sidebarLayout(
       position = "left",
       sidebarPanel(
@@ -157,8 +170,19 @@ import_data_ui <- function(id) {
   )
 }
 
+#' @title Sever-side for Data Importation
+#'
 #' @param id identify namespace
 #' @param uploaded_files list of uploaded files
+#'
+#' @importFrom DT renderDT
+#' @importFrom DT datatable
+#' @importFrom shinyWidgets updatePickerInput
+#' @importFrom shiny checkboxGroupInput
+#' @importFrom shiny validate
+#' @importFrom shiny need
+#' @importFrom shiny renderUI
+#'
 import_data_server <- function(id,
                                pop_data,
                                curve_data,
@@ -183,7 +207,7 @@ import_data_server <- function(id,
       selected_value(input$value_select)
     })
 
-    ############################## DATA SELECTION #######################################
+    ############### DATA SELECTION ###########################
 
     # select how to get data
     observeEvent(input$data_upload_type, {
@@ -218,7 +242,7 @@ import_data_server <- function(id,
       }
     })
 
-    ############################### GET DATA ############################################
+    ################ GET DATA ##########################
 
     # UPLOAD
     ## pop_data (upload)
@@ -268,7 +292,10 @@ import_data_server <- function(id,
           }
         })
       } else {
-        showNotification("Invalid URL. Please check and try again.", type = "error")
+        showNotification(
+          "Invalid URL. Please check and try again.",
+          type = "error"
+        )
       }
     })
 
@@ -279,7 +306,9 @@ import_data_server <- function(id,
           incProgress(0.5)
           curve_data_result <- tryCatch(
             {
-              serocalculator::load_curve_params(file_path = input$curve_data_url)
+              serocalculator::load_curve_params(
+                file_path = input$curve_data_url
+              )
             },
             error = function(e) {
               showNotification("Error loading curve data", type = "error")
@@ -294,7 +323,10 @@ import_data_server <- function(id,
           }
         })
       } else {
-        showNotification("Invalid URL. Please check and try again.", type = "error")
+        showNotification(
+          "Invalid URL. Please check and try again.",
+          type = "error"
+        )
       }
     })
 
@@ -305,7 +337,9 @@ import_data_server <- function(id,
           incProgress(0.5)
           noise_data_result <- tryCatch(
             {
-              serocalculator::load_noise_params(file_path = input$noise_data_url)
+              serocalculator::load_noise_params(
+                file_path = input$noise_data_url
+              )
             },
             error = function(e) {
               showNotification("Error loading noise data", type = "error")
@@ -320,7 +354,10 @@ import_data_server <- function(id,
           }
         })
       } else {
-        showNotification("Invalid URL. Please check and try again.", type = "error")
+        showNotification(
+          "Invalid URL. Please check and try again.",
+          type = "error"
+        )
       }
     })
 
@@ -340,7 +377,7 @@ import_data_server <- function(id,
       noise_data(df)
     })
 
-    ############################### PREVIEW DATA ########################################
+    ############## PREVIEW DATA ######################################
 
     output$pop_preview <- renderDT({
       datatable(data = pop_data(), editable = TRUE)
@@ -356,7 +393,7 @@ import_data_server <- function(id,
       datatable(data = pop_data(), editable = TRUE)
     })
 
-    ############################# DATA CAPTURE ###########################################
+    ############# DATA CAPTURE ######################################
     output$upload_type <- renderUI({
       req(input$data_upload_type)
 
@@ -442,7 +479,7 @@ import_data_server <- function(id,
     # file upload
     observeEvent(input$pop_upload, {
       req(input$data_upload_type == "Pop Data")
-      if (!is.null(input$pop_upload)) {
+      if (!is.null(pop_data())) {
         updatePickerInput(
           session = session,
           inputId = "data_upload_type",
@@ -462,7 +499,7 @@ import_data_server <- function(id,
     # Enable "Noise Data" after uploading "Curve Data"
     observeEvent(input$curve_upload, {
       req(input$data_upload_type == "Curve Data")
-      if (!is.null(input$pop_upload)) {
+      if (!is.null(pop_data())) {
         # Enable "Noise Data"
         updatePickerInput(
           session = session,
@@ -479,7 +516,7 @@ import_data_server <- function(id,
         )
       }
     })
-    ######################### FILE UPLOAD INDICATOR #############################################################
+    #################### FILE UPLOAD INDICATOR ###############################
     observeEvent(
       c(
         pop_data(),
@@ -488,23 +525,35 @@ import_data_server <- function(id,
       ),
       {
         if (!is.null(pop_data())) {
-          shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "MediumSeaGreen";')
+          shinyjs::runjs(
+            'document.getElementById("pop_data_indicator")
+            .style.backgroundColor = "MediumSeaGreen";'
+          )
         }
         if (!is.null(curve_data())) {
-          shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "MediumSeaGreen";')
+          shinyjs::runjs(
+            'document.getElementById("curve_data_indicator")
+            .style.backgroundColor = "MediumSeaGreen";'
+          )
         }
         if (!is.null(noise_data())) {
-          shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "MediumSeaGreen";')
+          shinyjs::runjs(
+            'document.getElementById("noise_data_indicator").
+            style.backgroundColor = "MediumSeaGreen";'
+          )
         }
         if (is.null(pop_data()) &&
           is.null(curve_data()) &&
           is.null(noise_data())) {
-          shinyjs::runjs('document.getElementById("status_circle").style.backgroundColor = "Tomato";')
+          shinyjs::runjs(
+            'document.getElementById("status_circle")
+            .style.backgroundColor = "Tomato";'
+          )
         }
       }
     )
 
-    ################################################################################################################
+    ############################################################################
 
     # get antigen in pop_data
     observeEvent(input$pop_upload, {
@@ -520,7 +569,12 @@ import_data_server <- function(id,
           )
         } else {
           # Display a message if 'antigen_iso' is not in the data
-          validate(need(FALSE, "Antigen-isotype variable ('antigen_iso') not present in data."))
+          validate(
+            need(
+              FALSE,
+              "Antigen-isotype variable ('antigen_iso') not present in data."
+            )
+          )
         }
       })
     })
@@ -645,7 +699,10 @@ import_data_server <- function(id,
 
         # Ensure there are valid choices
         validate(
-          need(length(cols) > 0, "No valid columns available in the uploaded file.")
+          need(
+            length(cols) > 0,
+            "No valid columns available in the uploaded file."
+          )
         )
 
         # Dynamically create drop-down list of column names
@@ -677,7 +734,8 @@ import_data_server <- function(id,
     observeEvent(input$clear_btn, {
       shinyalert::shinyalert(
         title = "Confirm Clear",
-        text = "Are you sure you want to clear the environment? This action cannot be undone.",
+        text = "Are you sure you want to clear the environment?
+                This action cannot be undone.",
         type = "warning",
         showCancelButton = TRUE,
         confirmButtonText = "Yes, Clear",
@@ -685,9 +743,18 @@ import_data_server <- function(id,
         callbackR = function(x) {
           if (x) {
             # clear indicators
-            shinyjs::runjs('document.getElementById("pop_data_indicator").style.backgroundColor = "Tomato";')
-            shinyjs::runjs('document.getElementById("curve_data_indicator").style.backgroundColor = "Tomato";')
-            shinyjs::runjs('document.getElementById("noise_data_indicator").style.backgroundColor = "Tomato";')
+            shinyjs::runjs(
+              'document.getElementById("pop_data_indicator")
+              .style.backgroundColor = "Tomato";'
+            )
+            shinyjs::runjs(
+              'document.getElementById("curve_data_indicator")
+              .style.backgroundColor = "Tomato";'
+            )
+            shinyjs::runjs(
+              'document.getElementById("noise_data_indicator")
+              .style.backgroundColor = "Tomato";'
+            )
 
             # set reactive objects to NULL
             pop_data(NULL)
@@ -736,54 +803,84 @@ import_data_server <- function(id,
     output$data_requirement <- renderText({
       HTML("<p> <strong> Required datasets </strong>
 
-    The following data is required to perform the analyis the analysis. The data sets can be uploaded from your personal computer in .csv or .rds format,
-    or linked from our OSF repositories (<a href=https://osf.io/ne8pc/>https://osf.io/ne8pc/</a>). The Noise Data can be uploaded, linked or entered manually.
+    The following data is required to perform the analyis the analysis.
+    The data sets can be uploaded from your personal computer in
+    .csv or .rds format, or linked from our OSF repositories
+    (<a href=https://osf.io/ne8pc/>https://osf.io/ne8pc/</a>).
+    The Noise Data can be uploaded, linked or entered manually.
 
         <ul>
           <li> <strong>Cross-sectional Population Data (Pop Data)</strong>
-                  <p>A dataset with one row per sample and columns for antigen isotype, quantitative antibody results, and age in years.</p>
- <ul>
-              <li>Additional columns and variables can be included for stratification</li>
+                  <p>A dataset with one row per sample and columns for
+                  antigen isotype, quantitative antibody results, and age
+                  in years.</p>
+        <ul>
+              <li>Additional columns and variables can be included for
+              stratification</li>
               <li>Age unit is years, decimal points are fine</li>
-              <li>The scale of the antibody response variable must be the same as the longituidnal antibody decay data (curve data) </li>
+              <li>The scale of the antibody response variable must be the
+              same as the longituidnal antibody decay data (curve data) </li>
               <li>Do not upload any identifying health information </li>
    </p>
             </ul>
           <li><strong>Antibody Decay Curve Data (Curve Data) </strong></li>
-          <p>A data set containing antibody decay curve parameters fit using a two-phase within-host
-          Bayesian hierarchical framework obtaining predictive posterior samples using Markov chain Monte Carlo sampling.
-          Note that variable names <u>must</u> follow these guidelines. For more information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a>.
-          The scale of y0 and y1 must be the same as the antibody response variable in the population data frame</p>
+          <p>A data set containing antibody decay curve parameters fit
+          using a two-phase within-host Bayesian hierarchical framework
+          obtaining predictive posterior samples using Markov chain
+          Monte Carlo sampling. Note that variable names <u>must</u>
+          follow these guidelines.
+          For more information see
+          <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>
+          Teunis (2012)</a>.
+          The scale of y0 and y1 must be the same as the antibody response
+          variable in the population data frame</p>
             <ul>
               <li>y0: baseline antibody level</li>
               <li>y1: antibody peak level </li>
-              <li>t1: time from symptom onset to peak antibody response (in days) </li>
-              <li>alpha: antibody decay rate (1/days for the current longitudinal parameter sets)</li>
+              <li>t1: time from symptom onset to peak antibody response
+              (in days) </li>
+              <li>alpha: antibody decay rate (1/days for the current
+              longitudinal parameter sets)</li>
               <li>r: shape factor of antibody decay</li>
             </ul>
         </p>
            <li> <strong>Noise Data</strong>
-                  <p>A dataset containing the following variables, specifying noise parameters for each antigen isotype.
-                  Note that variable names <u>must</u> follow these guidelines. For more information see <a hfref=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a>.
+                  <p>A dataset containing the following variables,
+                  specifying noise parameters for each antigen isotype.
+                  Note that variable names <u>must</u> follow these guidelines.
+                  For more information see
+                  <a hfref=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>
+                  Teunis (2020)</a>.
                   <ul>
-                    <li>antigen_iso: antigen isotype whose noise parameters are being specified on each row</li>
+                    <li>antigen_iso: antigen isotype whose noise parameters are
+                    being specified on each row</li>
                     <li>nu: biological noise</li>
-                    <li>y.low: Lower limit of detection of the antibody assay</li>
-                    <li>y.high: Upper limit of detection of the antibody assay</li>
+                    <li>y.low: Lower limit of detection of the antibody assay
+                    </li>
+                    <li>y.high: Upper limit of detection of the antibody assay
+                    </li>
                     <li>eps: measurement noise</li>
                   </ul></p>
         <p>
           <li><strong>Biological noise</strong>
-              <p>typically comes from cross-reactivity with other molecules or other pathogens causing an overestimation
-              of antibody concentration. In this case, biological noise needs to be pre-estimated using negative controls,
-              typically using the 95th percentile of the distribution of antibody responses to the antigen-isotype in a
+              <p>typically comes from cross-reactivity with other molecules
+              or other pathogens causing an overestimation
+              of antibody concentration. In this case, biological noise needs
+              to be pre-estimated using negative controls,
+              typically using the 95th percentile of the distribution of
+              antibody responses to the antigen-isotype in a
               population with no exposure.</p>
           </li>
           <li><strong>Measurement noise</strong>
-            <p>epresents measurement error from the laboratory testing process (e.g. user differences in pipetting technique,
-            random ELISA plate effects). It is defined by a CV (coefficient of variation) as the ratio of the standard deviation
-            to the mean for replicates. Note that the CV should ideally be measured across plates rather than within the same plate.
-            Measurement noise can over- or under-estimate antibody concentration. </p>
+            <p>epresents measurement error from the laboratory testing process
+            (e.g. user differences in pipetting technique,
+            random ELISA plate effects).
+            It is defined by a CV (coefficient of variation) as the ratio of
+            the standard deviation
+            to the mean for replicates. Note that the CV should ideally be
+            measured across plates rather than within the same plate.
+            Measurement noise can over- or under-estimate antibody concentration
+            .</p>
           </li>
         </p>
          <p>File limit: <strong>500MB</strong></p>")

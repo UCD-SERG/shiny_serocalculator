@@ -2,6 +2,11 @@
 #' @importFrom shiny tabPanel sidebarLayout sidebarPanel mainPanel
 #' @importFrom shiny uiOutput textOutput tableOutput helpText h4
 #' @importFrom shiny NS
+#' @importFrom shiny checkboxGroupInput
+#' @importFrom shiny radioButtons
+#' @importFrom shiny selectInput
+#' @importFrom shiny tabsetPanel
+#' @importFrom shiny radioButtons
 #'
 #' @param id A string to identify a namespace
 estimate_seroincidence_ui <- function(id) {
@@ -14,7 +19,9 @@ estimate_seroincidence_ui <- function(id) {
       sidebarPanel(
         width = 3,
         h4("Estimation Filters"),
-        helpText("Provide parameters for filtering the seroincidence estimation:"),
+        helpText(
+          "Provide parameters for filtering the seroincidence estimation:"
+        ),
         uiOutput(ns("antigen_type")),
         radioButtons(
           inputId = ns("choose_stratification"),
@@ -43,6 +50,9 @@ estimate_seroincidence_ui <- function(id) {
 #' @title Server Logic for Seroincidence Estimation
 #' @importFrom shiny moduleServer req renderTable showNotification observe
 #' @importFrom dplyr %>%
+#' @importFrom shiny checkboxGroupInput
+#' @importFrom shiny selectInput
+#' @importFrom shiny isolate
 #'
 #' @param id A string to identify a namespace
 #' @param pop_data Reactive expression for population data
