@@ -1,6 +1,6 @@
 Package: shiny.serocalculator
 Title: estimates of the frequency with which seroconversions
-Version: 0.0.0.9001
+Version: 0.0.0.9002
 Authors@R: 
     c(
   person(given = "Peter", family = "Teunis", email = "p.teunis@emory.edu", role = c("aut", "cph"), comment = "Author of the method and original code."),
