@@ -281,7 +281,6 @@ import_data_server <- function(id,
             },
             error = function(e) {
               showNotification("Error loading population data", type = "error")
-              return(NULL)
             }
           )
 
@@ -312,7 +311,6 @@ import_data_server <- function(id,
             },
             error = function(e) {
               showNotification("Error loading curve data", type = "error")
-              return(NULL)
             }
           )
 
@@ -342,8 +340,10 @@ import_data_server <- function(id,
               )
             },
             error = function(e) {
-              showNotification("Error loading noise data", type = "error")
-              return(NULL)
+              showNotification(
+                "Error loading noise data",
+                type = "error"
+              )
             }
           )
 
@@ -543,8 +543,8 @@ import_data_server <- function(id,
           )
         }
         if (is.null(pop_data()) &&
-          is.null(curve_data()) &&
-          is.null(noise_data())) {
+              is.null(curve_data()) &&
+              is.null(noise_data())) {
           shinyjs::runjs(
             'document.getElementById("status_circle")
             .style.backgroundColor = "Tomato";'
@@ -888,10 +888,10 @@ import_data_server <- function(id,
 
 
 
-    return(list(
+    list(
       selected_id = selected_id,
       selected_age = selected_age,
       selected_value = selected_value
-    ))
+    )
   })
 }

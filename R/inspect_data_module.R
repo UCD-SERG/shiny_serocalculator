@@ -299,11 +299,11 @@ inspect_data_server <- function(id,
           } else if (input$type_visualization == "Distribution") {
             selected_df %>%
               tidyr::pivot_longer(
-                cols = `y0`:`r`,
+                cols = "y0":"r",
                 names_to = "parameter",
                 values_to = "value"
               ) %>%
-              ggplot2::ggplot(aes(x = value)) +
+              ggplot2::ggplot(aes(x = "value")) +
               ggplot2::geom_density() +
               ggplot2::facet_grid(parameter ~ .) +
               ggplot2::scale_y_continuous(limits = c(0, 0.009)) +

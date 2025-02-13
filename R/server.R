@@ -24,7 +24,10 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$estimate_next_btn, {
-    updateNavbarPage(session, "serocalculator_app", selected = "estimate_seroincidence")
+    updateNavbarPage(session,
+      "serocalculator_app",
+      selected = "estimate_seroincidence"
+    )
   })
 
   ######################### CALL MODULES #######################################

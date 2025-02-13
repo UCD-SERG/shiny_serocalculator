@@ -89,7 +89,7 @@ estimate_seroincidence_server <- function(id,
           label = "Choose Stratification",
           choices = isolate(pop_data()) %>%
             dplyr::select(-imported_data$selected_id()) %>%
-            dplyr::select(-antigen_iso) %>%
+            dplyr::select(-"antigen_iso") %>%
             names()
         )
       }
