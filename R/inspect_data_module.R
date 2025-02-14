@@ -74,7 +74,7 @@ inspect_data_ui <- function(id) {
 #' @importFrom dplyr filter
 #'
 #' @param id identify namespace
-#' @param pop_data popualtion data
+#' @param pop_data population data
 #' @param curve_data curve data
 #' @param noise_data noise data
 #' @param imported_data data returned by import_data_module
