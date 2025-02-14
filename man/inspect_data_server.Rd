@@ -9,7 +9,7 @@ inspect_data_server(id, pop_data, curve_data, noise_data, imported_data)
 \arguments{
 \item{id}{identify namespace}
 
-\item{pop_data}{popualtion data}
+\item{pop_data}{population data}
 
 \item{curve_data}{curve data}
 
