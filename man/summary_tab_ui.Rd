@@ -6,6 +6,9 @@
 \usage{
 summary_tab_ui(id)
 }
+\arguments{
+\item{id}{identify namespace}
+}
 \description{
 UI for Summary Page
 }

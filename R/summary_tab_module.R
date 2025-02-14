@@ -8,6 +8,7 @@
 #' @importFrom shiny HTML
 #' @importFrom shiny h2
 #'
+#' @param id identify namespace
 summary_tab_ui <- function(id) {
   ns <- NS(id)
   tagList(
@@ -15,7 +16,7 @@ summary_tab_ui <- function(id) {
       style = "position:absolute;right:1em;",
       actionButton(
         "import_next_btn",
-        label = "Next ➤",
+        label = "Next", icon = icon("arrow-right"),
         style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
       ),
       tags$head(
@@ -38,6 +39,7 @@ summary_tab_ui <- function(id) {
 #' @importFrom shiny updateNavbarPage
 #' @importFrom shiny renderUI
 #'
+#' @param id identify namespace
 summary_tab_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     observeEvent(input$next_btn, {

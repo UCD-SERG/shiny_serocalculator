@@ -9,7 +9,11 @@ import_data_server(id, pop_data, curve_data, noise_data)
 \arguments{
 \item{id}{identify namespace}
 
-\item{uploaded_files}{list of uploaded files}
+\item{pop_data}{population data}
+
+\item{curve_data}{curve data}
+
+\item{noise_data}{noise data}
 }
 \description{
 Sever-side for Data Importation

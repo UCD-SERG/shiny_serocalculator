@@ -20,6 +20,8 @@ estimate_seroincidence_server(
 \item{curve_data}{Reactive expression for curve data}
 
 \item{noise_data}{Reactive expression for noise data}
+
+\item{imported_data}{data returned by import_data_module}
 }
 \description{
 Server Logic for Seroincidence Estimation

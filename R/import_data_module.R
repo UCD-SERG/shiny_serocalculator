@@ -21,6 +21,7 @@
 #' @importFrom shiny span
 #' @importFrom shiny h3
 #' @param id define namespace
+
 import_data_ui <- function(id) {
   ns <- shiny::NS(id)
   tabPanel(
@@ -28,7 +29,9 @@ import_data_ui <- function(id) {
     div(
       style = "position:absolute;right:1em;",
       actionButton(
-        "inspect_next_btn", "Next ➤",
+        "inspect_next_btn",
+        "Next",
+        , icon = icon("arrow-right"),
         style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
       ),
       tags$head(
@@ -173,7 +176,9 @@ import_data_ui <- function(id) {
 #' @title Sever-side for Data Importation
 #'
 #' @param id identify namespace
-#' @param uploaded_files list of uploaded files
+#' @param pop_data population data
+#' @param curve_data curve data
+#' @param noise_data noise data
 #'
 #' @importFrom DT renderDT
 #' @importFrom DT datatable
@@ -597,7 +602,7 @@ import_data_server <- function(id,
             n = length(antigens),
             colors = colors,
             label = "Noise Data",
-            antigen_name = antigens
+            antigen_names = antigens
           )
         })
       }
@@ -622,7 +627,7 @@ import_data_server <- function(id,
             n = length(antigens),
             colors = colors,
             label = "Curve Data",
-            antigen_name = antigens
+            antigen_names = antigens
           )
         })
       }

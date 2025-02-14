@@ -20,7 +20,8 @@ inspect_data_ui <- function(id) {
       style = "position:absolute;right:1em;",
       actionButton(
         "estimate_next_btn",
-        "Next ➤",
+        "Next",
+        , icon = icon("arrow-right"),
         style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
       ),
       tags$head(
@@ -73,7 +74,10 @@ inspect_data_ui <- function(id) {
 #' @importFrom dplyr filter
 #'
 #' @param id identify namespace
-#' @param value a continuous attribute
+#' @param pop_data popualtion data
+#' @param curve_data curve data
+#' @param noise_data noise data
+#' @param imported_data data returned by import_data_module
 inspect_data_server <- function(id,
                                 pop_data,
                                 curve_data,
@@ -261,14 +265,14 @@ inspect_data_server <- function(id,
           # NOTE: subset by antigen_type
           if (input$type_visualization == "Density") {
             selected_df %>%
-              serocalculator::autoplot.pop_data(
+              serocalculator:::autoplot.pop_data(
                 type = "density",
                 strata = input$choosen_stratification,
                 log = input$check_log
               )
           } else if (input$type_visualization == "Age Scatter") {
             selected_df %>%
-              serocalculator::autoplot.pop_data(
+              serocalculator:::autoplot.pop_data(
                 type = "age-scatter",
                 strata = input$choosen_stratification,
                 log = input$check_log # check why log on/off
@@ -279,10 +283,10 @@ inspect_data_server <- function(id,
           selected_df <- isolate(
             curve_data()
           ) %>%
-            serocalculator::as_curve_params(
+            serocalculator:::as_curve_params(
               antigen_isos = input$output_antigen
             ) %>%
-            serocalculator::autoplot.curve_params(
+            serocalculator:::autoplot.curve_params(
               antigen_isos = input$output_antigen
             )
 
@@ -295,7 +299,7 @@ inspect_data_server <- function(id,
 
           if (input$type_visualization == "Decay") {
             selected_df %>%
-              serocalculator::autoplot.curve_params()
+              serocalculator:::autoplot.curve_params()
           } else if (input$type_visualization == "Distribution") {
             selected_df %>%
               tidyr::pivot_longer(

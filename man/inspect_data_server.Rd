@@ -9,7 +9,13 @@ inspect_data_server(id, pop_data, curve_data, noise_data, imported_data)
 \arguments{
 \item{id}{identify namespace}
 
-\item{value}{a continuous attribute}
+\item{pop_data}{popualtion data}
+
+\item{curve_data}{curve data}
+
+\item{noise_data}{noise data}
+
+\item{imported_data}{data returned by import_data_module}
 }
 \description{
 server-side data inspection

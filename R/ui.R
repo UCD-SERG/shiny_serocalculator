@@ -1,5 +1,7 @@
 #' @importFrom shiny fluidPage
 #' @importFrom shiny navbarPage
+#' @importFrom shinyjs useShinyjs
+#' @importFrom shinyalert useShinyalert
 
 ui <- function(...) {
   # define UI

@@ -6,6 +6,9 @@
 \usage{
 summary_tab_server(id)
 }
+\arguments{
+\item{id}{identify namespace}
+}
 \description{
 Server-side for Summary Page
 }

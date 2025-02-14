@@ -15,9 +15,7 @@ Depends: R (>= 4.1.0),
           shiny,
           shinyWidgets,
           shinyjs,
-          DT,
-          golem,
-          pkgload
+          DT
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -25,16 +23,14 @@ RoxygenNote: 7.3.2
 Imports:
   ggplot2,
   shinyalert,
-  readxl,
   serocalculator,
   dplyr,
   shinythemes,
   shinybusy,
   httr,
-  vroom,
   skimr,
   rlang,
-  htmltools
+  tidyr
 Suggests:
     shinytest2,
     spelling

@@ -58,6 +58,7 @@ estimate_seroincidence_ui <- function(id) {
 #' @param pop_data Reactive expression for population data
 #' @param curve_data Reactive expression for curve data
 #' @param noise_data Reactive expression for noise data
+#' @param imported_data data returned by import_data_module
 estimate_seroincidence_server <- function(id,
                                           pop_data,
                                           curve_data,
