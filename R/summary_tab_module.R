@@ -32,7 +32,7 @@ summary_tab_ui <- function(id) {
     div(
       style = "position:absolute;right:1em;",
       textOutput(ns("serocalculator_version"))
-      ),
+    ),
   )
 }
 
@@ -55,7 +55,8 @@ summary_tab_server <- function(id) {
 
     output$serocalculator_version <- renderText({
       tryCatch(
-        paste("Serocalculator ", as.character(packageVersion("serocalculator"))),
+        paste("Serocalculator ",
+              as.character(packageVersion("serocalculator"))),
         error = function(e) "Version not available"
       )
     })
