@@ -737,6 +737,12 @@ import_data_server <- function(id,
 
     ## Clear environment with confirmation
     observeEvent(input$clear_btn, {
+
+      # set reactive objects to NULL
+      pop_data(NULL)
+      curve_data(NULL)
+      noise_data(NULL)
+
       shinyalert::shinyalert(
         title = "Confirm Clear",
         text = "Are you sure you want to clear the environment?
@@ -760,11 +766,6 @@ import_data_server <- function(id,
               'document.getElementById("noise_data_indicator")
               .style.backgroundColor = "Tomato";'
             )
-
-            # set reactive objects to NULL
-            pop_data(NULL)
-            curve_data(NULL)
-            noise_data(NULL)
 
             # clear environment
             rm(list = ls())

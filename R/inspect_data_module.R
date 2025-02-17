@@ -90,7 +90,6 @@ inspect_data_server <- function(id,
 
     antigen_iso <- NULL
 
-
     ##########################################################################
 
     # Dynamically generate the tabset
@@ -256,7 +255,6 @@ inspect_data_server <- function(id,
             message("No antigen type selected; skipping filter step.")
           }
 
-
           # Check if data is available and proceed
           if (is.null(selected_df) || nrow(selected_df) == 0) {
             return(NULL)
@@ -265,14 +263,14 @@ inspect_data_server <- function(id,
           # NOTE: subset by antigen_type
           if (input$type_visualization == "Density") {
             selected_df %>%
-              serocalculator:::autoplot.pop_data(
+              serocalculator::autoplot(
                 type = "density",
                 strata = input$choosen_stratification,
                 log = input$check_log
               )
           } else if (input$type_visualization == "Age Scatter") {
             selected_df %>%
-              serocalculator:::autoplot.pop_data(
+              serocalculator::autoplot(
                 type = "age-scatter",
                 strata = input$choosen_stratification,
                 log = input$check_log # check why log on/off
@@ -283,10 +281,10 @@ inspect_data_server <- function(id,
           selected_df <- isolate(
             curve_data()
           ) %>%
-            serocalculator:::as_curve_params(
+            serocalculator::as_curve_params(
               antigen_isos = input$output_antigen
             ) %>%
-            serocalculator:::autoplot.curve_params(
+            serocalculator::autoplot(
               antigen_isos = input$output_antigen
             )
 
@@ -299,7 +297,7 @@ inspect_data_server <- function(id,
 
           if (input$type_visualization == "Decay") {
             selected_df %>%
-              serocalculator:::autoplot.curve_params()
+              serocalculator::autoplot()
           } else if (input$type_visualization == "Distribution") {
             selected_df %>%
               tidyr::pivot_longer(
