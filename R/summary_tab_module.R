@@ -28,7 +28,11 @@ summary_tab_ui <- function(id) {
       ),
     ),
     h2("Serocalculator"),
-    htmlOutput(ns("output_html"))
+    htmlOutput(ns("output_html")),
+    div(
+      style = "position:absolute;right:1em;",
+      textOutput(ns("serocalculator_version"))
+      ),
   )
 }
 
@@ -46,6 +50,13 @@ summary_tab_server <- function(id) {
       updateNavbarPage(session,
         "serocalculator_app",
         selected = "import_data"
+      )
+    })
+
+    output$serocalculator_version <- renderText({
+      tryCatch(
+        paste("Serocalculator ", as.character(packageVersion("serocalculator"))),
+        error = function(e) "Version not available"
       )
     })
 
@@ -133,4 +144,7 @@ summary_tab_server <- function(id) {
       ")
     })
   })
+
+
+
 }
