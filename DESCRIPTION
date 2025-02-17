@@ -33,7 +33,9 @@ Imports:
   tidyr
 Suggests:
     shinytest2,
-    spelling
+    spelling,
+    testthat (>= 3.0.0)
 Config/Needs/check: shinytest2
 URL: https://ucd-serg.github.io/shiny_serocalculator/
 Language: en-US
+Config/testthat/edition: 3
