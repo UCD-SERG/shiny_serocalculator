@@ -31,7 +31,7 @@ summary_tab_ui <- function(id) {
     htmlOutput(ns("output_html")),
     div(
       style = "position:absolute;right:1em;",
-      textOutput(ns("serocalculator_version"))
+      uiOutput(ns("serocalculator_version"))
     ),
   )
 }
@@ -53,13 +53,22 @@ summary_tab_server <- function(id) {
       )
     })
 
-    output$serocalculator_version <- renderText({
-      tryCatch(
-        paste("Serocalculator ",
-              as.character(packageVersion("serocalculator"))),
-        error = function(e) "Version not available"
+    output$serocalculator_version <- renderUI({
+      HTML(
+        paste(
+          "Serocalculator",
+          as.character(packageVersion("serocalculator")),
+          "<br>", R.version.string,
+          "<br>",
+          paste(
+            "shiny.serocalculator",
+            as.character(packageVersion("shiny.serocalculator"))
+          )
+        )
       )
     })
+
+
 
     output$output_html <- renderUI({
       tags$head(
@@ -145,7 +154,4 @@ summary_tab_server <- function(id) {
       ")
     })
   })
-
-
-
 }
