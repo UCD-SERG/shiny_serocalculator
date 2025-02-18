@@ -30,7 +30,8 @@ Imports:
   httr,
   skimr,
   rlang,
-  tidyr
+  tidyr,
+  tidyselect
 Suggests:
     shinytest2,
     spelling,

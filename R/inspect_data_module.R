@@ -96,12 +96,6 @@ inspect_data_ui <- function(id) {
 #' @param noise_data noise data
 #' @param imported_data data returned by import_data_module
 #'
-#' @param y0 curve data parameter
-#' @param y1 curve data parameter
-#' @param t1 curve data parameter
-#' @param alpha curve data paramter
-#' @param r curve data parameter
-#' @param value  continious variable to visualize
 inspect_data_server <- function(id,
                                 pop_data,
                                 curve_data,
