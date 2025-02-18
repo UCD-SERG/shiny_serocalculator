@@ -17,7 +17,7 @@ to a drop down with options Upload, OSF, Manually Enter #42
 
 * Add "step #" to tab headers in shiny app #40
 
-
+* Add "next" and "back" buttons to switch tabs #39
 
 ## Internal changes
 
