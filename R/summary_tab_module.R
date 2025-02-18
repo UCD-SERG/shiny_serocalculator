@@ -38,10 +38,12 @@ summary_tab_ui <- function(id) {
 
 
 # Module Server
-#' @title Server-side for Summary Page
+#' @title Server-side for Summary Module
 #'
 #' @importFrom shiny updateNavbarPage
 #' @importFrom shiny renderUI
+#' @importFrom utils packageVersion
+#' @importFrom shiny observeEvent
 #'
 #' @param id identify namespace
 summary_tab_server <- function(id) {

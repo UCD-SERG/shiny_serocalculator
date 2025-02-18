@@ -40,6 +40,20 @@ import_data_ui <- function(id) {
         )
       ),
     ),
+    div(
+      style = "position:absolute;right:1em;bottom:1em;",
+      actionButton(
+        "import_back_btn",
+        "Back",
+        , icon = icon("arrow-left"),
+        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
+      ),
+      tags$head(
+        tags$style(
+          HTML("hr {border-top: 1px solid #828994;}")
+        )
+      ),
+    ),
     sidebarLayout(
       position = "left",
       sidebarPanel(
@@ -187,6 +201,7 @@ import_data_ui <- function(id) {
 #' @importFrom shiny validate
 #' @importFrom shiny need
 #' @importFrom shiny renderUI
+#' @importFrom shiny observeEvent
 #'
 import_data_server <- function(id,
                                pop_data,

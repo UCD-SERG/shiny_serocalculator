@@ -13,7 +13,7 @@ server <- function(input, output, session) {
   noise_data <- reactiveVal(NULL)
   session$userData$select_id <- reactiveVal()
 
-  ######################### NEXT PAGE ######################################
+  ######################### NEXT PAGE #########################################
 
   observeEvent(input$import_next_btn, {
     updateNavbarPage(session, "serocalculator_app", selected = "import_data")
@@ -28,6 +28,20 @@ server <- function(input, output, session) {
       "serocalculator_app",
       selected = "estimate_seroincidence"
     )
+  })
+
+  ######################### BACK PAGE ##########################################
+
+  observeEvent(input$import_back_btn, {
+    updateNavbarPage(session, "serocalculator_app", selected = "summary")
+  })
+
+  observeEvent(input$inspect_back_btn, {
+    updateNavbarPage(session, "serocalculator_app", selected = "import_data")
+  })
+
+  observeEvent(input$estimate_back_btn, {
+    updateNavbarPage(session, "serocalculator_app", selected = "inspect_data")
   })
 
   ######################### CALL MODULES #######################################

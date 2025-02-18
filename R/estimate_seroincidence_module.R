@@ -14,6 +14,22 @@ estimate_seroincidence_ui <- function(id) {
 
   tabPanel(
     "Seroconversion Rate",
+    div(
+      style = "position:absolute;right:1em;",
+      actionButton(
+        "estimate_back_btn",
+        "Back",
+        , icon = icon("arrow-left"),
+        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
+      ),
+      tags$head(
+        tags$style(
+          HTML(
+            "hr {border-top: 1px solid #828994;}"
+          )
+        )
+      ),
+    ),
     sidebarLayout(
       position = "left",
       sidebarPanel(
@@ -53,6 +69,7 @@ estimate_seroincidence_ui <- function(id) {
 #' @importFrom shiny checkboxGroupInput
 #' @importFrom shiny selectInput
 #' @importFrom shiny isolate
+#' @importFrom shiny observeEvent
 #'
 #' @param id A string to identify a namespace
 #' @param pop_data Reactive expression for population data

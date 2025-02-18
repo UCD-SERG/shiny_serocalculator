@@ -32,6 +32,22 @@ inspect_data_ui <- function(id) {
         )
       ),
     ),
+    div(
+      style = "position:absolute;right:1em;bottom:1em;",
+      actionButton(
+        "inspect_back_btn",
+        "Back",
+        , icon = icon("arrow-left"),
+        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
+      ),
+      tags$head(
+        tags$style(
+          HTML(
+            "hr {border-top: 1px solid #828994;}"
+          )
+        )
+      ),
+    ),
     sidebarLayout(
       position = "left",
       sidebarPanel(
@@ -72,12 +88,20 @@ inspect_data_ui <- function(id) {
 #' @importFrom dplyr where
 #' @importFrom shiny checkboxGroupInput
 #' @importFrom dplyr filter
+#' @importFrom tidyselect all_of
 #'
 #' @param id identify namespace
 #' @param pop_data population data
 #' @param curve_data curve data
 #' @param noise_data noise data
 #' @param imported_data data returned by import_data_module
+#'
+#' @param y0 curve data parameter
+#' @param y1 curve data parameter
+#' @param t1 curve data parameter
+#' @param alpha curve data paramter
+#' @param r curve data parameter
+#' @param value  continious variable to visualize
 inspect_data_server <- function(id,
                                 pop_data,
                                 curve_data,
@@ -86,11 +110,11 @@ inspect_data_server <- function(id,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    #########################################################################
+    ######################## INITIALIZE VALUES #################################
 
     antigen_iso <- NULL
 
-    ##########################################################################
+    ############################################################################
 
     # Dynamically generate the tabset
     output$dynamic_tabset <- renderUI({
@@ -278,15 +302,13 @@ inspect_data_server <- function(id,
           }
         } else if (input$updatedData_ext == "Curve Data") {
           # Convert reactive data object to data.frame
-          selected_df <- isolate(
-            curve_data()
-          ) %>%
-            serocalculator::as_curve_params(
-              antigen_isos = input$output_antigen
-            ) %>%
-            serocalculator::autoplot(
-              antigen_isos = input$output_antigen
-            )
+          selected_df <- isolate({
+            curve_data() %>%
+              serocalculator::as_curve_params(
+                antigen_isos = input$output_antigen
+              )
+          })
+
 
           if (!is.null(input$antigen_type) && length(input$antigen_type) > 0) {
             selected_df <- selected_df %>%
@@ -297,15 +319,15 @@ inspect_data_server <- function(id,
 
           if (input$type_visualization == "Decay") {
             selected_df %>%
-              serocalculator::autoplot()
+              serocalculator::autoplot(antigen_isos = input$output_antigen)
           } else if (input$type_visualization == "Distribution") {
             selected_df %>%
               tidyr::pivot_longer(
-                cols = "y0":"r",
+                cols = tidyselect::all_of(c("y0", "y1", "t1", "alpha", "r")),
                 names_to = "parameter",
                 values_to = "value"
               ) %>%
-              ggplot2::ggplot(aes(x = "value")) +
+              ggplot2::ggplot(aes(x = selected_df$value)) +
               ggplot2::geom_density() +
               ggplot2::facet_grid(parameter ~ .) +
               ggplot2::scale_y_continuous(limits = c(0, 0.009)) +

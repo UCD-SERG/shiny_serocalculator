@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary_tab_module.R
 \name{summary_tab_server}
 \alias{summary_tab_server}
-\title{Server-side for Summary Page}
+\title{Server-side for Summary Module}
 \usage{
 summary_tab_server(id)
 }
@@ -10,5 +10,5 @@ summary_tab_server(id)
 \item{id}{identify namespace}
 }
 \description{
-Server-side for Summary Page
+Server-side for Summary Module
 }
