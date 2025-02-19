@@ -4,7 +4,20 @@
 
 ## User-facing changes
 
-(none yet)
+* Add confirmation to Clear Environment button #47
+
+* Consistent naming for import and download options #46
+
+* Curve data to have file upload and OSF link options #45
+
+* On import noise data, replace "do you want to manually enter data?" 
+to a drop down with options Upload, OSF, Manually Enter #42
+
+* Implement input validation #41
+
+* Add "step #" to tab headers in shiny app #40
+
+* Add "next" and "back" buttons to switch tabs #39
 
 ## Internal changes
 

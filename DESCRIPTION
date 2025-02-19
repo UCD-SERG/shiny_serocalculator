@@ -1,6 +1,6 @@
 Package: shiny.serocalculator
 Title: estimates of the frequency with which seroconversions
-Version: 0.0.0.9001
+Version: 0.0.0.9003
 Authors@R: 
     c(
   person(given = "Peter", family = "Teunis", email = "p.teunis@emory.edu", role = c("aut", "cph"), comment = "Author of the method and original code."),
@@ -15,28 +15,28 @@ Depends: R (>= 4.1.0),
           shiny,
           shinyWidgets,
           shinyjs,
-          DT,
-          golem,
-          pkgload
+          DT
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
   ggplot2,
-  readxl,
+  shinyalert,
   serocalculator,
   dplyr,
   shinythemes,
   shinybusy,
   httr,
-  vroom,
   skimr,
   rlang,
-  htmltools
+  tidyr,
+  tidyselect
 Suggests:
     shinytest2,
-    spelling
+    spelling,
+    testthat (>= 3.0.0)
 Config/Needs/check: shinytest2
 URL: https://ucd-serg.github.io/shiny_serocalculator/
 Language: en-US
+Config/testthat/edition: 3

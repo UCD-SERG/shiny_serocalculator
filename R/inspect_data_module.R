@@ -9,13 +9,45 @@
 #' @importFrom ggplot2 aes
 #' @importFrom ggplot2 geom_density
 #' @importFrom ggplot2 theme_minimal
+#' @importFrom shiny selectInput
 #'
 #' @param id a `string` to identify a namespace
 inspect_data_ui <- function(id) {
   ns <- NS(id)
-
   tabPanel(
     "Inspect Data",
+    div(
+      style = "position:absolute;right:1em;",
+      actionButton(
+        "estimate_next_btn",
+        "Next",
+        , icon = icon("arrow-right"),
+        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
+      ),
+      tags$head(
+        tags$style(
+          HTML(
+            "hr {border-top: 1px solid #828994;}"
+          )
+        )
+      ),
+    ),
+    div(
+      style = "position:absolute;right:1em;bottom:1em;",
+      actionButton(
+        "inspect_back_btn",
+        "Back",
+        , icon = icon("arrow-left"),
+        style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
+      ),
+      tags$head(
+        tags$style(
+          HTML(
+            "hr {border-top: 1px solid #828994;}"
+          )
+        )
+      ),
+    ),
     sidebarLayout(
       position = "left",
       sidebarPanel(
@@ -25,9 +57,9 @@ inspect_data_ui <- function(id) {
 
         # Select input for dataset
         selectInput(ns("updatedData_ext"),
-                    "Select data",
-                    choices = c("Pop Data", "Curve Data", "Noise Data"),
-                    selected = "Pop Data"
+          "Select data",
+          choices = c("Pop Data", "Curve Data", "Noise Data"),
+          selected = "Pop Data"
         ),
 
         # Dynamic UI elements
@@ -47,24 +79,40 @@ inspect_data_ui <- function(id) {
 
 
 #' @title server-side data inspection
+#'
+#' @importFrom shiny renderUI
+#' @importFrom shiny tabsetPanel
+#' @importFrom shiny selectInput
+#' @importFrom shiny isolate
+#' @importFrom shiny validate
+#' @importFrom dplyr where
+#' @importFrom shiny checkboxGroupInput
+#' @importFrom dplyr filter
+#' @importFrom tidyselect all_of
+#'
 #' @param id identify namespace
-#' @param value a continuous attribute
+#' @param pop_data population data
+#' @param curve_data curve data
+#' @param noise_data noise data
+#' @param imported_data data returned by import_data_module
+#'
 inspect_data_server <- function(id,
                                 pop_data,
                                 curve_data,
                                 noise_data,
-                                imported_data
-                                ) {
+                                imported_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    ######################## INITIALIZE VALUES #################################
 
-    ##########################################################################
+    antigen_iso <- NULL
+
+    ############################################################################
 
     # Dynamically generate the tabset
     output$dynamic_tabset <- renderUI({
       if (input$updatedData_ext == "Noise Data") {
-        # Only show "Numeric Summary" tab
         tabsetPanel(
           id = ns("switcher"),
           tabPanel(
@@ -73,7 +121,6 @@ inspect_data_server <- function(id,
           )
         )
       } else {
-        # Show both "Numeric Summary" and "Visualize" tabs
         tabsetPanel(
           id = ns("switcher"),
           tabPanel(
@@ -134,25 +181,31 @@ inspect_data_server <- function(id,
           NULL
         )
 
-        # Convert reactive to data.frame
-        selectedDF <- isolate(selected_data())
+        selected_df <- isolate(selected_data())
 
         # Check if the data is not empty and has numeric columns
-        if (!is.null(selectedDF) && nrow(selectedDF) > 0) {
+        if (!is.null(selected_df) && nrow(selected_df) > 0) {
           renderTable({
-            skimr::skim(selectedDF) %>%
+            skimr::skim(selected_df) %>%
               skimr::yank("numeric") %>%
-              dplyr::mutate(n_observations = nrow(selectedDF))
+              dplyr::mutate(n_observations = nrow(selected_df))
           })
         } else {
-          renderText("No data available to display summary.")
+          validate(
+            "Please upload a dataset
+            (Pop Data, Noise Data, or Curve Data)
+            to enable visualization."
+          )
         }
       })
 
       ############################ Stratification UI ###########################
 
       output$stratification <- renderUI({
-        if (input$updatedData_ext == "Pop Data") {
+        req(pop_data())
+        if (is.null(imported_data$selected_id())) {
+          showNotification("ID variable not selected for Pop Data")
+        } else if (input$updatedData_ext == "Pop Data") {
           df <- isolate(pop_data()) %>%
             dplyr::select(where(~ !is.numeric(.))) %>%
             dplyr::select(-antigen_iso) %>%
@@ -173,6 +226,8 @@ inspect_data_server <- function(id,
       ############################ Antigen Choice ##############################
 
       output$antigen_type <- renderUI({
+        req(pop_data())
+
         df <- pop_data()
         antigen_types <- df$antigen_iso %>% unique()
 
@@ -188,7 +243,13 @@ inspect_data_server <- function(id,
         req(input$output_antigen)
 
         output$antigen_choosen <- renderText({
-          paste("The antigen(s) in use: ", paste(input$output_antigen, collapse = ", "))
+          paste(
+            "The antigen(s) in use: ",
+            paste(
+              input$output_antigen,
+              collapse = ", "
+            )
+          )
         })
       })
 
@@ -197,8 +258,8 @@ inspect_data_server <- function(id,
       output$visualize <- renderPlot({
         if (input$updatedData_ext == "Pop Data") {
           # Convert reactive data object to data.frame
-          selectedDF <- isolate(pop_data()) %>%
-            serocalculator:::as_pop_data(
+          selected_df <- isolate(pop_data()) %>%
+            serocalculator::as_pop_data(
               antigen_isos = NULL,
               age = imported_data$selected_age(),
               value = imported_data$selected_value(),
@@ -206,61 +267,61 @@ inspect_data_server <- function(id,
             )
 
           if (!is.null(input$antigen_type) && length(input$antigen_type) > 0) {
-            selectedDF <- selectedDF %>%
+            selected_df <- selected_df %>%
               filter(antigen_iso %in% input$antigen_type)
           } else {
             message("No antigen type selected; skipping filter step.")
           }
 
-
           # Check if data is available and proceed
-          if (is.null(selectedDF) || nrow(selectedDF) == 0) {
+          if (is.null(selected_df) || nrow(selected_df) == 0) {
             return(NULL)
           }
 
+          # NOTE: subset by antigen_type
           if (input$type_visualization == "Density") {
-            selectedDF %>%
-              serocalculator:::autoplot.pop_data(
+            selected_df %>%
+              serocalculator::autoplot(
                 type = "density",
                 strata = input$choosen_stratification,
                 log = input$check_log
               )
           } else if (input$type_visualization == "Age Scatter") {
-            selectedDF %>%
-              serocalculator:::autoplot.pop_data(
+            selected_df %>%
+              serocalculator::autoplot(
                 type = "age-scatter",
                 strata = input$choosen_stratification,
-                log = input$check_log
+                log = input$check_log # check why log on/off
               )
           }
         } else if (input$updatedData_ext == "Curve Data") {
           # Convert reactive data object to data.frame
-          selectedDF <- isolate(curve_data()) %>%
-            serocalculator:::as_curve_params()
+          selected_df <- isolate({
+            curve_data() %>%
+              serocalculator::as_curve_params(
+                antigen_isos = input$output_antigen
+              )
+          })
+
 
           if (!is.null(input$antigen_type) && length(input$antigen_type) > 0) {
-            selectedDF <- selectedDF %>%
+            selected_df <- selected_df %>%
               filter(antigen_iso %in% input$antigen_type)
           } else {
             message("No antigen type selected; skipping filter step.")
           }
 
-          # Check if data is available and proceed
-          if (is.null(selectedDF) || nrow(selectedDF) == 0) {
-            return(NULL)
-          }
-
           if (input$type_visualization == "Decay") {
-            selectedDF %>%
-              serocalculator:::plot_curve_params_one_ab()
+            selected_df %>%
+              serocalculator::autoplot(antigen_isos = input$output_antigen)
           } else if (input$type_visualization == "Distribution") {
-            selectedDF %>%
+            selected_df %>%
               tidyr::pivot_longer(
-                cols = `y0`:`r`,
+                cols = tidyselect::all_of(c("y0", "y1", "t1", "alpha", "r")),
                 names_to = "parameter",
                 values_to = "value"
               ) %>%
-              ggplot2::ggplot(aes(x = value)) +
+              ggplot2::ggplot(aes(x = selected_df$value)) +
               ggplot2::geom_density() +
               ggplot2::facet_grid(parameter ~ .) +
               ggplot2::scale_y_continuous(limits = c(0, 0.009)) +
@@ -268,7 +329,10 @@ inspect_data_server <- function(id,
               theme_minimal()
           }
         } else if (input$updatedData_ext == "Noise Data") {
-          showNotification("No inspection visualizations for Noise Data", type = "warning")
+          showNotification(
+            "No inspection visualizations for Noise Data",
+            type = "warning"
+          )
         }
       })
     })
