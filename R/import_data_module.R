@@ -104,11 +104,19 @@ import_data_server <- function(id,
 
 
     output$data_requirement <- renderText({
-      HTML("<p>Required datasets:
+      HTML("<p>Required datasets and variable names:
 
         <ul>
           <li> <strong>Cross-sectional Population Data (Pop Data)</strong>
-                  <p>A dataset with one row per sample and columns for antigen isotype, quantitative antibody results, and age in years. Additional columns and variables can be included for stratification.</p>
+                  <p>A dataset with one row per sample and columns for id, antigen isotype (antigen_iso), quantitative antibody results, and age in years. Additional columns and variables can be included for stratification.</p>
+                  <ul>
+                    <li>antigen_iso: antigen isotype whose noise parameters are being specified on each row</li>
+                    <li>quantitative antibody result </li>
+                    <li>age* (specific variable name not required)</li>
+                    <li>id variable* </li>
+                    *name defined in upload, specific variable name not required
+                    </ul></p>
+
           <li> <strong>Noise Data</strong>
                   <p>A dataset containing the following variables, specifying noise parameters for each antigen isotype.
                   Note that variable names <u>must</u> follow these guidelines. For more information see <a hfref=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>Teunis (2020)</a>.
@@ -119,9 +127,10 @@ import_data_server <- function(id,
                     <li>y.high: Upper limit of detection of the antibody assay</li>
                     <li>eps: measurement noise</li>
                   </ul></p>
-          <li><strong>Antibody Decay Curve Data</strong></li>
+          <li><strong>Longitudinal Seroresponse Data</strong></li>
           <p>A data set containing antibody decay curve parameters fit using a Bayesian hierarchical framework obtaining predictive posterior samples using Markov chain Monte Carlo sampling. Note that variable names <u>must</u> follow these guidelines. For more information see <a href=https://onlinelibrary.wiley.com/doi/10.1002/sim.5322>Teunis (2012)</a></p>
             <ul>
+              <li>antigen_iso: antigen isotype whose noise parameters are being specified on each row</li>
               <li>y0: baseline antibody level</li>
               <li>y1: antibody peak level (ELISA units)</li>
               <li>t1: duration of infection</li>
