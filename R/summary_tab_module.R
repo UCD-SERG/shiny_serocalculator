@@ -134,9 +134,9 @@ summary_tab_server <- function(id) {
 
           <ul>
             <li>Step 1: Import the required datasets</li>
-            <li>Step 2: Inspect their data</li>
-            <li>Step 3: Estimate seroconversion rate</li>
-            <li>Step 4: Prepare a report (Coming Soon)</li>
+            <li>Step 2: Inspect and visualize the data</li>
+            <li>Step 3: Estimate the seroconversion rate</li>
+
           </ul>
 
           <p>Required datasets:</p>
@@ -145,10 +145,10 @@ summary_tab_server <- function(id) {
             and quantitative antibody results (Pop Data)
             </li>
             <li>Noise parameters (Noise Data)</li>
-            <li>Longitudinal curve parameters (Curve Data)</li>
+            <li>Modeleded longitudinal seroresponse parameters (Seroresponse Data)</li>
           </ul>
 
-          <p>If you need assistance or encounter a clear bug,
+          <p>If you need assistance or encounter a bug,
           please file an issue with a minimal reproducible example on
           <a href='https://github.com/UCD-SERG/serocalculator/issues'>
           GitHub</a>.</p>
