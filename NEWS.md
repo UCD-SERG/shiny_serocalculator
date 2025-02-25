@@ -19,6 +19,8 @@ to a drop down with options Upload, OSF, Manually Enter #42
 
 * Add "next" and "back" buttons to switch tabs #39
 
+* remove antigen types on Inspect Data UI when pop_data is selected #58
+
 * Change 'Curve Data' to 'Seroresponse Data' #53
 
 ## Internal changes

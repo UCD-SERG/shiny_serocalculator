@@ -20,8 +20,8 @@ inspect_data_ui <- function(id) {
       style = "position:absolute;right:1em;",
       actionButton(
         "estimate_next_btn",
-        "Next",
-        , icon = icon("arrow-right"),
+        "Next", ,
+        icon = icon("arrow-right"),
         style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
       ),
       tags$head(
@@ -36,8 +36,8 @@ inspect_data_ui <- function(id) {
       style = "position:absolute;right:1em;bottom:1em;",
       actionButton(
         "inspect_back_btn",
-        "Back",
-        , icon = icon("arrow-left"),
+        "Back", ,
+        icon = icon("arrow-left"),
         style = "color: #fff; background-color: #337ab7; border-color: #2e6da4"
       ),
       tags$head(
@@ -107,6 +107,7 @@ inspect_data_server <- function(id,
     ######################## INITIALIZE VALUES #################################
 
     antigen_iso <- NULL
+    value <- NULL
 
     ############################################################################
 
@@ -226,17 +227,19 @@ inspect_data_server <- function(id,
       ############################ Antigen Choice ##############################
 
       output$antigen_type <- renderUI({
-        req(pop_data())
+        if (input$updatedData_ext == "Curve Data") {
+          df <- pop_data()
+          antigen_types <- df$antigen_iso %>% unique()
 
-        df <- pop_data()
-        antigen_types <- df$antigen_iso %>% unique()
-
-        checkboxGroupInput(
-          session$ns("output_antigen"),
-          label = "Select antigen-isotype:",
-          choices = antigen_types,
-          selected = antigen_types[1]
-        )
+          checkboxGroupInput(
+            session$ns("output_antigen"),
+            label = "Select antigen-isotype:",
+            choices = antigen_types,
+            selected = antigen_types[1]
+          )
+        } else {
+          NULL
+        }
       })
 
       observeEvent(input$output_antigen, {
@@ -321,7 +324,7 @@ inspect_data_server <- function(id,
                 names_to = "parameter",
                 values_to = "value"
               ) %>%
-              ggplot2::ggplot(aes(x = selected_df$value)) +
+              ggplot2::ggplot(aes(x = value)) +
               ggplot2::geom_density() +
               ggplot2::facet_grid(parameter ~ .) +
               ggplot2::scale_y_continuous(limits = c(0, 0.009)) +
