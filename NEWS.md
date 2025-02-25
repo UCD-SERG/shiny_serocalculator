@@ -21,6 +21,7 @@ to a drop down with options Upload, OSF, Manually Enter #42
 
 * remove antigen types on Inspect Data UI when pop_data is selected #58
 
+* Change 'Curve Data' to 'Seroresponse Data' #53
 
 ## Internal changes
 
