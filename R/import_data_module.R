@@ -822,7 +822,7 @@ import_data_server <- function(id,
     })
 
     output$data_requirement <- renderText({
-      HTML("<p> <strong> Required datasets </strong>
+      HTML("<p> <strong> Required datasets and variable names </strong>
 
     The following data is required to perform the analyis the analysis.
     The data sets can be uploaded from your personal computer in
@@ -833,19 +833,25 @@ import_data_server <- function(id,
         <ul>
           <li> <strong>Cross-sectional Population Data (Pop Data)</strong>
                   <p>A dataset with one row per sample and columns for
-                  antigen isotype, quantitative antibody results, and age
+                  antigen isotype, quantitative antibody results,
+                  participant ID, and age
                   in years.</p>
         <ul>
               <li>Additional columns and variables can be included for
               stratification</li>
               <li>Age unit is years, decimal points are fine</li>
               <li>The scale of the antibody response variable must be the
-              same as the longituidnal antibody decay data (curve data) </li>
+              same as the longitudinal antibody decay data
+              (seroresponse parameters) </li>
               <li>Do not upload any identifying health information </li>
+              <li>The antigen-isotype variable must be named
+              <code>antigen_iso</code> </li>
    </p>
             </ul>
-          <li><strong>Antibody Decay Curve Data (Curve Data) </strong></li>
-          <p>A data set containing antibody decay curve parameters fit
+          <li><strong> Longitudinal Antibody Seroresponse Parameters
+          (Seroresponse Data) </strong></li>
+          <p>A data set containing within-host antibody seroresponse
+          parameters fit
           using a two-phase within-host Bayesian hierarchical framework
           obtaining predictive posterior samples using Markov chain
           Monte Carlo sampling. Note that variable names <u>must</u>
@@ -856,16 +862,20 @@ import_data_server <- function(id,
           The scale of y0 and y1 must be the same as the antibody response
           variable in the population data frame</p>
             <ul>
-              <li>y0: baseline antibody level</li>
-              <li>y1: antibody peak level </li>
-              <li>t1: time from symptom onset to peak antibody response
+              <li><code>antigen_iso</code>: antigen-isotype</li>
+              <li><code>y0</code>: baseline antibody level</li>
+              <li><code>y1</code>: antibody peak level </li>
+              <li><code>t1</code>: time from symptom onset to peak
+              antibody response
               (in days) </li>
-              <li>alpha: antibody decay rate (1/days for the current
+              <li><code>alpha</code>: antibody decay rate (1/days for the
+              current
               longitudinal parameter sets)</li>
-              <li>r: shape factor of antibody decay</li>
+              <li><code>r</code>: shape factor of antibody decay</li>
             </ul>
         </p>
-           <li> <strong>Noise Data</strong>
+           <li> <strong> Antibody cross reactivity, measurement noise
+           and limits of detection (Noise Data)</strong>
                   <p>A dataset containing the following variables,
                   specifying noise parameters for each antigen isotype.
                   Note that variable names <u>must</u> follow these guidelines.
@@ -873,36 +883,41 @@ import_data_server <- function(id,
                   <a hfref=https://onlinelibrary.wiley.com/doi/10.1002/sim.8578>
                   Teunis (2020)</a>.
                   <ul>
-                    <li>antigen_iso: antigen isotype whose noise parameters are
-                    being specified on each row</li>
-                    <li>nu: biological noise</li>
-                    <li>y.low: Lower limit of detection of the antibody assay
+                    <li><code>antigen_iso</code>: antigen isotype whose noise
+                    parameters are being specified on each row</li>
+                    <li><code>y.low</code>: Lower limit of detection of the
+                    antibody assay
                     </li>
-                    <li>y.high: Upper limit of detection of the antibody assay
+                    <li><code>y.high</code>: Upper limit of detection of the
+                    antibody assay
                     </li>
-                    <li>eps: measurement noise</li>
-                  </ul></p>
-        <p>
-          <li><strong>Biological noise</strong>
-              <p>typically comes from cross-reactivity with other molecules
-              or other pathogens causing an overestimation
-              of antibody concentration. In this case, biological noise needs
-              to be pre-estimated using negative controls,
-              typically using the 95th percentile of the distribution of
-              antibody responses to the antigen-isotype in a
-              population with no exposure.</p>
-          </li>
-          <li><strong>Measurement noise</strong>
-            <p>epresents measurement error from the laboratory testing process
-            (e.g. user differences in pipetting technique,
-            random ELISA plate effects).
-            It is defined by a CV (coefficient of variation) as the ratio of
-            the standard deviation
-            to the mean for replicates. Note that the CV should ideally be
-            measured across plates rather than within the same plate.
-            Measurement noise can over- or under-estimate antibody concentration
-            .</p>
-          </li>
+                    <li><code>nu</code>: biological noise</li>
+                       <ul>
+                            <li>
+                              <em> Typically comes from cross-reactivity with
+                              other molecules or other pathogens.
+                              Biological noise is defined as the 95th percentile
+                              of the distribution of antibody
+                              responses to the antigen-isotype in a population
+                              with no exposure.</em>
+                            </li>
+                          </ul>
+                    <li><code>eps</code>: measurement noise</li>
+                       <ul>
+                            <li>
+                              <em>Represents measurement error from the
+                              laboratory testing process
+                              It is defined by a CV (coefficient of variation)
+                              as the ratio of
+                              the standard deviation to the mean for replicates.
+                              Note that the CV should ideally be
+                              measured across plates rather than within the
+                              same plate.</em>
+                            </li>
+                          </ul>
+
+
+
         </p>
          <p>File limit: <strong>500MB</strong></p>")
     })
