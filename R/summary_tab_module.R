@@ -145,7 +145,8 @@ summary_tab_server <- function(id) {
             and quantitative antibody results (Pop Data)
             </li>
             <li>Noise parameters (Noise Data)</li>
-            <li>Modeleded longitudinal seroresponse parameters (Seroresponse Data)</li>
+            <li>Modeleded longitudinal seroresponse parameters
+            (Seroresponse Data)</li>
           </ul>
 
           <p>If you need assistance or encounter a bug,
