@@ -19,6 +19,8 @@ to a drop down with options Upload, OSF, Manually Enter #42
 
 * Add "next" and "back" buttons to switch tabs #39
 
+* Change 'Curve Data' to 'Seroresponse Data' #53
+
 ## Internal changes
 
 * Copied Github Actions workflows over from `{serocalculator}` (#44)
