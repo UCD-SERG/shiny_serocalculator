@@ -21,6 +21,8 @@ to a drop down with options Upload, OSF, Manually Enter #42
 
 ## Internal changes
 
+* Re-configured codecov (#52)
+
 * Copied Github Actions workflows over from `{serocalculator}` (#44)
 
 * Add Build ignore for app.R 
