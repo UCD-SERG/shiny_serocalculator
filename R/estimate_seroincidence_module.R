@@ -145,7 +145,7 @@ estimate_seroincidence_server <- function(id,
       )
       output$est_incidence <- renderTable({
         if (input$choose_stratification == "overall") {
-          est <- serocalculator::est.incidence(
+          est <- serocalculator::estimate_scr(
             pop_data = pop_df(),
             curve_params = curve_df(),
             noise_params = noise_df(),
@@ -153,7 +153,7 @@ estimate_seroincidence_server <- function(id,
             verbose = TRUE
           )
         } else if (input$choose_stratification == "stratified") {
-          est <- serocalculator::est.incidence.by(
+          est <- serocalculator::estimate_scr_by(
             pop_data = pop_df(),
             curve_params = curve_df(),
             noise_params = noise_df(),
