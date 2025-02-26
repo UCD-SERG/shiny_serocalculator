@@ -21,17 +21,17 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
-  ggplot2,
-  shinyalert,
-  serocalculator,
-  dplyr,
-  shinythemes,
-  shinybusy,
-  httr,
-  skimr,
-  rlang,
-  tidyr,
-  tidyselect
+    ggplot2,
+    shinyalert,
+    serocalculator (>= 1.3.0.9034),
+    dplyr,
+    shinythemes,
+    shinybusy,
+    httr,
+    skimr,
+    rlang,
+    tidyr,
+    tidyselect
 Suggests:
     shinytest2,
     spelling,
@@ -40,3 +40,5 @@ Config/Needs/check: shinytest2
 URL: https://ucd-serg.github.io/shiny_serocalculator/
 Language: en-US
 Config/testthat/edition: 3
+Remotes:  
+    ucd-serg/serocalculator
