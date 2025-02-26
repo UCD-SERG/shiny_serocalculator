@@ -23,6 +23,9 @@ to a drop down with options Upload, OSF, Manually Enter #42
 
 * Change 'Curve Data' to 'Seroresponse Data' #53
 
+* use renamed estimate.incidence with new names #59
+
+
 ## Internal changes
 
 * Re-configured codecov (#52)
