@@ -97,11 +97,11 @@ summary_tab_server <- function(id) {
           </a></cite>, and further developed in subsequent publications by
           <cite>
           <a href=
-          'http://bit.ly/40W7wQY'>
+          'https://www.sciencedirect.com/science/article/pii/S1755436514000371'>
           de Graaf (2014)</a></cite>,
           <cite>
           <a href=
-          'https://bit.ly/42UnBJv'>
+          'https://www.sciencedirect.com/science/article/pii/S1755436516300135'>
           Teunis (2016)</a></cite>, and <cite>
           <a href='https://onlinelibrary.wiley.com/doi/10.1002/sim.8578'>
           Teunis (2020)</a>.</cite></p>
@@ -124,7 +124,7 @@ summary_tab_server <- function(id) {
 
           <p>Further details on the methodology can be found on the
           <a href=
-          'https://bit.ly/41aaOBr'>
+          'https://ucd-serg.github.io/serocalculator/articles/serocalculator.html'>
           main package website</a>.</p>
 
           <p>This app provides a user-friendly interface to use the
