@@ -145,17 +145,17 @@ estimate_seroincidence_server <- function(id,
       )
       output$est_incidence <- renderTable({
         if (input$choose_stratification == "overall") {
-          est <- serocalculator::estimate_scr(
+          est <- serocalculator::est_seroincidence(
             pop_data = pop_df(),
-            curve_params = curve_df(),
+            sr_params = curve_df(),
             noise_params = noise_df(),
             antigen_isos = input$antigen_available,
             verbose = TRUE
           )
         } else if (input$choose_stratification == "stratified") {
-          est <- serocalculator::estimate_scr_by(
+          est <- serocalculator::est_seroincidence_by(
             pop_data = pop_df(),
-            curve_params = curve_df(),
+            sr_params = curve_df(),
             noise_params = noise_df(),
             verbose = TRUE,
             antigen_isos = input$antigen_available,
