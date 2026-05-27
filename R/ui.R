@@ -21,7 +21,7 @@ ui <- function(...) {
         spin = "atom",
         position = "top-right",
         margins = c(200, 800),
-        timeout = 100
+        timeout = 50
       ),
       tabPanel(
         title = "Start Here",
